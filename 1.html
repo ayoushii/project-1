@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title> RAYALISTLY </title>
+    <link rel="icon" href="bilder/icon.png"/>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link rel='stylesheet' type='text/css' media='screen' href='1.css'>
+    <script src="1.js"></script>
+    
+</head>
+<body>
+    <header class="meny-rad">
+        
+            <img src="bilder/logo.png" alt="logo">
+            <nav>
+        
+               <!--<button>Info</button>--> 
+                <button class="menu-btn" onclick="showLogin()">Log in</button>
+                <button class="menu-button"onclick="showSignup()">Sign up</button>
+                <!--<button>About Us</button> -->               
+            
+
+            </nav>      
+    </header>
+
+<div id="login-box" class="login-box" style="display: none;">
+   <span onclick="this.parentElement.style.display='none'" style="cursor:pointer; float:right;">✖</span>
+    <h3>Welcome back</h3>
+    
+    <div class="input-container">
+        <input type="email" placeholder="Email" id="login-email">
+    </div>
+    
+    <div class="input-container">
+        <input type="password" placeholder="Password" id="login-password">
+    </div>
+
+    <a href="#" class="blue-link">Forgot password?</a>
+
+    <button class="continue-btn">Continue</button>
+
+    <p class="footer-text">Don't have an account? <a href="javascript:void(0)" onclick="showSignup()">Sign up now</a></p>
+</div>
+
+<div id="signup-box" class="login-box" style="display:none;">
+    <span onclick="this.parentElement.style.display='none'" style="cursor:pointer; float:right;">✖</span>
+    <h3>Create Account</h3>
+    <input type="text" placeholder="Full Name" class="active-input">
+    <input type="email" placeholder="Email" class="active-input">
+    <input type="text" placeholder="Username" class="active-input">
+    <input type="password" placeholder="Password" class="active-input">
+    
+    <div style="text-align: left; margin: 10px 0;">
+        <input type="checkbox" id="terms" style="width: auto;"> 
+        <label for="terms">I agree to the terms</label>
+    </div>
+
+    <button class="continue-btn" onclick="showVerify()">Create Account</button>
+</div>
+
+<div id="verify-box" class="login-box" style="display:none;">
+    <p style="font-size: 40px;">✉️</p>
+    <h3>Verify your email</h3>
+    <p>Check your inbox! We have sent a link to you.</p>
+    <button class="continue-btn" onclick="showLogin()">Go to Login</button>
+</div>
+
+</body>
+</html>
