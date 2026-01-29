@@ -107,3 +107,77 @@ header img{
     display: block;
     margin-bottom: 10px;
 }
+
+
+.account-btn {
+    display: inline-flex;  /* Gör att knappen anpassar sig efter innehållet */
+    align-items: center;   /* Centrerar gubben och texten i höjdled */
+    gap: 8px;              /* Skapar ett perfekt avstånd mellan gubben och texten */
+    padding: 10px 15px;
+    cursor: pointer;
+    background-color: none;
+    border: none;
+    border-radius: 5px;
+}
+
+.account-btn i , .account-btn i{
+    font-size: 18px;       /* Justera storleken på gubben här */
+}
+
+
+
+
+.menu-btn, .menu-button {
+    display: inline-flex;  /* Detta ska ligga här för att styra både ikon + text */
+    
+    align-items: center;   /* Centrerar innehållet i höjdled */
+    gap: 8px;              /* Skapar avståndet mellan ikonen och texten */
+    padding: 10px 15px;
+    cursor: pointer;
+    background: none;      /* "none" fungerar bäst som "transparent" eller "none" */
+    border: none;
+    font-family: sans-serif; /* Viktigt för att texten ska se bra ut */
+}
+
+.menu-button {
+    background-color: #4CAF50 !important;
+    color: white !important;
+    border-radius: 20px !important;
+}
+
+
+
+/* Ta bort prickar och marginaler från listan */
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 30px 0 0 20px; /* 30px ner från header, 20px från vänster */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Gör om länkarna till menyvalen i din skiss */
+.menu-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: fit-content; /* Gör rutan så liten som möjligt */
+    min-width: 180px;   /* Ger en jämn basbredd för alla val */
+    
+    padding: 12px 20px;
+    border: 2px solid black;
+    border-radius: 12px;
+    
+    background-color: white;
+    color: black;
+    text-decoration: none; /* Tar bort det blåa/understrukna på länken */
+    font-size: 16px;
+    transition: 0.2s ease;
+}
+
+/* Effekt när man hovrar över ett menyval */
+.menu-link:hover {
+    background-color: #f0f0f0;
+    transform: translateX(5px); /* Flyttar menyn lite snyggt till höger vid hovring */
+}

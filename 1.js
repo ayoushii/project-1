@@ -25,3 +25,15 @@ function showVerify() {
     // Visar verify-boxen
     document.getElementById('verify-box').style.display = 'block';
 }
+
+
+function toggleMenu() {
+    var submenu = document.getElementById("mySubmenu");
+    
+    // Om menyn är dold, visa den. Om den syns, dölj den.
+    if (submenu.style.display === "none") {
+        submenu.style.display = "block";
+    } else {
+        submenu.style.display = "none";
+    }
+}
