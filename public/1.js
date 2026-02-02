@@ -50,37 +50,41 @@ window.onload = function() {
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
 
+            if (!email || !password) {
+                alert("Skriv in email och lösenord.");
+                return;
+            }
+
             // 2. Ändra knappens text så användaren ser att något händer
             loginSubmitBtn.innerText = "Loggar in...";
             loginSubmitBtn.disabled = true;
 
             try {
                 // 3. FETCH-ANROPET (Här pratar vi med din kollegas backend)
-                // Byt ut 'URL_FRÅN_KOLLEGA' mot den adress hon ger dig senare
-                const response = await fetch('https://din-kollegas-api.com/login', {
+                // Byt ut 'URL_FRÅN_KOLLEGA' 
+                const response = await fetch('http://localhost:5000/register', {
                     method: 'POST', // Vi använder POST för att skicka hemlig data
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        email: email,
-                        password: password
-                    })
+                    body: JSON.stringify({ email, password})
                 });
 
+                const data = await response.json();
                 // 4. Hantera svaret från Backend
                 if (response.ok) {
-                    const data = await response.json();
-                    
+                
                     // Om inloggningen lyckas: Spara t.ex. en token (nyckel)
-                    localStorage.setItem('userToken', data.token);
+                    if (data.token) {
+                        localStorage.setItem("userToken", data.token);
+                    }
                     
                     alert("Välkommen in!");
                     window.location.href = "2.html"; 
-                } else {
-                    // Om backend säger nej (t.ex. fel lösenord)
-                    alert("Fel mejl eller lösenord. Försök igen!");
+                }   else {
+                    alert(data.message); // visar serverns fel, t.ex. "Wrong email or password"
                     resetButton();
+                    // Om backend säger nej (t.ex. fel lösenord)   
                 }
 
             } catch (error) {
@@ -96,4 +100,50 @@ window.onload = function() {
         loginSubmitBtn.innerText = "Continue";
         loginSubmitBtn.disabled = false;
     }
+
+const signupSubmitBtn = document.getElementById("signupSubmitBtn");
+
+  if (signupSubmitBtn) {
+    signupSubmitBtn.onclick = async function () {
+
+      // Hämta värden från signup-boxens input-fält
+      const fullName = document.querySelectorAll("#signup-box input")[0].value;
+      const email = document.querySelectorAll("#signup-box input")[1].value;
+      const username = document.querySelectorAll("#signup-box input")[2].value;
+      const password = document.querySelectorAll("#signup-box input")[3].value;
+
+      if (!fullName || !email || !username || !password) {
+        alert("Fyll i alla fält.");
+        return;
+      }
+
+      signupSubmitBtn.innerText = "Skapar konto...";
+      signupSubmitBtn.disabled = true;
+
+      try {
+        const response = await fetch("http://localhost:5000/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fullName, email, username, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert("Konto skapat! Logga in nu.");
+          showLogin();
+        } else {
+          // Här ska backend skicka t.ex. "Username already exists"
+          alert(data.message || "Kunde inte skapa konto.");
+        }
+
+      } catch (error) {
+        alert("Kunde inte kontakta servern. Kontrollera att servern kör.");
+      }
+
+      signupSubmitBtn.innerText = "Create Account";
+      signupSubmitBtn.disabled = false;
+    };
+  }
+
 };
