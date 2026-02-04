@@ -90,13 +90,19 @@ header img{
 .continue-btn {
     width: 100%;
     padding: 15px;
-    background-color: #ccc;
+    background-color: #5cb85c;
     color: white;
     border: none;
+    font-size: 16px;
     border-radius: 12px;
     font-weight: bold;
     cursor: pointer;
     margin-top: 10px;
+    transition: background 0.3s ease;
+}
+
+.continue-btn:hover {
+    background-color: #4cae4c;
 }
 
 /* Länkar inuti rutan */
