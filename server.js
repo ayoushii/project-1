@@ -30,7 +30,7 @@ db.connect((err) => {
 
 // 5) När någon går till "/", visa 1.html
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "1.html"));
+  res.sendFile(path.join(__dirname, "public", "PublicHome1.html"));
 });
 
 // 6) REGISTER (skapa konto)
