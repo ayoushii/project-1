@@ -1,6 +1,8 @@
 const express = require("express");
 const mysql = require("mysql2");
 const path = require("path");
+const crypto = require("crypto");
+const token = crypto.randomBytes(32).toString("hex")
 
 const app = express();
 app.use(express.json());
