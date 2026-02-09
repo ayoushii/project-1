@@ -59,7 +59,7 @@ window.onload = function () {
         // 4. Hantera svar
         if (response.ok) {
           alert("Login OK!");
-          window.location.href = "2.html";
+          window.location.href = "PrivateHome2.html";
         } else {
           alert(data.message || "Fel vid login.");
         }
