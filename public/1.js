@@ -109,7 +109,7 @@ window.onload = function () {
         }
 
       } catch (error) {
-        alert("Kunde inte kontakta servern. Är backend igång?");
+        alert("Kunde inte kontakta servern.");
       }
 
       // 5. Återställ knappen
