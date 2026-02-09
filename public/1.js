@@ -18,7 +18,12 @@ function showVerify() {
   document.getElementById("login-box").style.display = "none";
   document.getElementById("verify-box").style.display = "block";
 }
-
+function toggleMenu() {
+    const submenu = document.getElementById("mySubmenu");
+    if (submenu) {
+        submenu.classList.toggle("open");
+    }
+}
 // Vänta på att dokumentet har laddats helt
 window.onload = function () {
 
@@ -118,4 +123,17 @@ window.onload = function () {
     };
   }
 
+
+
 };
+
+
+
+    document.getElementById('logout-btn').addEventListener('click', function() {
+        // Rensa lokalt minne
+        localStorage.clear();
+        sessionStorage.clear();
+
+        // Skicka användaren till startsidan
+        window.location.href = "index.html";
+    });

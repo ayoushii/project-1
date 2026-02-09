@@ -187,3 +187,96 @@ header img{
     background-color: #f0f0f0;
     transform: translateX(5px); /* Flyttar menyn lite snyggt till höger vid hovring */
 }
+
+
+nav {
+    display: flex;
+    gap: 15px; /* Mellanrum mellan knapparna */
+}
+
+/* Grundstil för Logout-knappen (matchar dina andra knappar) */
+.logout-btn {
+    width: 140px;
+    padding: 10px;
+    margin-top: 12px; /* Samma som din account-btn */
+    border: none;
+    background: none;
+    font-size: 18px;
+    font-family: 'Times New Roman', Times, serif;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0px 0px 8px whitesmoke; /* Matchar din bild */
+}
+
+/* Hover-effekt */
+.logout-btn:hover {
+    color: #07689f; /* Röd färg för att indikera utloggning */
+    box-shadow: 0px 0px 15px silver;
+}
+
+/* --- NY KOD FÖR RULLGARDINEN --- */
+
+/* Grundstilen för den flytande menyn */
+/* Grundläget för den flytande rullgardinen */
+/* Ser till att sidebar-listan får sina mellanrum tillbaka */
+/* Grundstilen för undermenyn till höger */
+.submenu {
+    position: absolute;
+    left: 105%;           /* Placerar den precis till höger om knappen */
+    top: 10px;            /* Flyttar ner den så den startar en bit ner från knappens topp */
+    
+    background: none;     /* Ingen ram eller bakgrund */
+    border: none;
+    padding: 0;
+    min-width: 150px;
+    z-index: 9999;
+    
+    /* Animation och döljning */
+    display: none;
+    opacity: 0;
+    transform: translateY(-10px); /* Startar lite högre upp för en "glid ner"-effekt */
+    transition: all 0.3s ease;
+}
+
+/* Visas när klassen 'open' läggs till */
+.submenu.open {
+    display: block;
+    opacity: 1;
+    transform: translateY(0); /* Glider ner till sin rätta plats */
+}
+
+.submenu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;            /* Mellanrum mellan alternativen */
+}
+
+.submenu li a {
+    text-decoration: none;
+    color: black;         /* Svart text */
+    font-size: 18px;
+    font-family: 'Times New Roman', serif;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: 0.2s;
+}
+
+/* Ikonerna ska också vara svarta */
+.submenu li a i {
+    color: black;
+    font-size: 14px;
+}
+
+/* Hover-effekt på texten */
+.submenu li a:hover {
+    color: #07689f;       /* Blir blå när man pekar på dem */
+}
