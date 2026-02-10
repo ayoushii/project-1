@@ -8,6 +8,7 @@
     <meta name='viewport' content='width=device-width, initial-scale=1'>
     <link rel='stylesheet' type='text/css' media='screen' href='1.css'>
     <script src="1.js"></script>
+    <script src="list.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 
@@ -37,19 +38,25 @@
         <ul>
             <li><a href="#">Private <i class="fa-solid fa-plus"></i></a></li>
             <li><a href="#">Family <i class="fa-solid fa-plus"></i></a></li>
-            <li><a href="#">Other... <i class="fa-solid fa-plus"></i></a></li>
+            <li><a href="other.html">Other... <i class="fa-solid fa-plus"></i></a></li>
         </ul>
     </div>
         </li>
 
 
 
+<li>
+    <a href="javascript:void(0)" class="menu-link" id="showMyListBtn" onclick="toggleSavedLists()">
+        <i class="fa-solid fa-list"></i> Show my list
+    </a>
+    
+    <div id="savedListsMenu" class="submenu" style="display: none; padding-left: 20px;">
+        <ul id="myCreatedLists" style="list-style: none; padding: 0;">
+            </ul>
+    </div>
+</li>
       
-        <li>
-            <a href="#" class="menu-link">
-                <i class="fa-solid fa-list"></i> Show my list
-            </a>
-        </li>
+        
         
         <li>
             <a href="#" class="menu-link">
