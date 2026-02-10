@@ -71,6 +71,7 @@ app.post("/register", async (req, res) => {
   const sqlUser =
     "INSERT INTO users (username, email, password_hash, is_verified) VALUES (?, NULL, ?, 0)";
 
+
   db.query(sqlUser, [username, password_hash], (err, result) => {
     if (err) {
       if (err.code === "ER_DUP_ENTRY") {
@@ -92,6 +93,8 @@ app.post("/register", async (req, res) => {
       // visa verify-länk i terminal
       const link = `http://localhost:5000/verify?token=${token}`;
       console.log("VERIFY LINK:", link);
+      console.log("REGISTER HIT:", req.body);
+
 
       return res.status(201).json({
         message: "User created. Verifiera via länken i terminalen."
