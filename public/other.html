@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create List - RayaListly</title>
+    <link rel="stylesheet" href="list.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="list-area">
+        <a href="PrivateHome2.html" class="back-link">← Back to Menu</a>
+
+        <div id="createListSection">
+            <h3>Create New List</h3>
+            <p>Give your list a name to get started.</p>
+            <div class="input-container">
+                <input type="text" id="listNameInput" placeholder="Enter list name (e.g., Grocery)...">
+                <button id="createListBtn">Create</button>
+            </div>
+        </div>
+
+        <div id="activeListSection" style="display: none;">
+            <h2 id="currentListNameDisplay">List Name</h2>
+            <div class="input-container">
+                <input type="text" id="itemInput" placeholder="Add an item...">
+                <button id="addBtn">Add</button>
+            </div>
+            
+            <ul id="shoppingList">
+                </ul>
+        </div>
+    </div>
+
+    <script src="list.js"></script>
+</body>
+</html>
