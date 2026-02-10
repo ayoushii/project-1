@@ -2,6 +2,13 @@ const express = require("express");
 const mysql = require("mysql2");
 const path = require("path");
 require("dotenv").config();
+
+console.log("ENV CHECK:", {
+  BASE_URL: process.env.BASE_URL,
+  MAIL_USER: process.env.MAIL_USER ? "OK" : "MISSING",
+  DB_NAME: process.env.DB_NAME
+});
+
 const nodemailer = require("nodemailer");
 const crypto = require("crypto"); // token
 const bcrypt = require("bcrypt"); // hash
@@ -76,60 +83,66 @@ app.get("/verify", (req, res) => {
   });
 });
 
+
 // register
 app.post("/register", async (req, res) => {
-  const { username,email, password } = req.body;
+  console.log("REGISTER HIT:", req.body); // (debug) visa vad som kommer från frontend
+
+  const { username, email, password } = req.body;
 
   if (!username || !email || !password) {
     return res.status(400).json({ message: "Username, email och password krävs" });
   }
 
   // hash password
-  const password_hash = await bcrypt.hash(password, 10);
+  try {
+    const password_hash = await bcrypt.hash(password, 10);
 
-  // skapa user
-  const sqlUser =
-    "INSERT INTO users (username, email, password_hash, is_verified) VALUES (?, ?, ?, 0)";
+    // skapa user
+    const sqlUser =
+      "INSERT INTO users (username, email, password_hash, is_verified) VALUES (?, ?, ?, 0)";
 
+    db.query(sqlUser, [username, email, password_hash], (err, result) => {
+      if (err) {
+        console.log("SQL USER INSERT ERROR:", err.code, err.message); // (debug)
 
-  db.query(sqlUser, [username, email, password_hash], (err, result) => {
-    if (err) {
-      if (err.code === "ER_DUP_ENTRY") {
-        return res.status(400).json({ message: "Username eller email is already exists" });
+        if (err.code === "ER_DUP_ENTRY") {
+          return res.status(400).json({ message: "Username eller email is already exists" });
+        }
+        return res.status(500).json({ message: err.message }); // (debug) visa riktiga DB-felet
       }
-      return res.status(500).json({ message: "Database error" });
-    }
 
-    // skapa token
-    const userId = result.insertId;
-    const token = crypto.randomBytes(32).toString("hex");
+      // skapa token
+      const userId = result.insertId;
+      const token = crypto.randomBytes(32).toString("hex");
 
-    const sqlToken =
-      "INSERT INTO email_tokens (user_id, token, type, expires_at) VALUES (?, ?, 'verify', DATE_ADD(NOW(), INTERVAL 24 HOUR))";
+      const sqlToken =
+        "INSERT INTO email_tokens (user_id, token, type, expires_at) VALUES (?, ?, 'verify', DATE_ADD(NOW(), INTERVAL 24 HOUR))";
 
-    db.query(sqlToken, [userId, token], (err2) => {
-      if (err2) return res.status(500).json({ message: "Database error (token)" });
+      db.query(sqlToken, [userId, token], (err2) => {
+        if (err2) {
+          console.log("SQL TOKEN INSERT ERROR:", err2.code, err2.message); // (debug)
+          return res.status(500).json({ message: err2.message }); // (debug) visa riktiga felet
+        }
 
-      // visa verify-länk i terminal
-      const link = `${process.env.BASE_URL}/verify?token=${token}`;
+        // visa verify-länk i terminal
+        const link = `${process.env.BASE_URL}/verify?token=${token}`;
 
-      console.log("REGISTER HIT:", req.body);
-
-      
-
-      sendVerifyMail(email, link)
-        .then(() => {
-          return res.status(201).json({ message: "Konto skapat! Kolla din email för verifiering." });
-        })
-        .catch((e) => {
-          console.log("MAIL ERROR:", e);
-          return res.status(500).json({ message: "Kunde inte skicka verifieringsmail" });
-        });
-
-
-    
+        sendVerifyMail(email, link)
+          .then(() => {
+            return res.status(201).json({ message: "Konto skapat! Kolla din email för verifiering." });
+          })
+          .catch((e) => {
+            console.log("MAIL ERROR:", e);
+            return res.status(500).json({ message: "Mail kunde inte skickas (kolla MAIL_USER/PASS)" });
+          });
+      });
     });
-  });
+
+  } catch (e) {
+    console.log("REGISTER ERROR:", e); // (debug)
+    return res.status(500).json({ message: "Serverfel vid hashing" });
+  }
 });
 
 // login
