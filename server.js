@@ -36,12 +36,12 @@ app.get("/", (req, res) => {
 });
 
 // 6) REGISTER (skapa konto)
-app.post("/register", (req, res) => {
-  const { username, password } = req.body;
+app.post("/register", async (req, res) => {
+  const { username, email, password } = req.body;
 
   // enkel kontroll
-  if (!username || !password) {
-    return res.status(400).json({ message: "Username och password krävs" });
+  if (!username || !email || !password) {
+    return res.status(400).json({ message: "Username, email och password krävs" });
   }
 
   const sql = "INSERT INTO users (username, password) VALUES (?, ?)";
