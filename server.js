@@ -20,10 +20,12 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true, // true för 465
   auth: {
     user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS,
+    pass: (process.env.MAIL_PASS || "").replace(/\s/g, ""), // tar bort mellanslag/newlines
   },
 });
 
@@ -181,5 +183,11 @@ app.post("/login", (req, res) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log("Server running on port " + PORT);
+
+  transporter.verify((err) => {
+    if (err) console.log("MAIL VERIFY ERROR:", err.message);
+    else console.log("MAIL READY ✅");
+  });
+
 });
  
