@@ -1,17 +1,7 @@
 const express = require("express");
 const mysql = require("mysql2");
 const path = require("path");
-require("dotenv").config();
-
-console.log("ENV CHECK:", {
-  BASE_URL: process.env.BASE_URL,
-  MAIL_USER: process.env.MAIL_USER ? "OK" : "MISSING",
-  DB_NAME: process.env.DB_NAME
-});
-
-const nodemailer = require("nodemailer");
-const crypto = require("crypto"); // token
-const bcrypt = require("bcrypt"); // hash
+const bcrypt = require("bcrypt");
 
 const app = express();
 app.use(express.json());
@@ -19,32 +9,12 @@ app.use(express.json());
 // serverar frontend
 app.use(express.static(path.join(__dirname, "public")));
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true, // true för 465
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: (process.env.MAIL_PASS || "").replace(/\s/g, ""), // tar bort mellanslag/newlines
-  },
-});
-
-function sendVerifyMail(toEmail, link) {
-  return transporter.sendMail({
-    from: process.env.MAIL_USER,
-    to: toEmail,
-    subject: "Verifiera ditt konto",
-    html: `Klicka här för att verifiera ditt konto: <a href="${link}">${link}</a>`,
-  });
-}
-
-
-// DB config
+// DB config (HÅRDKODAT NU)
 const dbConfig = {
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER || "appuser",
-  password: process.env.DB_PASS || "Rama@20052005@",
-  database: process.env.DB_NAME || "project1"
+  host: "localhost",
+  user: "appuser",         
+  password: "Rama@20052005@", 
+  database: "project1",
 };
 
 // DB connect
@@ -63,32 +33,9 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "PublicHome1.html"));
 });
 
-// verify konto via token
-app.get("/verify", (req, res) => {
-  const { token } = req.query;
-  if (!token) return res.status(400).send("Token saknas");
-
-  const sql = "SELECT user_id FROM email_tokens WHERE token=? AND type='verify' AND expires_at > NOW()";
-
-  db.query(sql, [token], (err, rows) => {
-    if (err) return res.status(500).send("Serverfel");
-    if (rows.length === 0) return res.status(400).send("Ogiltig eller utgången länk");
-
-    const userId = rows[0].user_id;
-
-    db.query("UPDATE users SET is_verified=1 WHERE id=?", [userId], (err2) => {
-      if (err2) return res.status(500).send("Serverfel");
-
-      db.query("DELETE FROM email_tokens WHERE token=?", [token]);
-      return res.redirect("/verified.html");
-    });
-  });
-});
-
-
-// register
+// REGISTER (utan mail/token/verifiering)
 app.post("/register", async (req, res) => {
-  console.log("REGISTER HIT:", req.body); // (debug) visa vad som kommer från frontend
+  console.log("REGISTER HIT:", req.body);
 
   const { username, email, password } = req.body;
 
@@ -96,58 +43,31 @@ app.post("/register", async (req, res) => {
     return res.status(400).json({ message: "Username, email och password krävs" });
   }
 
-  // hash password
   try {
     const password_hash = await bcrypt.hash(password, 10);
 
-    // skapa user
     const sqlUser =
-      "INSERT INTO users (username, email, password_hash, is_verified) VALUES (?, ?, ?, 0)";
+      "INSERT INTO users (username, email, password_hash, is_verified) VALUES (?, ?, ?, 1)";
 
-    db.query(sqlUser, [username, email, password_hash], (err, result) => {
+    db.query(sqlUser, [username, email, password_hash], (err) => {
       if (err) {
-        console.log("SQL USER INSERT ERROR:", err.code, err.message); // (debug)
+        console.log("SQL USER INSERT ERROR:", err.code, err.message);
 
         if (err.code === "ER_DUP_ENTRY") {
-          return res.status(400).json({ message: "Username eller email is already exists" });
+          return res.status(400).json({ message: "Username eller email finns redan" });
         }
-        return res.status(500).json({ message: err.message }); // (debug) visa riktiga DB-felet
+        return res.status(500).json({ message: "Database error" });
       }
 
-      // skapa token
-      const userId = result.insertId;
-      const token = crypto.randomBytes(32).toString("hex");
-
-      const sqlToken =
-        "INSERT INTO email_tokens (user_id, token, type, expires_at) VALUES (?, ?, 'verify', DATE_ADD(NOW(), INTERVAL 24 HOUR))";
-
-      db.query(sqlToken, [userId, token], (err2) => {
-        if (err2) {
-          console.log("SQL TOKEN INSERT ERROR:", err2.code, err2.message); // (debug)
-          return res.status(500).json({ message: err2.message }); // (debug) visa riktiga felet
-        }
-
-        // visa verify-länk i terminal
-        const link = `${process.env.BASE_URL}/verify?token=${token}`;
-
-        sendVerifyMail(email, link)
-          .then(() => {
-            return res.status(201).json({ message: "Konto skapat! Kolla din email för verifiering." });
-          })
-          .catch((e) => {
-            console.log("MAIL ERROR:", e);
-            return res.status(500).json({ message: "Mail kunde inte skickas (kolla MAIL_USER/PASS)" });
-          });
-      });
+      return res.status(201).json({ message: "Konto skapat! Du kan logga in nu." });
     });
-
   } catch (e) {
-    console.log("REGISTER ERROR:", e); // (debug)
-    return res.status(500).json({ message: "Serverfel vid hashing" });
+    console.log("REGISTER ERROR:", e);
+    return res.status(500).json({ message: "Serverfel" });
   }
 });
 
-// login
+// LOGIN
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
 
@@ -155,7 +75,7 @@ app.post("/login", (req, res) => {
     return res.status(400).json({ message: "Username och password krävs" });
   }
 
-  const sql = "SELECT id, password_hash, is_verified FROM users WHERE username=?";
+  const sql = "SELECT id, password_hash FROM users WHERE username=?";
 
   db.query(sql, [username], async (err, rows) => {
     if (err) return res.status(500).json({ message: "Database error" });
@@ -166,12 +86,6 @@ app.post("/login", (req, res) => {
 
     const user = rows[0];
 
-    // måste vara verifierad
-    if (user.is_verified !== 1) {
-      return res.status(403).json({ message: "Verifiera konto först" });
-    }
-
-    // jämför hash
     const ok = await bcrypt.compare(password, user.password_hash);
     if (!ok) return res.status(401).json({ message: "Fel username eller lösenord" });
 
@@ -180,14 +94,7 @@ app.post("/login", (req, res) => {
 });
 
 // start server
-const PORT = process.env.PORT || 5000;
+const PORT = 5000;
 app.listen(PORT, () => {
   console.log("Server running on port " + PORT);
-
-  transporter.verify((err) => {
-    if (err) console.log("MAIL VERIFY ERROR:", err.message);
-    else console.log("MAIL READY ✅");
-  });
-
 });
- 
