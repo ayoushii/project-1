@@ -1,16 +1,16 @@
 const express = require("express");
 const mysql = require("mysql2");
 const path = require("path");
-const crypto = require("crypto");
-const bcrypt = require("bcrypt");
+const crypto = require("crypto"); // token
+const bcrypt = require("bcrypt"); // hash
 
 const app = express();
 app.use(express.json());
 
-// 1) Servera frontend-filer (HTML/CSS/JS/bilder) från /public
+// serverar frontend
 app.use(express.static(path.join(__dirname, "public")));
 
-// 2) DB-inställningar (OBS: detta är ett vanligt objekt)
+// DB config
 const dbConfig = {
   host: "localhost",
   user: "appuser",
@@ -18,10 +18,9 @@ const dbConfig = {
   database: "project1"
 };
 
-// 3) Skapa DB-anslutning
+// DB connect
 const db = mysql.createConnection(dbConfig);
 
-// 4) Koppla DB och skriv ut om det funkar
 db.connect((err) => {
   if (err) {
     console.log("DB ERROR:", err.message);
@@ -30,34 +29,78 @@ db.connect((err) => {
   console.log("DB connected!");
 });
 
-// 5) När någon går till "/", visa 1.html
+// start page
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "PublicHome1.html"));
 });
 
-// 6) REGISTER (skapa konto)
-app.post("/register", async (req, res) => {
-  const { username, email, password } = req.body;
+// verify konto via token
+app.get("/verify", (req, res) => {
+  const { token } = req.query;
+  if (!token) return res.status(400).send("Token saknas");
 
-  // enkel kontroll
-  if (!username || !email || !password) {
-    return res.status(400).json({ message: "Username, email och password krävs" });
+  const sql = "SELECT user_id FROM email_tokens WHERE token=? AND type='verify' AND expires_at > NOW()";
+
+  db.query(sql, [token], (err, rows) => {
+    if (err) return res.status(500).send("Serverfel");
+    if (rows.length === 0) return res.status(400).send("Ogiltig eller utgången länk");
+
+    const userId = rows[0].user_id;
+
+    db.query("UPDATE users SET is_verified=1 WHERE id=?", [userId], (err2) => {
+      if (err2) return res.status(500).send("Serverfel");
+
+      db.query("DELETE FROM email_tokens WHERE token=?", [token]);
+      return res.redirect("/verified.html");
+    });
+  });
+});
+
+// register
+app.post("/register", async (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ message: "Username och password krävs" });
   }
 
-  const sql = "INSERT INTO users (username, password) VALUES (?, ?)";
+  // hash password
+  const password_hash = await bcrypt.hash(password, 10);
 
-  db.query(sql, [username, password], (err) => {
+  // skapa user
+  const sqlUser =
+    "INSERT INTO users (username, email, password_hash, is_verified) VALUES (?, NULL, ?, 0)";
+
+  db.query(sqlUser, [username, password_hash], (err, result) => {
     if (err) {
       if (err.code === "ER_DUP_ENTRY") {
         return res.status(400).json({ message: "Username already exists" });
       }
       return res.status(500).json({ message: "Database error" });
-    } 
-    return res.status(201).json({ message: "User created successfully" });
+    }
+
+    // skapa token
+    const userId = result.insertId;
+    const token = crypto.randomBytes(32).toString("hex");
+
+    const sqlToken =
+      "INSERT INTO email_tokens (user_id, token, type, expires_at) VALUES (?, ?, 'verify', DATE_ADD(NOW(), INTERVAL 24 HOUR))";
+
+    db.query(sqlToken, [userId, token], (err2) => {
+      if (err2) return res.status(500).json({ message: "Database error (token)" });
+
+      // visa verify-länk i terminal
+      const link = `http://localhost:5000/verify?token=${token}`;
+      console.log("VERIFY LINK:", link);
+
+      return res.status(201).json({
+        message: "User created. Verifiera via länken i terminalen."
+      });
+    });
   });
 });
 
-// 7) LOGIN (logga in)
+// login
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
 
@@ -65,21 +108,31 @@ app.post("/login", (req, res) => {
     return res.status(400).json({ message: "Username och password krävs" });
   }
 
-  const sql = "SELECT id, username FROM users WHERE username = ? AND password = ?";
+  const sql = "SELECT id, password_hash, is_verified FROM users WHERE username=?";
 
-  db.query(sql, [username, password], (err, rows) => {
+  db.query(sql, [username], async (err, rows) => {
     if (err) return res.status(500).json({ message: "Database error" });
 
     if (rows.length === 0) {
       return res.status(401).json({ message: "Fel username eller lösenord" });
     }
 
+    const user = rows[0];
+
+    // måste vara verifierad
+    if (user.is_verified !== 1) {
+      return res.status(403).json({ message: "Verifiera konto först" });
+    }
+
+    // jämför hash
+    const ok = await bcrypt.compare(password, user.password_hash);
+    if (!ok) return res.status(401).json({ message: "Fel username eller lösenord" });
+
     return res.json({ message: "Login OK" });
   });
 });
 
-// 8) Starta server
+// start server
 app.listen(5000, () => {
   console.log("Server running on http://localhost:5000");
 });
-
