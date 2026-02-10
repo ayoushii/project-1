@@ -111,14 +111,23 @@ app.post("/register", async (req, res) => {
       if (err2) return res.status(500).json({ message: "Database error (token)" });
 
       // visa verify-länk i terminal
-      const link = `http://localhost:5000/verify?token=${token}`;
-      console.log("VERIFY LINK:", link);
+      const link = `${process.env.BASE_URL}/verify?token=${token}`;
+
       console.log("REGISTER HIT:", req.body);
 
+      
 
-      return res.status(201).json({
-        message: "User created. Verifiera via länken i terminalen."
-      });
+      sendVerifyMail(email, link)
+        .then(() => {
+          return res.status(201).json({ message: "Konto skapat! Kolla din email för verifiering." });
+        })
+        .catch((e) => {
+          console.log("MAIL ERROR:", e);
+          return res.status(500).json({ message: "Kunde inte skicka verifieringsmail" });
+        });
+
+
+    
     });
   });
 });
