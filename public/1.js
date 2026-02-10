@@ -48,7 +48,7 @@ window.onload = function () {
 
       try {
         // 3. Skicka till backend /login
-        const response = await fetch("http://localhost:5000/login", {
+        const response = await fetch("/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, password })
@@ -97,10 +97,10 @@ window.onload = function () {
 
       try {
         // 3. Skicka till backend /register
-        const response = await fetch("http://localhost:5000/register", {
+        const response = await fetch("/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password })
+          body: JSON.stringify({ username,email, password })
         });
 
         const data = await response.json();
@@ -135,5 +135,5 @@ window.onload = function () {
         sessionStorage.clear();
 
         // Skicka användaren till startsidan
-        window.location.href = "index.html";
+        window.location.href = "PublicHome1.html";
     });
