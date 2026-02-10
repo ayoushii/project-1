@@ -32,10 +32,10 @@ function sendVerifyMail(toEmail, link) {
 
 // DB config
 const dbConfig = {
-  host: "localhost",
-  user: "appuser",
-  password: "Rama@20052005@",
-  database: "project1"
+  host: process.env.DB_HOST || "localhost",
+  user: process.env.DB_USER || "appuser",
+  password: process.env.DB_PASS || "Rama@20052005@",
+  database: process.env.DB_NAME || "project1"
 };
 
 // DB connect
@@ -167,6 +167,6 @@ app.post("/login", (req, res) => {
 // start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log('Server running on port, PORT');
+  console.log("Server running on port " + PORT);
 });
  
