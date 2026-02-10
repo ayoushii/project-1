@@ -127,13 +127,16 @@ window.onload = function () {
 
 };
 
+const logoutBtn = document.getElementById("logout-btn");
 
+if (logoutBtn) {
+  logoutBtn.onclick = function () {
+    // Rensa lokalt minne
+    localStorage.clear();
+    sessionStorage.clear();
+    // Skicka användaren till startsidan
+    window.location.href = "PublicHome1.html";
+  };
+}
 
-    document.getElementById('logout-btn').addEventListener('click', function() {
-        // Rensa lokalt minne
-        localStorage.clear();
-        sessionStorage.clear();
-
-        // Skicka användaren till startsidan
-        window.location.href = "PublicHome1.html";
-    });
+    

@@ -12,8 +12,8 @@ app.use(express.static(path.join(__dirname, "public")));
 // DB config (HÅRDKODAT NU)
 const dbConfig = {
   host: "localhost",
-  user: "appuser",         
-  password: "Rama@20052005@", 
+  user: "appuser",
+  password: "Rama@20052005@",
   database: "project1",
 };
 
@@ -46,6 +46,7 @@ app.post("/register", async (req, res) => {
   try {
     const password_hash = await bcrypt.hash(password, 10);
 
+    // OBS: din tabell heter password_hash (inte password)
     const sqlUser =
       "INSERT INTO users (username, email, password_hash, is_verified) VALUES (?, ?, ?, 1)";
 
@@ -75,6 +76,7 @@ app.post("/login", (req, res) => {
     return res.status(400).json({ message: "Username och password krävs" });
   }
 
+  // OBS: password_hash finns i DB
   const sql = "SELECT id, password_hash FROM users WHERE username=?";
 
   db.query(sql, [username], async (err, rows) => {
