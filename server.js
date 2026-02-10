@@ -1,6 +1,8 @@
 const express = require("express");
 const mysql = require("mysql2");
 const path = require("path");
+require("dotenv").config();
+const nodemailer = require("nodemailer");
 const crypto = require("crypto"); // token
 const bcrypt = require("bcrypt"); // hash
 
@@ -9,6 +11,24 @@ app.use(express.json());
 
 // serverar frontend
 app.use(express.static(path.join(__dirname, "public")));
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS,
+  },
+});
+
+function sendVerifyMail(toEmail, link) {
+  return transporter.sendMail({
+    from: process.env.MAIL_USER,
+    to: toEmail,
+    subject: "Verifiera ditt konto",
+    html: `Klicka här för att verifiera ditt konto: <a href="${link}">${link}</a>`,
+  });
+}
+
 
 // DB config
 const dbConfig = {
@@ -58,10 +78,10 @@ app.get("/verify", (req, res) => {
 
 // register
 app.post("/register", async (req, res) => {
-  const { username, password } = req.body;
+  const { username,email, password } = req.body;
 
-  if (!username || !password) {
-    return res.status(400).json({ message: "Username och password krävs" });
+  if (!username || !email || !password) {
+    return res.status(400).json({ message: "Username, email och password krävs" });
   }
 
   // hash password
@@ -69,13 +89,13 @@ app.post("/register", async (req, res) => {
 
   // skapa user
   const sqlUser =
-    "INSERT INTO users (username, email, password_hash, is_verified) VALUES (?, NULL, ?, 0)";
+    "INSERT INTO users (username, email, password_hash, is_verified) VALUES (?, ?, ?, 0)";
 
 
-  db.query(sqlUser, [username, password_hash], (err, result) => {
+  db.query(sqlUser, [username, email, password_hash], (err, result) => {
     if (err) {
       if (err.code === "ER_DUP_ENTRY") {
-        return res.status(400).json({ message: "Username already exists" });
+        return res.status(400).json({ message: "Username eller email is already exists" });
       }
       return res.status(500).json({ message: "Database error" });
     }
