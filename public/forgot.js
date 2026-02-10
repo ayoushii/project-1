@@ -1,10 +1,11 @@
-document.gotElementById("resetBtn").onclick = function() {
-    const email = document.getElementById("reset-email").ariaValueMax;
+document.getElementById("resetBtn").onclick = function () {
+
+    const email = document.getElementById("reset-email").value;
 
     if (!email) {
         alert("Write your email first.");
         return;
     }
 
-    alert("Checke your gmail");
+    alert("Check your email!");
 };
