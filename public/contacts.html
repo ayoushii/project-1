@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>RAYALISTLY - Contacts</title>
+    <link rel="icon" href="bilder/icon.png"/>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link rel='stylesheet' type='text/css' media='screen' href='contacts.css'>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+    <header class="meny-rad">
+        <img src="bilder/logo.png" alt="logo">
+    </header>
+
+    <main class="main-layout">
+
+        <section class="side-box requests-section">
+    <h2>Friend Requests</h2>
+    <div id="requests-list">
+        </div>
+    <div class="mini-card">
+        <span class="user-name">Kalle Kula</span>
+        <div class="card-btns">
+            <button class="accept-btn" onclick="acceptFriend('Kalle Kula', this)">Accept</button>
+            <button class="decline-btn" onclick="this.closest('.mini-card').remove()">Decline</button>
+        </div>
+    </div>
+</div>
+        </section>
+
+        <section class="search-container">
+            <div class="search-bar">
+                <input type="text" placeholder="Search by email or username..." id="search-input">
+                <button id="search-btn">Search <i class="fa-solid fa-magnifying-glass"></i></button>
+            </div>
+
+            <div id="result-box" class="result-card" style="display: none;">
+                <span id="username-display">User Found!</span>
+                <button class="add-btn" onclick="sendFriendRequest()">Send Request</button>
+            </div>
+        </section>
+
+        <section class="side-box contacts-section">
+            <h2>My Contacts</h2>
+            <ul id="my-contacts-list">
+                </ul>
+        </section>
+
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
