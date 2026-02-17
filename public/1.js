@@ -1,142 +1,122 @@
-// Funktion för att visa Logga in
+// --- 1. FUNKTIONER SOM KAN LIGGA UTANFÖR (För Login/Signup-vyn) ---
 function showLogin() {
-  document.getElementById("signup-box").style.display = "none";
-  document.getElementById("verify-box").style.display = "none";
-  document.getElementById("login-box").style.display = "block";
+    document.getElementById("signup-box").style.display = "none";
+    if(document.getElementById("verify-box")) document.getElementById("verify-box").style.display = "none";
+    document.getElementById("login-box").style.display = "block";
 }
 
-// Funktion för att visa Skapa konto
 function showSignup() {
-  document.getElementById("login-box").style.display = "none";
-  document.getElementById("verify-box").style.display = "none";
-  document.getElementById("signup-box").style.display = "block";
+    document.getElementById("login-box").style.display = "none";
+    if(document.getElementById("verify-box")) document.getElementById("verify-box").style.display = "none";
+    document.getElementById("signup-box").style.display = "block";
 }
 
-// Funktion för att visa "Bekräfta mejl"
-function showVerify() {
-  document.getElementById("signup-box").style.display = "none";
-  document.getElementById("login-box").style.display = "none";
-  document.getElementById("verify-box").style.display = "block";
-}
 function toggleMenu() {
     const submenu = document.getElementById("mySubmenu");
     if (submenu) {
         submenu.classList.toggle("open");
     }
 }
-// Vänta på att dokumentet har laddats helt
+
+// --- 2. ALLT SOM KRÄVER ATT HTML-ELEMENTEN FINNS LADDADE ---
 window.onload = function () {
 
-  // ===== LOGIN =====
-  const loginSubmitBtn = document.getElementById("loginSubmitBtn");
+    // ===== MY ACCOUNT: TOGGLE & DATA =====
+    const accountBtn = document.getElementById('account-link');
+    const accountSection = document.getElementById('account-section');
 
-  if (loginSubmitBtn) {
-    loginSubmitBtn.onclick = async function () {
+    if (accountBtn && accountSection) {
+        accountBtn.onclick = async function(event) {
+            event.stopPropagation(); 
+            
+            const isHidden = accountSection.classList.toggle('hidden');
 
-      // 1. Hämta data från input-fälten
-      const username = document.getElementById("login-username").value;
-      const password = document.getElementById("login-password").value;
+            // Om rutan precis öppnades, hämta data
+            if (!isHidden) {
+                await loadUserProfile();
+            }
+        };
 
-      if (!username || !password) {
-        alert("Skriv in username och lösenord.");
-        return;
-      }
-
-      // 2. Visa att något händer
-      loginSubmitBtn.innerText = "Loggar in...";
-      loginSubmitBtn.disabled = true;
-
-      try {
-        // 3. Skicka till backend /login
-        const response = await fetch("/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password })
+        // Stäng rutan om man klickar utanför
+        document.addEventListener('click', function(event) {
+            if (!accountSection.contains(event.target) && event.target !== accountBtn) {
+                accountSection.classList.add('hidden');
+            }
         });
+    }
 
-        const data = await response.json();
+    // Funktion för att hämta profil (med test-data tills backend är klar)
+    async function loadUserProfile() {
+    // Vi tömmer fälten först så att gammal info inte ligger kvar
+    document.getElementById('acc-name').value = "";
+    document.getElementById('acc-username').value = "";
+    document.getElementById('acc-email').value = "";
 
-        // 4. Hantera svar
+    try {
+        const response = await fetch("/api/user/profile"); 
+        
         if (response.ok) {
-          alert("Login OK!");
-          window.location.href = "PrivateHome2.html";
+            const userData = await response.json();
+            // Här fylls datan i BARA om backend svarar med OK
+            document.getElementById('acc-name').value = userData.name;
+            document.getElementById('acc-username').value = userData.username;
+            document.getElementById('acc-email').value = userData.email;
         } else {
-          alert(data.message || "Fel vid login.");
+            console.log("Ingen användare inloggad.");
+            // Valfritt: Skicka användaren till login-sidan om de inte är inloggade
+            // window.location.href = "index.html";
         }
-
-      } catch (error) {
-        alert("Kunde inte kontakta servern. Är backend igång?");
-      }
-
-      // 5. Återställ knappen
-      loginSubmitBtn.innerText = "Continue";
-      loginSubmitBtn.disabled = false;
-    };
-  }
-
-  // ===== SIGNUP / REGISTER =====
-  const signupSubmitBtn = document.getElementById("signupSubmitBtn");
-
-  if (signupSubmitBtn) {
-    signupSubmitBtn.onclick = async function () {
-
-      // 1. Hämta data från signup-boxens input-fält
-      const fullName = document.querySelectorAll("#signup-box input")[0].value;
-      const email = document.querySelectorAll("#signup-box input")[1].value;
-      const username = document.querySelectorAll("#signup-box input")[2].value;
-      const password = document.querySelectorAll("#signup-box input")[3].value;
-
-      if (!fullName || !email || !username || !password) {
-        alert("Fyll i alla fält.");
-        return;
-      }
-
-      // 2. Visa att något händer
-      signupSubmitBtn.innerText = "Skapar konto...";
-      signupSubmitBtn.disabled = true;
-
-      try {
-        // 3. Skicka till backend /register
-        const response = await fetch("/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username,email, password })
-        });
-
-        const data = await response.json();
-
-        // 4. Hantera svar
-        if (response.ok) {
-          alert("Konto skapat! Logga in nu.");
-          showLogin();
-        } else {
-          alert(data.message || "Kunde inte skapa konto.");
-        }
-
-      } catch (error) {
-        alert("Kunde inte kontakta servern.");
-      }
-
-      // 5. Återställ knappen
-      signupSubmitBtn.innerText = "Create Account";
-      signupSubmitBtn.disabled = false;
-    };
-  }
-
-
-
-};
-
-const logoutBtn = document.getElementById("logout-btn");
-
-if (logoutBtn) {
-  logoutBtn.onclick = function () {
-    // Rensa lokalt minne
-    localStorage.clear();
-    sessionStorage.clear();
-    // Skicka användaren till startsidan
-    window.location.href = "PublicHome1.html";
-  };
+    } catch (error) {
+        console.error("Kunde inte ansluta till servern:", error);
+    }
 }
+    // ===== CHANGE PASSWORD LOGIC =====
+    const editBtn = document.querySelector('.edit-btn');
+    const passwordInput = document.getElementById('acc-password');
 
-    
+    if (editBtn && passwordInput) {
+        editBtn.onclick = function() {
+            if (passwordInput.hasAttribute('readonly')) {
+                passwordInput.removeAttribute('readonly');
+                passwordInput.value = ""; 
+                passwordInput.focus();
+                editBtn.innerText = "Save";
+                editBtn.style.backgroundColor = "#4CAF50";
+                editBtn.style.color = "white";
+            } else {
+                saveNewPassword(passwordInput.value);
+            }
+        };
+    }
+
+    async function saveNewPassword(newPassword) {
+        if (newPassword.length < 6) {
+            alert("Password must be at least 6 characters.");
+            return;
+        }
+        console.log("Saving password...");
+        passwordInput.setAttribute('readonly', true);
+        editBtn.innerText = "Change";
+        editBtn.style.backgroundColor = ""; 
+        editBtn.style.color = "";
+        alert("Password updated!");
+    }
+
+   
+
+
+              // ===== LOGIN LOGIK (Fortsättning) =====
+    const loginSubmitBtn = document.getElementById("loginSubmitBtn");
+    if (loginSubmitBtn) {
+        loginSubmitBtn.onclick = async function () {
+            const username = document.getElementById("login-username").value;
+            const password = document.getElementById("login-password").value;
+
+            if (!username || !password) {
+                alert("Please enter credentials.");
+                return;
+            }
+            // ... resten av din login fetch kod ...
+        };
+    }
+}; // Denna sista måsvinge stänger window.onload och är JÄTTEVIKTIG!

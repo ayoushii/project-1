@@ -8,19 +8,48 @@
     <meta name='viewport' content='width=device-width, initial-scale=1'>
     <link rel='stylesheet' type='text/css' media='screen' href='1.css'>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel='stylesheet' type='text/css' media='screen' href='2.css'>
 </head>
 
+
+
 <body>
- <header>
+<header>
     <img src="bilder/logo.png" alt="logo">
     <nav>
-        <button class="account-btn"> 
+        <button class="account-btn" id="account-link"> 
             <i class="fa-regular fa-user"></i> My Account 
         </button>
-        <button id="logout-btn" class="logout-btn">
+
+        <div id="account-section" class="account-card hidden">
+            <h2>My Account</h2>
+            
+            <div class="info-row">
+                <label>Name:</label>
+                <input type="text" id="acc-name" readonly placeholder="Loading...">
+            </div>
+
+            <div class="info-row">
+                <label>Username:</label>
+                <input type="text" id="acc-username" readonly placeholder="Loading...">
+            </div>
+
+            <div class="info-row">
+                <label>Email:</label>
+                <input type="text" id="acc-email" readonly placeholder="Loading...">
+            </div>
+
+            <div class="info-row">
+                <label>Password:</label>
+                <div class="password-container">
+                    <input type="password" id="acc-password" value="********" readonly>
+                    <button class="edit-btn">Change</button>
+                </div>
+            </div>
+        </div> <button id="logout-btn" class="logout-btn">
             <i class="fas fa-sign-out-alt"></i> Log out
         </button>
-    </nav>     
+    </nav> 
 </header>
 
 
@@ -40,7 +69,6 @@
         </ul>
     </div>
         </li>
-
 
 
 <li>
