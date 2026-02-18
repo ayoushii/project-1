@@ -102,21 +102,38 @@ window.onload = function () {
         alert("Password updated!");
     }
 
-   
+// ===== LOGIN LOGIK =====
+const loginSubmitBtn = document.getElementById("loginSubmitBtn");
+if (loginSubmitBtn) {
+  loginSubmitBtn.onclick = async function () {
+    const username = document.getElementById("login-username").value.trim();
+    const password = document.getElementById("login-password").value;
 
-
-              // ===== LOGIN LOGIK (Fortsättning) =====
-    const loginSubmitBtn = document.getElementById("loginSubmitBtn");
-    if (loginSubmitBtn) {
-        loginSubmitBtn.onclick = async function () {
-            const username = document.getElementById("login-username").value;
-            const password = document.getElementById("login-password").value;
-
-            if (!username || !password) {
-                alert("Please enter credentials.");
-                return;
-            }
-            // ... resten av din login fetch kod ...
-        };
+    if (!username || !password) {
+      alert("Please enter credentials.");
+      return;
     }
-}; // Denna sista måsvinge stänger window.onload och är JÄTTEVIKTIG!
+
+    try {
+      const res = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message);
+        return;
+      }
+
+      window.location.href = "/PrivateHome2.html";
+
+    } catch (err) {
+      console.error(err);
+      alert("Server error");
+    }
+  };
+}
+};
