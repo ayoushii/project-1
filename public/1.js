@@ -136,4 +136,46 @@ if (loginSubmitBtn) {
     }
   };
 }
+
+// ===== SIGNUP =====
+const signupSubmitBtn = document.getElementById("signupSubmitBtn");
+
+if (signupSubmitBtn) {
+  signupSubmitBtn.onclick = async function () {
+
+    const email = document.getElementById("signup-email").value;
+    const username = document.getElementById("signup-username").value;
+    const password = document.getElementById("signup-password").value;
+
+    if (!email || !username || !password) {
+      alert("Fill all fields");
+      return;
+    }
+
+    try {
+      const res = await fetch("/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message);
+        return;
+      }
+
+      alert("Account created!");
+      showLogin();
+
+      window.location.href = "/PrivateHome2.html";
+
+    } catch (err) {
+      console.log(err);
+      alert("Server error");
+    }
+  };
+}
+
 };
