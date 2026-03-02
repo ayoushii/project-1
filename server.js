@@ -18,7 +18,7 @@ const dbConfig = {
 };
 
 // DB connect
-const db = mysql.createConnection(dbConfig);
+//const db = mysql.createConnection(dbConfig);
 
 //db.connect((err) => {
 //  if (err) {
