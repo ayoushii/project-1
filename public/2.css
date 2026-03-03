@@ -1,97 +1,284 @@
-*{
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
+body{
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  background: linear-gradient(180deg, #f6f9ff 0%, #ffffff 60%);
+  color: #111;
+}
+
+/* ===== HEADER ===== */
 header{
-    width: 100%;
-    height: 150px;
-    background-color: white;
-    box-shadow: 0px 0px 12px black ;
-    display: flex;
-    justify-content: space-between; 
-    align-items: center;
-    padding: 0 20px;
-    
+  width: 100%;
+  height: 110px;
+  background: #fff;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 22px;
+  position: sticky;
+  top: 0;
+  z-index: 999;
 }
 
 header img{
-    width: 200px;
+  width: 200px;
+  height: auto;
+  transform: none; /* viktigast: tar bort "scale(2)" som sprängde layouten */
+}
+
+/* Nav uppe till höger (My Account + Log out) */
+header nav{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+/* ===== TOP BUTTONS ===== */
+.account-btn,
+.logout-btn{
+  border: 1px solid rgba(0,0,0,0.12);
+  background: #fff;
+  color: #111;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 10px 18px rgba(0,0,0,0.06);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.account-btn:hover,
+.logout-btn:hover{
+  transform: translateY(-1px);
+  opacity: 0.98;
+  box-shadow: 0 14px 25px rgba(0,0,0,0.10);
+}
+
+.logout-btn{
+  border: 1px solid rgba(231, 76, 60, 0.25);
+}
+
+.logout-btn i{
+  color: #e74c3c;
+}
+
+/* ===== ACCOUNT CARD ===== */
+.hidden{
+  display: none !important;
+}
+
+.account-card{
+  position: absolute;
+  top: 60px;
+  right: 0;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.12);
+  padding: 18px;
+  border-radius: 18px;
+  box-shadow: 0 18px 45px rgba(0,0,0,0.12);
+  width: 340px;
+  z-index: 1000;
+}
+
+.account-card h2{
+  font-size: 18px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.info-row{
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.info-row label{
+  font-weight: 700;
+  color: rgba(0,0,0,0.65);
+  width: 90px;
+}
+
+.info-row input{
+  flex: 1;
+  padding: 9px 10px;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 12px;
+  background: rgba(0,0,0,0.03);
+  outline: none;
+}
+
+.password-container{
+  display: flex;
+  gap: 8px;
+  flex: 1;
+}
+
+.edit-btn{
+  border: 1px solid rgba(0,0,0,0.12);
+  background: #fff;
+  padding: 8px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.edit-btn:hover{
+  background: rgba(0,0,0,0.04);
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar{
+  width: 280px;
+  background: rgba(255,255,255,0.92);
+  border-right: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 10px 0 25px rgba(0,0,0,0.05);
+  padding: 18px;
+  position: fixed;
+  top: 110px; /* matchar headerhöjden */
+  left: 0;
+  height: calc(100vh - 110px);
+  overflow-y: auto;
+}
+
+.sidebar ul{
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.menu-link{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #111;
+  font-weight: 800;
+  padding: 12px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.10);
+  background: #fff;
+  box-shadow: 0 10px 18px rgba(0,0,0,0.06);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.menu-link:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 14px 25px rgba(0,0,0,0.10);
+}
+
+.submenu{
+  margin-top: 10px;
+  display: none;
+  margin-left: 12px;
+  padding-left: 10px;
+  border-left: 2px solid rgba(0,0,0,0.10);
+}
+
+.submenu ul{
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.submenu a{
+  text-decoration: none;
+  color: rgba(0,0,0,0.75);
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 12px;
+}
+
+.submenu a:hover{
+  background: rgba(0,0,0,0.04);
+}
+
+/* ===== RESPONSIVE (mobil) ===== */
+@media (max-width: 900px){
+  header{
     height: auto;
-    image-rendering: -webkit-optimize-contrast;
-    transform: scale(2);
-    margin-top: 10px;
-    float: left; 
-    margin-left:  8px  ;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  header nav{
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .sidebar{
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    box-shadow: none;
+    border-right: none;
+    padding: 14px;
+  }
 }
 
-.hidden {
-    display: none !important;
-}
-/* This hides the section by default */
-.account-card {
-    position: absolute;
-    top: 100px;
-    right: 20px;
-    background: white;
-    border: 2px solid #333;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0px 10px 25px rgba(0,0,0,0.1); /* Mjukare skugga */
-    z-index: 1000;
-    width: 350px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+/* ===== APP LAYOUT ===== */
+.layout{
+  display: flex;
+  min-height: calc(100vh - 110px);
 }
 
-.account-card h2 {
-    margin-bottom: 20px;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
+/* ===== MAIN CONTENT ===== */
+.content{
+  flex: 1;
+  padding: 40px;
+  margin-left: 280px;
 }
 
-.info-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
+/* Empty state (ser mer professionellt ut när inget är valt) */
+.empty-state{
+  text-align: center;
+  margin-top: 120px;
+  color: rgba(0,0,0,0.6);
 }
 
-.info-row label {
-    font-weight: 600;
-    color: #555;
-    flex: 1; /* Tar upp vänstra sidan */
+.empty-state h1{
+  font-size: 28px;
+  margin-bottom: 10px;
 }
 
-.info-row input {
-    flex: 2; /* Tar upp högra sidan */
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    background-color: #f9f9f9;
-    color: #333;
-    outline: none;
+/* ===== SIDEBAR IMPROVEMENT ===== */
+.sidebar{
+  width: 260px;
+  background: #fff;
+  border-right: 1px solid rgba(0,0,0,0.06);
+  padding: 20px;
+  position: fixed;
+  top: 110px;
+  left: 0;
+  height: calc(100vh - 110px);
+  overflow-y: auto;
 }
 
-.password-container {
-    display: flex;
-    gap: 5px;
-    flex: 2;
-}
-
-.password-container input {
-    width: 100%; /* Fyller upp containern */
-}
-
-.edit-btn {
-    background: #f0f0f0;
-    border: 1px solid #ccc;
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-}
-
-.edit-btn:hover {
-    background: #e0e0e0;
+/* Submenu animation */
+.submenu{
+  margin-top: 8px;
+  display: none;
+  margin-left: 15px;
+  padding-left: 10px;
+  border-left: 2px solid rgba(0,0,0,0.08);
+  transition: all 0.2s ease;
 }

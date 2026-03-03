@@ -79,3 +79,29 @@ function toggleSavedLists() {
         menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
     }
 }
+
+// Öppnar / stänger Create a list-menyn
+function toggleCreateMenu() {
+  const menu = document.getElementById("mySubmenu");
+  if (!menu) return;
+
+  // Om den är öppen -> stäng
+  if (menu.style.display === "block") {
+    menu.style.display = "none";
+  } 
+  // Om den är stängd -> öppna
+  else {
+    menu.style.display = "block";
+  }
+}
+
+// Koppla knappen när sidan laddas
+window.addEventListener("load", () => {
+  const btn = document.getElementById("createListBtn");
+  if (btn) {
+    btn.addEventListener("click", toggleCreateMenu);
+  }
+});
+
+
+

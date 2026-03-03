@@ -1,79 +1,234 @@
 <!DOCTYPE html>
-<html>
+<html lang="sv">
 <head>
-    <meta charset='utf-8'>
-    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-    <title> RAYALISTLY </title>
-    <link rel="icon" href="bilder/icon.png"/>
-    <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <link rel='stylesheet' type='text/css' media='screen' href='1.css'>
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+  <title>RayaListly - Delad inköpslista</title>
+  <link rel="icon" href="bilder/icon.png" />
 
+  <link rel="stylesheet" href="1.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
 </head>
+
 <body>
-    <header class="meny-rad">
-        
-            <img src="bilder/logo.png" alt="logo">
-            <nav>
-        
-               <!--<button>Info</button>--> 
-                <button id="loginBox" class="menu-btn" onclick="showLogin()">
-                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Log in</button>
-                <button class="menu-button"onclick="showSignup()"> 
-                    <i class="fa-solid fa-user-plus"></i>Sign up</button>
-                <!--<button>About Us</button> -->               
-            
-
-            </nav>      
-    </header>
-
-<div id="login-box" class="login-box" style="display: none;">
-   <span onclick="this.parentElement.style.display='none'" style="cursor:pointer; float:right;">✖</span>
-    <h3>Welcome back</h3>
-    
-    <div class="input-container">
-        <input type="text" placeholder="Username" id="login-username">
-    </div>
-    
-    <div class="input-container">
-        <input type="password" placeholder="Password" id="login-password">
+  <!-- Header -->
+  <header class="topbar">
+    <div class="brand">
+      <img class="brand-logo" src="bilder/logo.png" alt="RayaListly logo" />
     </div>
 
-  <a href="ForgotPassw3.html" class="blue-link">Forgot password?</a>
+    <nav class="top-actions" aria-label="Authentication">
+      <!-- Jag kör buttons + id så 1.js kan koppla utan strul -->
+      <button type="button" class="btn btn-ghost" id="open-login">
+        <i class="fa-solid fa-right-to-bracket"></i>
+        Log in
+      </button>
 
+      <button type="button" class="btn btn-primary" id="open-signup">
+        <i class="fa-solid fa-user-plus"></i>
+        Sign up
+      </button>
+    </nav>
+  </header>
 
-    <button id="loginSubmitBtn" class="continue-btn">Continue</button>
+  <!-- Hero -->
+  <main class="page">
+    <section class="hero">
+      <div class="hero-left">
+        <p class="badge">
+          <i class="fa-solid fa-circle-nodes"></i>
+          Klient–Server • MySQL • API
+        </p>
 
-    <p class="footer-text">Don't have an account? <a href="javascript:void(0)" onclick="showSignup()">Sign up now</a></p>
-</div>
+        <h1 class="hero-title">
+          Delade inköpslistor som hela gruppen kan uppdatera.
+        </h1>
 
-<div id="signup-box" class="login-box" style="display:none;">
-    <span onclick="this.parentElement.style.display='none'" style="cursor:pointer; float:right;">✖</span>
-    <h3>Create Account</h3>
-    <input type="text" placeholder="Full Name" class="active-input">
-    <input type="email" placeholder="Email" class="active-input">
-    <input type="text" placeholder="Username" class="active-input">
-    <input type="password" placeholder="Password" class="active-input">
-    
-    <div style="text-align: left; margin: 10px 0;">
-        <input type="checkbox" id="terms" style="width: auto;"> 
-        <label for="terms">I agree to the terms</label>
+        <p class="hero-subtitle">
+          Skapa listor, bjud in medlemmar och markera varor som köpta.
+          Perfekt för familj, kompisar eller studentboende.
+        </p>
+
+        <div class="hero-cta">
+          <button type="button" class="btn btn-primary btn-lg" id="cta-get-started">
+            Kom igång
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+
+          <a class="btn btn-ghost btn-lg" href="#how-it-works">
+            Hur det funkar
+          </a>
+        </div>
+
+        <div class="hero-stats" aria-label="Highlights">
+          <div class="stat">
+            <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
+            <div class="stat-text">
+              <div class="stat-title">Dela listor</div>
+              <div class="stat-desc">Flera användare på samma lista</div>
+            </div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-icon"><i class="fa-solid fa-check"></i></div>
+            <div class="stat-text">
+              <div class="stat-title">Markera köpt</div>
+              <div class="stat-desc">Håll koll på vad som är fixat</div>
+            </div>
+          </div>
+
+          <div class="stat">
+            <div class="stat-icon"><i class="fa-solid fa-lock"></i></div>
+            <div class="stat-text">
+              <div class="stat-title">Konton</div>
+              <div class="stat-desc">Login/signup med databas</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: liten “preview” så det ser mer som en riktig produkt -->
+      <div class="hero-right" aria-hidden="true">
+        <div class="mock-card">
+          <div class="mock-header">
+            <div class="mock-dot"></div>
+            <div class="mock-dot"></div>
+            <div class="mock-dot"></div>
+            <span class="mock-title">Shared list: Studentboende</span>
+          </div>
+
+          <ul class="mock-list">
+            <li class="mock-item">
+              <span class="mock-check"><i class="fa-regular fa-circle"></i></span>
+              Mjölk
+              <span class="mock-tag">2 st</span>
+            </li>
+            <li class="mock-item">
+              <span class="mock-check"><i class="fa-solid fa-circle-check"></i></span>
+              Pasta
+              <span class="mock-tag is-done">Köpt</span>
+            </li>
+            <li class="mock-item">
+              <span class="mock-check"><i class="fa-regular fa-circle"></i></span>
+              Kyckling
+              <span class="mock-tag">500g</span>
+            </li>
+            <li class="mock-item">
+              <span class="mock-check"><i class="fa-regular fa-circle"></i></span>
+              Tomater
+              <span class="mock-tag">6 st</span>
+            </li>
+          </ul>
+
+          <div class="mock-footer">
+            <span><i class="fa-solid fa-users"></i> 3 members</span>
+            <span><i class="fa-solid fa-clock"></i> updated now</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="section" id="how-it-works">
+      <h2 class="section-title">Hur det funkar</h2>
+      <p class="section-subtitle">
+        Idén är enkel: en gemensam lista som alla kan se och uppdatera.
+      </p>
+
+      <div class="grid3">
+        <article class="feature">
+          <div class="feature-icon"><i class="fa-solid fa-list-check"></i></div>
+          <h3 class="feature-title">Skapa listor</h3>
+          <p class="feature-text">Du kan skapa flera listor och döpa om dem när som helst.</p>
+        </article>
+
+        <article class="feature">
+          <div class="feature-icon"><i class="fa-solid fa-user-group"></i></div>
+          <h3 class="feature-title">Bjud in medlemmar</h3>
+          <p class="feature-text">Dela listan med andra användare så alla kan bidra.</p>
+        </article>
+
+        <article class="feature">
+          <div class="feature-icon"><i class="fa-solid fa-cart-shopping"></i></div>
+          <h3 class="feature-title">Handla smartare</h3>
+          <p class="feature-text">Markera varor som köpta och undvik dubbelköp.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p class="footer-text">
+        RayaListly • Delade Köplista 
+      </p>
+    </footer>
+  </main>
+
+  <!-- ===== LOGIN MODAL (behövs för att showLogin() ska ha något att visa) ===== -->
+  <section id="login-box" class="auth-modal" style="display:none;">
+    <div class="auth-card">
+      <button class="close-btn" onclick="closeAuth()">×</button>
+      <h2>Logga in</h2>
+
+      <input id="login-username" type="text" placeholder="Username" autocomplete="username" />
+      <input id="login-password" type="password" placeholder="Password" autocomplete="current-password" />
+
+      <button id="loginSubmitBtn" type="button" class="btn btn-primary">Log in</button>
+      
+      <!-- Glömt lösenord-länk -->
+      <a class="forgot-link" href="ForgotPassw3.html">Forgot password?</a>
+
+      <p class="auth-switch">
+        Har du inget konto?
+        <button type="button" id="go-signup" class="link-btn">Sign up</button>
+      </p>
     </div>
+  </section>
 
-    <button id="signupSubmitBtn" class="continue-btn">Create Account</button>
-</div>
+  <!-- ===== SIGNUP MODAL ===== -->
+  <section id="signup-box" class="auth-modal" style="display:none;">
+    <div class="auth-card">
+      <button class="close-btn" onclick="closeAuth()">×</button>
+      <h2>Skapa konto</h2>
 
-<div id="verify-box" class="login-box" style="display:none;">
-    <p style="font-size: 40px;">✉️</p>
-    <h3>Verify your email</h3>
-    <p>Check your inbox! We have sent a link to you.</p>
-    <button class="continue-btn" onclick="showLogin()">Go to Login</button>
-</div>
+      <input type="email" placeholder="Email" autocomplete="email" />
+      <input type="text" placeholder="Full name" autocomplete="name" />
+      <input type="text" placeholder="Username" autocomplete="username" />
+      <input type="password" placeholder="Password" autocomplete="new-password" />
 
+      <label class="auth-terms">
+        <input type="checkbox" id ="terms-checkbox" />
+        Jag godkänner villkoren
+      </label>
 
+      <button id="signupSubmitBtn" type="button" class="btn btn-primary" disabled >Create account</button>
 
-<script src="1.js"></script>
+      <p class="auth-switch">
+        Har du redan konto?
+        <button type="button" id="go-login" class="link-btn">Log in</button>
+      </p>
+    </div>
+  </section>
+
+  <!-- Din befintliga fil -->
+  <script src="1.js"></script>
+
+  <!-- En liten koppling: knapparna öppnar rätt modal -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const loginBtn = document.getElementById("open-login");
+      const signupBtn = document.getElementById("open-signup");
+      const ctaBtn = document.getElementById("cta-get-started");
+
+      if (loginBtn && typeof showLogin === "function") loginBtn.addEventListener("click", showLogin);
+      if (signupBtn && typeof showSignup === "function") signupBtn.addEventListener("click", showSignup);
+      if (ctaBtn && typeof showSignup === "function") ctaBtn.addEventListener("click", showSignup);
+
+      document.getElementById("go-signup")?.addEventListener("click", showSignup);
+      document.getElementById("go-login")?.addEventListener("click", showLogin);
+    });
+  </script>
 </body>
 </html>

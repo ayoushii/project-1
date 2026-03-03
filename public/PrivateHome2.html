@@ -1,110 +1,129 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset='utf-8'>
-    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-    <title> RAYALISTLY </title>
-    <link rel="icon" href="bilder/icon.png"/>
-    <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <link rel='stylesheet' type='text/css' media='screen' href='1.css'>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel='stylesheet' type='text/css' media='screen' href='2.css'>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RAYALISTLY</title>
+
+  <link rel="icon" href="bilder/icon.png">
+  <link rel="stylesheet" href="2.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 
-
-
 <body>
-<header>
+
+  <!-- ===== HEADER (top navigation) ===== -->
+  <header>
     <img src="bilder/logo.png" alt="logo">
+
     <nav>
-        <button class="account-btn" id="account-link"> 
-            <i class="fa-regular fa-user"></i> My Account 
-        </button>
+      <!-- My account button -->
+      <button class="account-btn" id="account-link">
+        <i class="fa-regular fa-user"></i> My Account
+      </button>
 
-        <div id="account-section" class="account-card hidden">
-            <h2>My Account</h2>
-            
-            <div class="info-row">
-                <label>Name:</label>
-                <input type="text" id="acc-name" readonly placeholder="Loading...">
-            </div>
+      <!-- Account dropdown card -->
+      <div id="account-section" class="account-card hidden">
+        <h2>My Account</h2>
 
-            <div class="info-row">
-                <label>Username:</label>
-                <input type="text" id="acc-username" readonly placeholder="Loading...">
-            </div>
+        <!-- User info fields -->
+        <div class="info-row">
+          <label>Name:</label>
+          <input type="text" id="acc-name" readonly placeholder="Loading...">
+        </div>
 
-            <div class="info-row">
-                <label>Email:</label>
-                <input type="text" id="acc-email" readonly placeholder="Loading...">
-            </div>
+        <div class="info-row">
+          <label>Username:</label>
+          <input type="text" id="acc-username" readonly placeholder="Loading...">
+        </div>
 
-            <div class="info-row">
-                <label>Password:</label>
-                <div class="password-container">
-                    <input type="password" id="acc-password" value="********" readonly>
-                    <button class="edit-btn">Change</button>
-                </div>
-            </div>
-        </div> <button id="logout-btn" class="logout-btn">
-            <i class="fas fa-sign-out-alt"></i> Log out
-        </button>
-    </nav> 
-</header>
+        <div class="info-row">
+          <label>Email:</label>
+          <input type="text" id="acc-email" readonly placeholder="Loading...">
+        </div>
 
+        <div class="info-row">
+          <label>Password:</label>
+          <div class="password-container">
+            <input type="password" id="acc-password" value="********" readonly>
+            <button class="edit-btn">Change</button>
+          </div>
+        </div>
+      </div>
 
+      <!-- Logout button -->
+      <button id="logout-btn" class="logout-btn">
+        <i class="fas fa-sign-out-alt"></i> Log out
+      </button>
+    </nav>
+  </header>
 
-<nav class="sidebar">
-    <ul>
-        <li style="position: relative; list-style: none;"> 
-    <a href="javascript:void(0)" class="menu-link" onclick="toggleMenu()">
-        <i class="fa-solid fa-circle-plus"></i> Create a list
-    </a>
+  <!-- ===== MAIN LAYOUT WRAPPER ===== -->
+  <div class="layout">
 
-    <div id="mySubmenu" class="submenu">
-        <ul>
-            <li><a href="#">Private <i class="fa-solid fa-plus"></i></a></li>
-            <li><a href="#">Family <i class="fa-solid fa-plus"></i></a></li>
-            <li><a href="other.html">Other... <i class="fa-solid fa-plus"></i></a></li>
-        </ul>
-    </div>
-        </li>
+    <!-- ===== SIDEBAR ===== -->
+    <nav class="sidebar">
+      <ul>
 
+        <!-- Create list -->
+        <li>
+          <a href="javascript:void(0)" class="menu-link" id="createListBtn">
+            <i class="fa-solid fa-circle-plus"></i>
+            Create a list
+          </a>
 
-<li>
-    <a href="javascript:void(0)" class="menu-link" id="showMyListBtn" onclick="toggleSavedLists()">
-        <i class="fa-solid fa-list"></i> Show my list
-    </a>
-    
-    <div id="savedListsMenu" class="submenu" style="display: none; padding-left: 20px;">
-        <ul id="myCreatedLists" style="list-style: none; padding: 0;">
+          <!-- Dropdown -->
+          <div id="mySubmenu" class="submenu">
+            <ul>
+              <li><a href="#">Private <i class="fa-solid fa-plus"></i></a></li>
+              <li><a href="#">Family <i class="fa-solid fa-plus"></i></a></li>
+              <li><a href="other.html">Other... <i class="fa-solid fa-plus"></i></a></li>
             </ul>
-    </div>
-</li>
-      
-        
-        
+          </div>
+        </li>
+
+        <!-- Show my list -->
         <li>
-            <a href="#" class="menu-link">
-                <i class="fa-solid fa-clock-rotate-left"></i> History 
-            </a>
+          <a href="javascript:void(0)" class="menu-link" id="showMyListBtn" onclick="toggleSavedLists()">
+            <i class="fa-solid fa-list"></i>
+            Show my list
+          </a>
+
+          <div id="savedListsMenu" class="submenu">
+            <ul id="myCreatedLists"></ul>
+          </div>
         </li>
 
         <li>
-            <a href="contacts.html" class="menu-link">
-                <i class="fa-solid fa-address-book"></i> Contacts
-            </a>
+          <a href="#" class="menu-link">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            History
+          </a>
         </li>
-    </ul>
-</nav>
 
+        <li>
+          <a href="contacts.html" class="menu-link">
+            <i class="fa-solid fa-address-book"></i>
+            Contacts
+          </a>
+        </li>
+
+      </ul>
+    </nav>
+
+    <!-- ===== MAIN CONTENT AREA ===== -->
+    <main class="content">
+      <!-- Just empty area for now -->
+      <div class="empty-state">
+        <h1>Welcome 👋</h1>
+        <p>Select a list from the left or create a new one.</p>
+      </div>
+    </main>
+
+  </div>
+
+  <script src="1.js"></script>
+  <script src="list.js"></script>
 
 </body>
-
-<script src="1.js"></script>
-<script src="list.js"></script>
-
-   
 </html>
-
-

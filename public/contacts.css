@@ -328,3 +328,36 @@ header img {
 .result-left i {
   color: #2ecc71;
 }
+/* ===== Toast (messages) ===== */
+.toast {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 14px 30px rgba(0,0,0,0.18);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.2s ease;
+  z-index: 99999;
+  pointer-events: none;
+}
+
+.toast--show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast--info { background: #111; }
+.toast--success { background: #2ecc71; }
+.toast--warning { background: #f39c12; }
+.toast--danger { background: #e74c3c; }
+
+/* Liten remove-knapp i contacts listan */
+.contact-item .decline-btn {
+  padding: 6px 10px;
+  font-weight: 700;
+  border-radius: 10px;
+}

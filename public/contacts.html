@@ -8,16 +8,17 @@
   <title>RAYALISTLY - Contacts</title>
   <link rel="icon" href="bilder/icon.png" />
 
+  <!-- CSS -->
   <link rel="stylesheet" href="contacts.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 </head>
 
 <body>
-  <!-- Header -->
+
+  <!-- ===== HEADER ===== -->
   <header class="meny-rad">
     <img src="bilder/logo.png" alt="RayaListly logo" />
 
-    <!-- Top buttons (Back + Log out) -->
     <div class="top-actions">
       <a class="btn-link" href="PrivateHome2.html">
         <button type="button" class="action-btn action-btn--back">
@@ -33,22 +34,27 @@
     </div>
   </header>
 
-  <!-- Main layout -->
+  <!-- ===== MAIN ===== -->
   <main class="main-layout">
 
-    <!-- Friend Requests -->
-    <section class="side-box requests-section" aria-label="Friend requests">
-      <h2><i class="fa-solid fa-user-plus"></i> Friend Requests</h2>
+    <!-- ===== FRIEND REQUESTS ===== -->
+    <section class="side-box requests-section">
+      <h2>
+        <i class="fa-solid fa-user-plus"></i>
+        Friend Requests
+      </h2>
 
       <div id="requests-list">
-        <!-- Example request -->
-        <div class="mini-card">
-          <span class="user-name">Kalle Kula</span>
-          <div class="card-btns">
-            <button class="accept-btn" onclick="acceptFriend('Kalle Kula', this)">Accept</button>
-            <button class="decline-btn" onclick="this.closest('.mini-card').remove()">Decline</button>
-          </div>
+
+        <!-- Exempel: Kalle Kula request -->
+         <div class="mini-card" data-username="Kalle Kula">
+            <span class="user-name">Kalle Kula</span>
+            <div class="card-btns">
+                <button class="accept-btn" type="button" data-action="accept">Accept</button>
+                <button class="decline-btn" type="button" data-action="decline">Decline</button>
+            </div>
         </div>
+
       </div>
 
       <p class="helper-text">
@@ -56,15 +62,18 @@
       </p>
     </section>
 
-    <!-- Search -->
-    <section class="search-container" aria-label="Search users">
-      <div class="search-bar" role="search">
+
+    <!-- ===== SEARCH ===== -->
+    <section class="search-container">
+
+      <div class="search-bar">
         <input
           type="text"
-          placeholder="Search by email or username..."
           id="search-input"
+          placeholder="Search by email or username..."
           autocomplete="off"
         />
+
         <button id="search-btn" type="button">
           Search <i class="fa-solid fa-magnifying-glass"></i>
         </button>
@@ -73,11 +82,11 @@
       <div id="result-box" class="result-card" style="display: none;">
         <div class="result-left">
           <i class="fa-solid fa-circle-check"></i>
-          <span id="username-display">User Found!</span>
+          <span id="username-display"></span>
         </div>
 
-        <button class="add-btn" type="button" onclick="sendFriendRequest()">
-          <i class="fa-solid fa-paper-plane"></i> Send Request
+        <button class="add-btn" type="button" id="send-request-btn">
+            <i class="fa-solid fa-paper-plane"></i> Send Request
         </button>
       </div>
 
@@ -86,9 +95,13 @@
       </p>
     </section>
 
-    <!-- My Contacts -->
-    <section class="side-box contacts-section" aria-label="My contacts">
-      <h2><i class="fa-solid fa-address-book"></i> My Contacts</h2>
+
+    <!-- ===== MY CONTACTS ===== -->
+    <section class="side-box contacts-section">
+      <h2>
+        <i class="fa-solid fa-address-book"></i>
+        My Contacts
+      </h2>
 
       <ul id="my-contacts-list"></ul>
 
@@ -99,26 +112,12 @@
 
   </main>
 
-  <script src="script.js"></script>
+  <!-- ===== TOAST ===== -->
+  <div id="toast" class="toast"></div>
 
-  <!-- Hide "empty" text when contacts are added -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const list = document.getElementById("my-contacts-list");
-      const empty = document.getElementById("contacts-empty");
+  <!-- JS -->
+  <script src="contacts.js"></script>
+  <script src="1.js"></script>
 
-      function updateEmpty() {
-        if (!list || !empty) return;
-        empty.style.display = list.children.length > 0 ? "none" : "block";
-      }
-
-      updateEmpty();
-
-      if (list) {
-        const obs = new MutationObserver(updateEmpty);
-        obs.observe(list, { childList: true });
-      }
-    });
-  </script>
 </body>
 </html>

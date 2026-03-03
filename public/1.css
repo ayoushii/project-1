@@ -1,282 +1,387 @@
-*{
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  color: #111;
+  background: linear-gradient(180deg, #f6f9ff 0%, #ffffff 60%);
 }
 
-header{
-    width: 100%;
-    height: 150px;
-    background-color: white;
-    box-shadow: 0px 0px 12px black ;
-    display: flex;
-    justify-content: space-between; 
-    align-items: center;
-    padding: 0 20px;
-    
+/* ---------- Header ---------- */
+.topbar {
+  width: 100%;
+  height: 130px;
+  background: #fff;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 26px;
 }
 
-header button{
-    width: 140px;
-    padding: 10px;
-    margin-top: 12px;
-    border:none;
-    background: none;
-    font-size: 18px;
-    box-shadow: 0px 0px 8px whitesmoke;
-    font-family: 'Times New Roman', Times, serif;
-    font-weight: bold;
-    transition: 0,3s;
-    cursor: pointer;
-
-
+.brand-logo {
+  width: 200px;
+  height: auto;
 }
 
-header button:hover{
-    color:#07689f ;
-    box-shadow: opx 0px 15px silver
-
+.top-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
 }
 
-header img{
-    width: 200px;
+/* ---------- Buttons ---------- */
+.btn {
+  border: 1px solid rgba(0,0,0,0.12);
+  background: #fff;
+  color: #111;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 10px 18px rgba(0,0,0,0.06);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.btn:hover { transform: translateY(-1px); opacity: 0.98; box-shadow: 0 14px 25px rgba(0,0,0,0.10); }
+.btn:active { transform: translateY(0px); }
+
+.btn-primary {
+  border: none;
+  background: #4CAF50;
+  color: #fff;
+}
+
+.btn-ghost {
+  background: #fff;
+}
+
+.btn-lg {
+  padding: 12px 16px;
+  border-radius: 16px;
+}
+
+/* ---------- Page ---------- */
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 28px 20px 40px;
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  display: grid;
+  grid-template-columns: 1.25fr 0.9fr;
+  gap: 28px;
+  align-items: start;
+  margin-top: 22px;
+}
+
+.badge {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.06);
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.hero-title {
+  font-size: 40px;
+  line-height: 1.12;
+  margin-bottom: 12px;
+}
+
+.hero-subtitle {
+  font-size: 16px;
+  color: rgba(0,0,0,0.72);
+  line-height: 1.5;
+  max-width: 56ch;
+  margin-bottom: 18px;
+}
+
+.hero-cta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.hero-stats {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.stat {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.10);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.06);
+}
+
+.stat-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: rgba(76,175,80,0.14);
+}
+
+.stat-title { font-weight: 800; }
+.stat-desc { color: rgba(0,0,0,0.65); font-size: 13px; margin-top: 2px; }
+
+/* ---------- Mock preview ---------- */
+.mock-card {
+  background: rgba(255,255,255,0.9);
+  border: 1px solid rgba(0,0,0,0.10);
+  border-radius: 22px;
+  box-shadow: 0 18px 45px rgba(0,0,0,0.10);
+  overflow: hidden;
+}
+
+.mock-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.03);
+}
+
+.mock-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: rgba(0,0,0,0.18);
+}
+
+.mock-title {
+  margin-left: 8px;
+  font-weight: 800;
+  color: rgba(0,0,0,0.75);
+  font-size: 13px;
+}
+
+.mock-list {
+  list-style: none;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mock-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #fff;
+}
+
+.mock-check { width: 24px; display: grid; place-items: center; }
+.mock-tag {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.06);
+}
+
+.mock-tag.is-done { background: rgba(76,175,80,0.18); }
+
+.mock-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-top: 1px solid rgba(0,0,0,0.08);
+  color: rgba(0,0,0,0.62);
+  font-size: 12px;
+}
+
+/* ---------- Sections ---------- */
+.section {
+  margin-top: 42px;
+}
+
+.section-title {
+  font-size: 26px;
+  margin-bottom: 10px;
+}
+
+.section-subtitle {
+  color: rgba(0,0,0,0.70);
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.feature {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.10);
+  border-radius: 22px;
+  padding: 18px;
+  box-shadow: 0 14px 30px rgba(0,0,0,0.06);
+}
+
+.feature-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,0.06);
+  margin-bottom: 10px;
+}
+
+.feature-title { font-weight: 900; margin-bottom: 6px; }
+.feature-text { color: rgba(0,0,0,0.70); line-height: 1.5; }
+
+/* ---------- Footer ---------- */
+.footer {
+  margin-top: 44px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0,0,0,0.10);
+}
+
+.footer-text {
+  color: rgba(0,0,0,0.60);
+  font-size: 13px;
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 900px) {
+  .topbar {
     height: auto;
-    image-rendering: -webkit-optimize-contrast;
-    transform: scale(2);
-    margin-top: 10px;
-    float: left; 
-    margin-left:  8px  ;
-}
-
-.signup-btn-header {
-    background-color: #4CAF50 !important;
-    color: white !important;
-    border-radius: 20px !important;
-    padding: 10px 20px !important;
-}
-
-.login-box, .signup-box, .verify-box {
-    display: none; /* GÖMD VID START */
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    padding: 30px;
-    border-radius: 25px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    width: 400px;
-    text-align: center;
-    font-family: Arial, sans-serif;
-    z-index: 1000;
-}
-
-
-.is-visible {
-    display: block !important;
-}
-
-.login-box input, .signup-box input {
-  
-    width: 100%;
-    padding: 15px;
-    margin: 10px 0;
-    border-radius: 12px;
-    border: 1px solid #eee;
-    background-color: #f5f5f5;
-}
-
-/* Den gråa "Continue"-knappen */
-.continue-btn {
-    width: 100%;
-    padding: 15px;
-    background-color: #5cb85c;
-    color: white;
-    border: none;
-    font-size: 16px;
-    border-radius: 12px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-top: 10px;
-    transition: background 0.3s ease;
-}
-
-.continue-btn:hover {
-    background-color: #4cae4c;
-}
-
-/* Länkar inuti rutan */
-.blue-link {
-    color: blue;
-    text-decoration: none;
-    font-size: 14px;
-    display: block;
-    margin-bottom: 10px;
-}
-
-
-.account-btn {
-    display: inline-flex;  /* Gör att knappen anpassar sig efter innehållet */
-    align-items: center;   /* Centrerar gubben och texten i höjdled */
-    gap: 8px;              /* Skapar ett perfekt avstånd mellan gubben och texten */
-    padding: 10px 15px;
-    cursor: pointer;
-    background-color: none;
-    border: none;
-    border-radius: 5px;
-}
-
-.account-btn i , .account-btn i{
-    font-size: 18px;       /* Justera storleken på gubben här */
-}
-
-
-
-
-.menu-btn, .menu-button {
-    display: inline-flex;  /* Detta ska ligga här för att styra både ikon + text */
-    
-    align-items: center;   /* Centrerar innehållet i höjdled */
-    gap: 8px;              /* Skapar avståndet mellan ikonen och texten */
-    padding: 10px 15px;
-    cursor: pointer;
-    background: none;      /* "none" fungerar bäst som "transparent" eller "none" */
-    border: none;
-    font-family: sans-serif; /* Viktigt för att texten ska se bra ut */
-}
-
-.menu-button {
-    background-color: #4CAF50 !important;
-    color: white !important;
-    border-radius: 20px !important;
-}
-
-
-
-/* Ta bort prickar och marginaler från listan */
-.sidebar ul {
-    list-style: none;
-    padding: 0;
-    margin: 30px 0 0 20px; /* 30px ner från header, 20px från vänster */
-    display: flex;
+    padding: 16px;
+    gap: 14px;
     flex-direction: column;
-    gap: 15px;
+    align-items: flex-start;
+  }
+
+  .brand-logo { width: 180px; }
+
+  .page { padding: 18px 14px 30px; }
+
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-title { font-size: 30px; }
+  .grid3 { grid-template-columns: 1fr; }
 }
 
-/* Gör om länkarna till menyvalen i din skiss */
-.menu-link {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: fit-content; /* Gör rutan så liten som möjligt */
-    min-width: 180px;   /* Ger en jämn basbredd för alla val */
-    
-    padding: 12px 20px;
-    border: 2px solid black;
-    border-radius: 12px;
-    
-    background-color: white;
-    color: black;
-    text-decoration: none; /* Tar bort det blåa/understrukna på länken */
-    font-size: 16px;
-    transition: 0.2s ease;
+/* --- Login/Signup modal (bara så det inte ser trasigt ut) --- */
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  z-index: 9999;
 }
 
-/* Effekt när man hovrar över ett menyval */
-.menu-link:hover {
-    background-color: #f0f0f0;
-    transform: translateX(5px); /* Flyttar menyn lite snyggt till höger vid hovring */
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.18);
+  border: 1px solid rgba(0,0,0,0.10);
 }
 
-
-nav {
-    display: flex;
-    gap: 15px; /* Mellanrum mellan knapparna */
+.auth-card h2 {
+  margin-bottom: 12px;
 }
 
-/* Grundstil för Logout-knappen (matchar dina andra knappar) */
-.logout-btn {
-    width: 140px;
-    padding: 10px;
-    margin-top: 12px; /* Samma som din account-btn */
-    border: none;
-    background: none;
-    font-size: 18px;
-    font-family: 'Times New Roman', Times, serif;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.3s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    box-shadow: 0px 0px 8px whitesmoke; /* Matchar din bild */
+.auth-card input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.15);
+  margin-bottom: 10px;
+  outline: none;
 }
 
-/* Hover-effekt */
-.logout-btn:hover {
-    color: #07689f; /* Röd färg för att indikera utloggning */
-    box-shadow: 0px 0px 15px silver;
+.auth-card input:focus {
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 4px rgba(76,175,80,0.18);
 }
 
-/* --- NY KOD FÖR RULLGARDINEN --- */
-
-/* Grundstilen för den flytande menyn */
-/* Grundläget för den flytande rullgardinen */
-/* Ser till att sidebar-listan får sina mellanrum tillbaka */
-/* Grundstilen för undermenyn till höger */
-.submenu {
-    position: absolute;
-    left: 105%;           /* Placerar den precis till höger om knappen */
-    top: 10px;            /* Flyttar ner den så den startar en bit ner från knappens topp */
-    
-    background: none;     /* Ingen ram eller bakgrund */
-    border: none;
-    padding: 0;
-    min-width: 150px;
-    z-index: 9999;
-    
-    /* Animation och döljning */
-    display: none;
-    opacity: 0;
-    transform: translateY(-10px); /* Startar lite högre upp för en "glid ner"-effekt */
-    transition: all 0.3s ease;
+.auth-switch {
+  margin-top: 10px;
+  font-size: 14px;
+  color: rgba(0,0,0,0.70);
 }
 
-/* Visas när klassen 'open' läggs till */
-.submenu.open {
-    display: block;
-    opacity: 1;
-    transform: translateY(0); /* Glider ner till sin rätta plats */
+.link-btn {
+  background: none;
+  border: none;
+  color: #4CAF50;
+  font-weight: 800;
+  cursor: pointer;
+  margin-left: 6px;
 }
 
-.submenu ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;            /* Mellanrum mellan alternativen */
+.auth-terms {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+  color: rgba(0,0,0,0.70);
+  margin: 6px 0 12px;
+}
+/* Liten "Forgot password?"-länk i login-rutan */
+.forgot-link{
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(0,0,0,0.65);
+  text-decoration: none;
 }
 
-.submenu li a {
-    text-decoration: none;
-    color: black;         /* Svart text */
-    font-size: 18px;
-    font-family: 'Times New Roman', serif;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    transition: 0.2s;
+.forgot-link:hover{
+  color: #4CAF50;
+  text-decoration: underline;
+}
+/* X-knapp i auth-modaler */
+.auth-card {
+  position: relative;
 }
 
-/* Ikonerna ska också vara svarta */
-.submenu li a i {
-    color: black;
-    font-size: 14px;
+.close-btn {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #666;
+  transition: 0.2s;
 }
 
-/* Hover-effekt på texten */
-.submenu li a:hover {
-    color: #07689f;       /* Blir blå när man pekar på dem */
+.close-btn:hover {
+  color: #000;
 }

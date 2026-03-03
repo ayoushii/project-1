@@ -26,7 +26,7 @@ header img{
     width: 200px;
     height: auto;
     image-rendering: -webkit-optimize-contrast;
-    transform: scale(2);
+    transform: none;
     margin-top: 10px;
     float: left; 
     margin-left:  8px  ;
