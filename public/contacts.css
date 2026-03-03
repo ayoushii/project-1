@@ -1,153 +1,330 @@
-*{
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+/* contacts.css (modern & clean) */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-header{
-    width: 100%;
-    height: 150px;
-    background-color: white;
-    box-shadow: 0px 0px 12px black ;
-    display: flex;
-    justify-content: space-between; 
-    align-items: center;
-    padding: 0 20px;
-    
+body {
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  background: linear-gradient(180deg, #f6f9ff 0%, #ffffff 65%);
+  color: #111;
 }
 
-header img{
-    width: 200px;
-    height: auto;
-    image-rendering: -webkit-optimize-contrast;
-    transform: scale(2);
-    margin-top: 10px;
-    float: left; 
-    margin-left:  8px  ;
+/* ---------- Header ---------- */
+header {
+  width: 100%;
+  height: 150px;
+  background: #fff;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  padding: 0 28px;
 }
 
-/* DEN NYA LAYOUTEN FÖR DE TRE KOLUMNERNA - NU OMVÄND */
+header img {
+  width: 220px;
+  height: auto;
+  transform: none;          /* VIKTIGT: tar bort din scale(2) */
+  margin: 0;
+}
+
+/* ---------- Main layout (3 kolumner) ---------- */
 .main-layout {
-    display: flex;
-    flex-direction: row-reverse; /* Detta gör att sista elementet i HTML hamnar först till vänster */
-    justify-content: space-evenly; 
-    align-items: flex-start;
-    padding: 50px 20px;
-    gap: 20px;
-    max-width: 1400px;
-    margin: 0 auto;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px 22px;
+  display: flex;
+  gap: 28px;
+  align-items: flex-start;
+  justify-content: space-between;
 }
 
-/* Stil för boxarna på sidorna (Requests & Contacts) */
+/* ---------- Cards (side-box) ---------- */
 .side-box {
-    flex: 1;
-    min-width: 280px;
-    max-width: 350px;
-    border: 3px solid black;
-    border-radius: 25px;
-    padding: 20px;
-    background: #fff;
-    min-height: 400px;
-    box-shadow: 0px 4px 10px rgba(0,0,0,0.05);
+  flex: 1;
+  min-width: 280px;
+  max-width: 360px;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid rgba(0,0,0,0.10);
+  border-radius: 22px;
+  padding: 18px;
+  min-height: 420px;
+  box-shadow: 0 14px 35px rgba(0,0,0,0.08);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.side-box:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 45px rgba(0,0,0,0.12);
 }
 
 .side-box h2 {
-    font-family: 'Times New Roman', serif;
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 24px;
-    border-bottom: 2px solid #eee;
-    padding-bottom: 10px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
 }
 
-/* MITTEN: Sök-containern (förblir i mitten) */
+/* ---------- Search (mitten) ---------- */
 .search-container {
-    flex: 2; 
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  flex: 2;
+  min-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
 }
 
-/* Resten av din befintliga kod fortsätter här under... */
 .search-bar {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    align-items: center;
+  width: 100%;
+  max-width: 680px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.10);
+  border-radius: 18px;
+  padding: 14px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  box-shadow: 0 14px 30px rgba(0,0,0,0.08);
 }
 
 #search-input {
-    border: 3px solid black;
-    border-radius: 20px;
-    padding: 12px 20px;
-    width: 350px;
-    font-family: 'Times New Roman', serif;
-    font-size: 16px;
-    outline: none;
-    transition: 0.2s;
+  flex: 1;
+  border: 1px solid rgba(0,0,0,0.14);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+#search-input:focus {
+  border-color: #4CAF50;
+  box-shadow: 0 0 0 4px rgba(76, 175, 80, 0.18);
+}
 
-/* Själva raden för en förfrågan */
+#search-btn {
+  border: none;
+  border-radius: 14px;
+  padding: 12px 16px;
+  background: #111;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+#search-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.95;
+}
+
+/* ---------- Result card ---------- */
+.result-card {
+  width: 100%;
+  max-width: 680px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.10);
+  border-radius: 18px;
+  padding: 14px 16px;
+  box-shadow: 0 14px 30px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+#username-display {
+  font-weight: 700;
+  color: #111;
+}
+
+.add-btn {
+  border: none;
+  border-radius: 14px;
+  padding: 10px 14px;
+  background: #4CAF50;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.add-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.95;
+}
+
+/* ---------- Friend request rows ---------- */
+#requests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .mini-card {
-    border: 2px solid black;
-    border-radius: 15px;
-    padding: 10px 15px;
-    margin-bottom: 15px;
-    display: flex; /* Gör det till en rad */
-    justify-content: space-between; /* Namn till vänster, knappar till höger */
-    align-items: center; /* Centrerar dem i höjdled */
-    background-color: #fff;
+  border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 16px;
+  padding: 12px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  box-shadow: 0 10px 18px rgba(0,0,0,0.06);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* Behållaren för knapparna */
+.mini-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 25px rgba(0,0,0,0.10);
+}
+
+.user-name {
+  font-weight: 700;
+}
+
+/* Buttons */
 .card-btns {
-    display: flex;
-    gap: 10px; /* Mellanrum mellan Accept och Decline */
+  display: flex;
+  gap: 10px;
+}
+
+.accept-btn,
+.decline-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 800;
+  transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
 .accept-btn {
-    background-color: #2ecc71;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 5px 10px;
-    cursor: pointer;
-    font-weight: bold;
+  background: #2ecc71;
+  color: #fff;
 }
 
 .decline-btn {
-    background-color: #e74c3c;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 5px 10px;
-    cursor: pointer;
-    font-weight: bold;
+  background: #e74c3c;
+  color: #fff;
 }
+
+.accept-btn:hover,
+.decline-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+/* ---------- Contacts list ---------- */
 #my-contacts-list {
-    list-style: none; /* Tar bort punktlistan */
-    padding: 10px;
-    width: 100%;
+  list-style: none;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .contact-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 15px;
-    border-bottom: 1px solid #eee; /* En tunn linje mellan kontakter */
-    font-family: 'Times New Roman', serif;
-    font-size: 18px;
-    animation: fadeIn 0.3s ease; /* En liten animation när de dyker upp */
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px;
+  border: 1px solid rgba(0,0,0,0.10);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 10px 18px rgba(0,0,0,0.06);
+  animation: fadeIn 0.25s ease;
 }
 
 .contact-item i {
-    font-size: 24px;
-    color: #333;
+  font-size: 20px;
+  color: #222;
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateX(-10px); }
-    to { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1050px) {
+  .main-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .side-box, .search-container {
+    width: 100%;
+    max-width: 760px;
+  }
+
+  .search-container {
+    min-width: auto;
+  }
+}
+/* ===== Top action buttons (Back / Log out) ===== */
+.top-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.btn-link {
+  text-decoration: none;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.15);
+  background: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(0,0,0,0.12);
+  opacity: 0.98;
+}
+
+.action-btn:active {
+  transform: translateY(0px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.10);
+}
+
+.action-btn--logout {
+  border: 1px solid rgba(231, 76, 60, 0.35);
+}
+
+.action-btn--logout i {
+  color: #e74c3c;
+}
+
+.helper-text,
+.empty-text {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+}
+
+.result-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.result-left i {
+  color: #2ecc71;
 }

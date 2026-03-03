@@ -1,56 +1,124 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset='utf-8'>
-    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-    <title>RAYALISTLY - Contacts</title>
-    <link rel="icon" href="bilder/icon.png"/>
-    <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <link rel='stylesheet' type='text/css' media='screen' href='contacts.css'>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>RAYALISTLY - Contacts</title>
+  <link rel="icon" href="bilder/icon.png" />
+
+  <link rel="stylesheet" href="contacts.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 </head>
+
 <body>
+  <!-- Header -->
+  <header class="meny-rad">
+    <img src="bilder/logo.png" alt="RayaListly logo" />
 
-    <header class="meny-rad">
-        <img src="bilder/logo.png" alt="logo">
-    </header>
+    <!-- Top buttons (Back + Log out) -->
+    <div class="top-actions">
+      <a class="btn-link" href="PrivateHome2.html">
+        <button type="button" class="action-btn action-btn--back">
+          <i class="fa-solid fa-arrow-left"></i>
+          Back
+        </button>
+      </a>
 
-    <main class="main-layout">
+      <button type="button" id="logout-btn" class="action-btn action-btn--logout">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        Log out
+      </button>
+    </div>
+  </header>
 
-        <section class="side-box requests-section">
-    <h2>Friend Requests</h2>
-    <div id="requests-list">
-        </div>
-    <div class="mini-card">
-        <span class="user-name">Kalle Kula</span>
-        <div class="card-btns">
+  <!-- Main layout -->
+  <main class="main-layout">
+
+    <!-- Friend Requests -->
+    <section class="side-box requests-section" aria-label="Friend requests">
+      <h2><i class="fa-solid fa-user-plus"></i> Friend Requests</h2>
+
+      <div id="requests-list">
+        <!-- Example request -->
+        <div class="mini-card">
+          <span class="user-name">Kalle Kula</span>
+          <div class="card-btns">
             <button class="accept-btn" onclick="acceptFriend('Kalle Kula', this)">Accept</button>
             <button class="decline-btn" onclick="this.closest('.mini-card').remove()">Decline</button>
+          </div>
         </div>
-    </div>
-</div>
-        </section>
+      </div>
 
-        <section class="search-container">
-            <div class="search-bar">
-                <input type="text" placeholder="Search by email or username..." id="search-input">
-                <button id="search-btn">Search <i class="fa-solid fa-magnifying-glass"></i></button>
-            </div>
+      <p class="helper-text">
+        Accept adds the user to your contacts. Decline removes the request.
+      </p>
+    </section>
 
-            <div id="result-box" class="result-card" style="display: none;">
-                <span id="username-display">User Found!</span>
-                <button class="add-btn" onclick="sendFriendRequest()">Send Request</button>
-            </div>
-        </section>
+    <!-- Search -->
+    <section class="search-container" aria-label="Search users">
+      <div class="search-bar" role="search">
+        <input
+          type="text"
+          placeholder="Search by email or username..."
+          id="search-input"
+          autocomplete="off"
+        />
+        <button id="search-btn" type="button">
+          Search <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+      </div>
 
-        <section class="side-box contacts-section">
-            <h2>My Contacts</h2>
-            <ul id="my-contacts-list">
-                </ul>
-        </section>
+      <div id="result-box" class="result-card" style="display: none;">
+        <div class="result-left">
+          <i class="fa-solid fa-circle-check"></i>
+          <span id="username-display">User Found!</span>
+        </div>
 
-    </main>
+        <button class="add-btn" type="button" onclick="sendFriendRequest()">
+          <i class="fa-solid fa-paper-plane"></i> Send Request
+        </button>
+      </div>
 
-    <script src="script.js"></script>
+      <p class="helper-text">
+        Tip: Press Enter to search quickly.
+      </p>
+    </section>
+
+    <!-- My Contacts -->
+    <section class="side-box contacts-section" aria-label="My contacts">
+      <h2><i class="fa-solid fa-address-book"></i> My Contacts</h2>
+
+      <ul id="my-contacts-list"></ul>
+
+      <div id="contacts-empty" class="empty-text">
+        No contacts yet. Accept a request or search and send one.
+      </div>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+
+  <!-- Hide "empty" text when contacts are added -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const list = document.getElementById("my-contacts-list");
+      const empty = document.getElementById("contacts-empty");
+
+      function updateEmpty() {
+        if (!list || !empty) return;
+        empty.style.display = list.children.length > 0 ? "none" : "block";
+      }
+
+      updateEmpty();
+
+      if (list) {
+        const obs = new MutationObserver(updateEmpty);
+        obs.observe(list, { childList: true });
+      }
+    });
+  </script>
 </body>
 </html>

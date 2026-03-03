@@ -133,21 +133,23 @@ window.addEventListener("load", () => {
   $("#logout-btn")?.addEventListener("click", handleLogout);
 });
 
-// ---------- 5) Profilfunktion (som du hade) ----------
+// --- 3. PROFILFUNKTIONER (Lösenordsändring) ---
 async function saveNewPassword(newPassword) {
-  if (newPassword.length < 6) {
-    alert("Password must be at least 6 characters.");
-    return;
-  }
+    if (newPassword.length < 6) {
+        alert("Password must be at least 6 characters.");
+        return;
+    }
 
-  const passwordInput = $("#acc-password");
-  const editBtn = $(".edit-btn");
+    console.log("Saving password...");
 
-  if (passwordInput && editBtn) {
-    passwordInput.setAttribute("readonly", true);
-    editBtn.innerText = "Change";
-    editBtn.style.backgroundColor = "";
-    editBtn.style.color = "";
-    alert("Password updated!");
-  }
+    const passwordInput = document.getElementById('acc-password');
+    const editBtn = document.querySelector('.edit-btn');
+
+    if (passwordInput && editBtn) {
+        passwordInput.setAttribute('readonly', true);
+        editBtn.innerText = "Change";
+        editBtn.style.backgroundColor = "";
+        editBtn.style.color = "";
+        alert("Password updated!");
+    }
 }
