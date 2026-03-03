@@ -17,16 +17,16 @@ const dbConfig = {
   database: "project1",
 };
 
-// DB connect
-//const db = mysql.createConnection(dbConfig);
+ DB connect
+const db = mysql.createConnection(dbConfig);
 
-//db.connect((err) => {
-//  if (err) {
-//    console.log("DB ERROR:", err.message);
-//    return;
-//  }
-//  console.log("DB connected!");
-//});
+db.connect((err) => {
+ if (err) {
+   console.log("DB ERROR:", err.message);
+    return;
+ }
+  console.log("DB connected!");
+});
 
 // start page
 app.get("/", (req, res) => {

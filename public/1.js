@@ -1,103 +1,153 @@
-// --- 1. VISUELLA FUNKTIONER (Växla mellan Login/Signup) ---
+// 1.js (renare version)
+
+// ---------- Små hjälpfunktioner ----------
+const $ = (selector, root = document) => root.querySelector(selector);
+const $$ = (selector, root = document) => root.querySelectorAll(selector);
+
+function hide(el) { if (el) el.style.display = "none"; }
+function show(el) { if (el) el.style.display = "block"; }
+
+async function postJSON(url, body) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  // Om servern råkar skicka något som inte är JSON så kraschar vi inte direkt
+  let data = {};
+  try { data = await res.json(); } catch (_) {}
+
+  return { res, data };
+}
+
+// ---------- 1) Visa / Dölj Login & Signup ----------
 function showLogin() {
-    document.getElementById("signup-box").style.display = "none";
-    if(document.getElementById("verify-box")) document.getElementById("verify-box").style.display = "none";
-    document.getElementById("login-box").style.display = "block";
+  hide($("#signup-box"));
+  hide($("#verify-box"));
+  show($("#login-box"));
 }
 
 function showSignup() {
-    document.getElementById("login-box").style.display = "none";
-    if(document.getElementById("verify-box")) document.getElementById("verify-box").style.display = "none";
-    document.getElementById("signup-box").style.display = "block";
+  hide($("#login-box"));
+  hide($("#verify-box"));
+  show($("#signup-box"));
 }
 
-// --- 2. LOGIK VID SIDLADDNING ---
-window.onload = function () {
+// ---------- 2) Auth (localStorage) ----------
+function setLoggedIn(value) {
+  if (value) localStorage.setItem("isLoggedIn", "true");
+  else localStorage.removeItem("isLoggedIn");
+}
 
-    // ----- INLOGGNING -----
-    const loginSubmitBtn = document.getElementById("loginSubmitBtn");
-    if (loginSubmitBtn) {
-        loginSubmitBtn.onclick = async function () {
-            const username = document.getElementById("login-username").value.trim();
-            const password = document.getElementById("login-password").value;
+function isLoggedIn() {
+  return localStorage.getItem("isLoggedIn") === "true";
+}
 
-            if (!username || !password) {
-                alert("Please enter credentials.");
-                return;
-            }
+function protectPrivatePage() {
+  if (window.location.pathname.includes("PrivateHome2.html") && !isLoggedIn()) {
+    window.location.href = "PublicHome1.html";
+  }
+}
 
-            try {
-                const res = await fetch("/login", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ username, password }),
-                });
+// ---------- 3) Login / Signup / Logout ----------
+async function handleLogin() {
+  const username = $("#login-username")?.value.trim();
+  const password = $("#login-password")?.value;
 
-                const data = await res.json();
+  if (!username || !password) {
+    alert("Please enter credentials.");
+    return;
+  }
 
-                if (res.ok) {
-                    window.location.href = "PrivateHome2.html";
-                } else {
-                    alert(data.message || "Login failed.");
-                }
-            } catch (err) {
-                console.error("Server error:", err);
-            }
-        };
+  try {
+    const { res, data } = await postJSON("/login", { username, password });
+
+    if (res.ok) {
+      setLoggedIn(true);
+      window.location.href = "PrivateHome2.html";
+    } else {
+      alert(data.message || "Login failed.");
     }
+  } catch (err) {
+    console.error(err);
+    alert("Server error. Check console.");
+  }
+}
 
-    // ----- REGISTRERING (SIGNUP) -----
-    const signupSubmitBtn = document.getElementById("signupSubmitBtn");
-    if (signupSubmitBtn) {
-        signupSubmitBtn.onclick = async function () {
-            const email = document.getElementById("signup-email").value;
-            const username = document.getElementById("signup-username").value;
-            const password = document.getElementById("signup-password").value;
+async function handleSignup() {
+  const signupBox = $("#signup-box");
+  if (!signupBox) {
+    alert("Signup box not found.");
+    return;
+  }
 
-            if (!email || !username || !password) {
-                alert("Fill all fields");
-                return;
-            }
+  // HTML saknar id på signup inputs, därför selectors:
+  const email = $('input[type="email"]', signupBox)?.value.trim() || "";
+  const password = $('input[type="password"]', signupBox)?.value || "";
 
-            try {
-                const res = await fetch("/register", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ username, email, password }),
-                });
+  // Två textfält: [0] Full Name, [1] Username
+  const texts = $$('input[type="text"]', signupBox);
+  const username = texts.length >= 2 ? texts[1].value.trim() : "";
 
-                const data = await res.json();
+  const termsOk = $('input[type="checkbox"]', signupBox)?.checked ?? true;
 
-                if (res.ok) {
-                    alert("Account created!");
-                    window.location.href = "PrivateHome2.html";
-                } else {
-                    alert(data.message || "Registration failed.");
-                }
-            } catch (err) {
-                console.error("Server error:", err);
-            }
-        };
+  if (!email || !username || !password) {
+    alert("Fill all fields");
+    return;
+  }
+
+  if (!termsOk) {
+    alert("You must agree to the terms.");
+    return;
+  }
+
+  try {
+    const { res, data } = await postJSON("/register", { username, email, password });
+
+    if (res.ok) {
+      alert("Account created!");
+      setLoggedIn(true); // ta bort denna raden om du INTE vill auto-logga in efter signup
+      window.location.href = "PrivateHome2.html";
+    } else {
+      alert(data.message || "Registration failed.");
     }
-};
+  } catch (err) {
+    console.error(err);
+    alert("Server error. Check console.");
+  }
+}
 
-// --- 3. PROFILFUNKTIONER (Lösenordsändring) ---
+function handleLogout() {
+  setLoggedIn(false);
+  window.location.href = "PublicHome1.html";
+}
+
+// ---------- 4) Kör när sidan laddas ----------
+window.addEventListener("load", () => {
+  protectPrivatePage();
+
+  // Knappar (finns inte på alla sidor, därför null-check)
+  $("#loginSubmitBtn")?.addEventListener("click", handleLogin);
+  $("#signupSubmitBtn")?.addEventListener("click", handleSignup);
+  $("#logout-btn")?.addEventListener("click", handleLogout);
+});
+
+// ---------- 5) Profilfunktion (som du hade) ----------
 async function saveNewPassword(newPassword) {
-    if (newPassword.length < 6) {
-        alert("Password must be at least 6 characters.");
-        return;
-    }
-    
-    console.log("Saving password...");
-    
-    const passwordInput = document.getElementById('acc-password');
-    const editBtn = document.querySelector('.edit-btn');
-    
-    if (passwordInput && editBtn) {
-        passwordInput.setAttribute('readonly', true);
-        editBtn.innerText = "Change";
-        editBtn.style.backgroundColor = "";
-        editBtn.style.color = "";
-        alert("Password updated!");
-    }
+  if (newPassword.length < 6) {
+    alert("Password must be at least 6 characters.");
+    return;
+  }
+
+  const passwordInput = $("#acc-password");
+  const editBtn = $(".edit-btn");
+
+  if (passwordInput && editBtn) {
+    passwordInput.setAttribute("readonly", true);
+    editBtn.innerText = "Change";
+    editBtn.style.backgroundColor = "";
+    editBtn.style.color = "";
+    alert("Password updated!");
+  }
 }
