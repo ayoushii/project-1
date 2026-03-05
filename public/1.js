@@ -11,8 +11,6 @@ function show(el) {
   if (el) el.style.display = "block";
 }
 
-// Skickar POST-request till servern
-// och försöker läsa JSON utan att krascha
 async function postJSON(url, body) {
   const res = await fetch(url, {
     method: "POST",
@@ -28,7 +26,7 @@ async function postJSON(url, body) {
   return { res, data };
 }
 
-// Växlar mellan login och signup-rutor
+
 function showLogin() {
   hide($("#signup-box"));
   hide($("#verify-box"));
@@ -160,8 +158,8 @@ function closeAuth() {
   hide($("#signup-box"));
 }
 
-// När sidan laddas
-// När sidan laddas
+
+
 window.addEventListener("load", () => {
   protectPrivatePage();
 
@@ -188,7 +186,7 @@ window.addEventListener("load", () => {
 
   // Förhindra att rutan stängs om man klickar inuti den
   accountSection?.addEventListener("click", (e) => e.stopPropagation());
-  // --- SLUT PÅ MY ACCOUNT LOGIK ---
+  // SLUT PÅ MY ACCOUNT LOGIK ---
 
   // Event Listeners för knappar
   $("#loginSubmitBtn")?.addEventListener("click", handleLogin);
