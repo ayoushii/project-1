@@ -4,7 +4,6 @@
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => root.querySelectorAll(selector);
 
-// Små hjälpfunktioner för att visa/dölja saker
 function hide(el) {
   if (el) el.style.display = "none";
 }
@@ -25,9 +24,7 @@ async function postJSON(url, body) {
   let data = {};
   try {
     data = await res.json();
-  } catch (e) {
-    // om servern inte skickar JSON så fortsätter vi ändå
-  }
+  } catch (e) {}
 
   return { res, data };
 }
@@ -51,26 +48,21 @@ function setLoggedIn(flag) {
   else localStorage.removeItem("isLoggedIn");
 }
 
-// Sparar userId från databasen
-// behövs senare för contacts och friend requests
 function setUserId(id) {
   if (!id) return;
   localStorage.setItem("userId", String(id));
 }
 
-// Tar bort all login-info
 function clearAuth() {
   localStorage.removeItem("isLoggedIn");
   localStorage.removeItem("userId");
 }
 
-// Kollar om man är inloggad
 function isLoggedIn() {
   return localStorage.getItem("isLoggedIn") === "true";
 }
 
 // Skyddar privata sidor
-// Om man försöker gå direkt till en privat sida utan login → skickas tillbaka
 function protectPrivatePage() {
   const p = window.location.pathname;
 
@@ -83,43 +75,30 @@ function protectPrivatePage() {
   }
 }
 
-// LOGIN
+// LOGIN (utan reCAPTCHA)
 async function handleLogin() {
   const username = $("#login-username")?.value.trim();
   const password = $("#login-password")?.value;
 
   if (!username || !password) {
-    alert("Please enter credentials.");
-    return;
-  }
-  const recaptchaToken = window.grecaptcha ? grecaptcha.getResponse() : "";
-
-  if (!recaptchaToken) {
-    alert("Verify reCAPTCHA.");
+    alert("Please enter username and password.");
     return;
   }
 
   try {
-    const { res, data } = await postJSON("/login", { username, password, recaptchaToken });
+    const { res, data } = await postJSON("/login", { username, password });
 
     if (!res.ok) {
-      if (window.grecaptcha) grecaptcha.reset();
       alert(data.message || "Login failed.");
       return;
     }
 
-    // Om vi kommer hit betyder det att login lyckades
     setLoggedIn(true);
     setUserId(data.userId);
 
-    if (window.grecaptcha) grecaptcha.reset();
-
-    // Skickar användaren till privata startsidan
-    
     window.location.href = "PrivateHome2.html";
   } catch (err) {
     console.error(err);
-    if (window.grecaptcha) grecaptcha.reset();
     alert("Server error.");
   }
 }
@@ -134,11 +113,12 @@ async function handleSignup() {
 
   // Två textfält: [0] Full Name, [1] Username
   const texts = $$('input[type="text"]', signupBox);
+  const fullName = texts.length >= 1 ? texts[0].value.trim() : "";
   const username = texts.length >= 2 ? texts[1].value.trim() : "";
 
-  const termsOk = $('input[type="checkbox"]', signupBox)?.checked ?? true;
+  const termsOk = $("#terms-checkbox")?.checked ?? false;
 
-  if (!email || !username || !password) {
+  if (!email || !fullName || !username || !password) {
     alert("Fill all fields");
     return;
   }
@@ -149,14 +129,18 @@ async function handleSignup() {
   }
 
   try {
-    const { res, data } = await postJSON("/register", { username, email, password });
+    const { res, data } = await postJSON("/register", {
+      username,
+      email,
+      password,
+      fullName, 
+    });
 
     if (!res.ok) {
       alert(data.message || "Registration failed.");
       return;
     }
 
-    // Jag skickar inte direkt till privata sidan här, för jag vill att man loggar in “på riktigt”
     alert("Account created! Now log in.");
     showLogin();
   } catch (err) {
@@ -167,30 +151,44 @@ async function handleSignup() {
 
 // LOGOUT
 function handleLogout() {
-  // Tar bort allt som har med login att göra
   clearAuth();
-
-  // Skickar tillbaka till public startsidan
   window.location.href = "PublicHome1.html";
+}
+
+// Stänger login och signup
+function closeAuth() {
+  hide($("#login-box"));
+  hide($("#signup-box"));
 }
 
 // När sidan laddas
 window.addEventListener("load", () => {
   protectPrivatePage();
 
-  // Koppla knappar (finns inte på alla sidor, därför ?. )
   $("#loginSubmitBtn")?.addEventListener("click", handleLogin);
   $("#signupSubmitBtn")?.addEventListener("click", handleSignup);
   $("#logout-btn")?.addEventListener("click", handleLogout);
 
-  // Koppla topbar-knapparna på startsidan
   $("#open-login")?.addEventListener("click", showLogin);
   $("#open-signup")?.addEventListener("click", showSignup);
   $("#cta-get-started")?.addEventListener("click", showSignup);
 
-  // Koppla “byt ruta” knapparna inne i modalerna
   $("#go-signup")?.addEventListener("click", showSignup);
   $("#go-login")?.addEventListener("click", showLogin);
+
+  // Terms-checkbox styr signup-knappen
+  const terms = $("#terms-checkbox");
+  const btn = $("#signupSubmitBtn");
+
+  function syncButton() {
+    if (!btn || !terms) return;
+    btn.disabled = !terms.checked;
+  }
+
+  if (terms && btn) {
+    syncButton();
+    terms.addEventListener("change", syncButton);
+  }
 });
 
 // Lösenordsändring (bara UI, inte kopplad till DB än)
@@ -210,25 +208,4 @@ async function saveNewPassword(newPassword) {
     editBtn.style.color = "";
     alert("Password updated!");
   }
-}
-window.addEventListener("load", () => {
-  const signupBox = document.getElementById("signup-box");
-  const terms = document.getElementById("terms-checkbox");
-  const btn = document.getElementById("signupSubmitBtn");
-
-  function syncButton() {
-    if (!btn || !terms) return;
-    btn.disabled = !terms.checked;
-  }
-
-  // om vi inte har signup på sidan så skippar vi
-  if (!signupBox || !terms || !btn) return;
-
-  syncButton();
-  terms.addEventListener("change", syncButton);
-});
-// Stänger login och signup
-function closeAuth() {
-  hide($("#login-box"));
-  hide($("#signup-box"));
 }

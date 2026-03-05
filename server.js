@@ -6,40 +6,21 @@ const bcrypt = require("bcrypt");
 const app = express();
 app.use(express.json());
 
-// Serverar frontend från /public
+// Frontend-filer (HTML/CSS/JS/images) ligger i /public
 app.use(express.static(path.join(__dirname, "public")));
 
-// reCAPTCHA verify helper
-async function verifyRecaptcha(token) {
-  const RECAPTCHA_SECRET_KEY = "6LeUJ4AsAAAAAN2prpEs8VvjiuI_d4zdtKSoFMNm";
-
-  try {
-    const form = new URLSearchParams();
-    form.append("secret", RECAPTCHA_SECRET_KEY);
-    form.append("response", token);
-
-    const r = await fetch("https://www.google.com/recaptcha/api/siteverify", {
-      method: "POST",
-      body: form,
-    });
-
-    return await r.json(); // { success: true/false, ... }
-  } catch (e) {
-    console.log("reCAPTCHA verify error:", e.message);
-    return { success: false };
-  }
-}
+// ===== DB: läser från .env =====
 const dbConfig = {
-  host: "project1-db.c3oom6q4ag16.eu-north-1.rds.amazonaws.com",
-  user: "admin",
-  password: "MyStrongPass123!",
-  database: "project1",
-  port: 3306,
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
+  port: Number(process.env.DB_PORT || 3306),
 };
 
-// Kopplar upp mot DB
 const db = mysql.createConnection(dbConfig);
 
+// Kollar att vi får kontakt med databasen när servern startar
 db.connect((err) => {
   if (err) {
     console.log("DB ERROR:", err.message);
@@ -48,30 +29,28 @@ db.connect((err) => {
   console.log("DB connected!");
 });
 
-// Start page
+// Startsidan (när man går in på domänen)
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "PublicHome1.html"));
 });
 
-// REGISTER
+// ===== Skapa konto =====
 app.post("/register", async (req, res) => {
   console.log("REGISTER HIT:", req.body);
 
-  const { username, email, password, recaptchaToken } = req.body;
+  const { username, email, password } = req.body;
 
-   if (!recaptchaToken) {
-    return res.status(400).json({ message: "Verify reCAPTCHA." });
-  }
-  const check = await verifyRecaptcha(recaptchaToken);
-  if (!check.success) {
-    return res.status(403).json({ message: "reCAPTCHA failed." });
-  }
-
+  // Snabb input-check så vi slipper trasiga inserts
   if (!username || !email || !password) {
     return res.status(400).json({ message: "Username, email och password krävs" });
   }
 
+  if (String(password).length < 6) {
+    return res.status(400).json({ message: "Lösenordet måste vara minst 6 tecken." });
+  }
+
   try {
+    // Hashar lösenordet innan vi sparar (aldrig plain text i DB)
     const password_hash = await bcrypt.hash(password, 10);
 
     const sqlUser =
@@ -84,6 +63,7 @@ app.post("/register", async (req, res) => {
         if (err.code === "ER_DUP_ENTRY") {
           return res.status(400).json({ message: "Username eller email finns redan" });
         }
+
         return res.status(500).json({ message: "Database error" });
       }
 
@@ -95,23 +75,15 @@ app.post("/register", async (req, res) => {
   }
 });
 
-// LOGIN
-app.post("/login", async (req, res) => {
-  const { username, password, recaptchaToken } = req.body;
-
-  if (!recaptchaToken) {
-    return res.status(400).json({ message: "Verify reCAPTCHA." });
-  }
-  const check = await verifyRecaptcha(recaptchaToken);
-  if (!check.success) {
-    return res.status(403).json({ message: "reCAPTCHA failed." });
-  }
+// ===== Logga in =====
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
 
   if (!username || !password) {
     return res.status(400).json({ message: "Username och password krävs" });
   }
 
-  // password_hash finns i DB
+  // Vi hämtar bara det vi behöver: id + hash
   const sql = "SELECT id, password_hash FROM users WHERE username=? LIMIT 1";
 
   db.query(sql, [username], async (err, rows) => {
@@ -126,12 +98,12 @@ app.post("/login", async (req, res) => {
     const ok = await bcrypt.compare(password, user.password_hash);
     if (!ok) return res.status(401).json({ message: "Fel username eller lösenord" });
 
-    // Skickar tillbaka userId så frontend kan spara den i localStorage
+    // Frontend sparar userId i localStorage (behövs för contacts)
     return res.json({ message: "Login OK", userId: user.id });
   });
 });
 
-// Sök användare i DB (username eller email)
+// ===== Sök användare (för att lägga till som kontakt) =====
 app.get("/users/search", (req, res) => {
   const q = (req.query.q || "").trim();
 
@@ -158,7 +130,7 @@ app.get("/users/search", (req, res) => {
   });
 });
 
-// Hämta alla kontakter för en user
+// ===== Hämta kontakter =====
 app.get("/contacts", (req, res) => {
   const userId = Number(req.query.userId);
 
@@ -182,7 +154,7 @@ app.get("/contacts", (req, res) => {
   });
 });
 
-// Lägg till kontakt
+// ===== Lägg till kontakt =====
 app.post("/contacts", (req, res) => {
   const userId = Number(req.body.userId);
   const q = (req.body.q || "").trim();
@@ -230,7 +202,7 @@ app.post("/contacts", (req, res) => {
   });
 });
 
-// Ta bort kontakt
+// ===== Ta bort kontakt =====
 app.delete("/contacts/:contactId", (req, res) => {
   const contactId = Number(req.params.contactId);
   const userId = Number(req.query.userId);
@@ -255,7 +227,7 @@ app.delete("/contacts/:contactId", (req, res) => {
   });
 });
 
-// Start server
+// Startar servern
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log("Server running on port " + PORT);

@@ -13,14 +13,12 @@
 </head>
 
 <body>
-  <!-- Header -->
   <header class="topbar">
     <div class="brand">
       <img class="brand-logo" src="bilder/logo.png" alt="RayaListly logo" />
     </div>
 
     <nav class="top-actions" aria-label="Authentication">
-      <!-- Jag kör buttons + id så 1.js kan koppla utan strul -->
       <button type="button" class="btn btn-ghost" id="open-login">
         <i class="fa-solid fa-right-to-bracket"></i>
         Log in
@@ -33,7 +31,6 @@
     </nav>
   </header>
 
-  <!-- Hero -->
   <main class="page">
     <section class="hero">
       <div class="hero-left">
@@ -89,7 +86,6 @@
         </div>
       </div>
 
-      <!-- Right: liten “preview” så det ser mer som en riktig produkt -->
       <div class="hero-right" aria-hidden="true">
         <div class="mock-card">
           <div class="mock-header">
@@ -130,7 +126,6 @@
       </div>
     </section>
 
-    <!-- How it works -->
     <section class="section" id="how-it-works">
       <h2 class="section-title">Hur det funkar</h2>
       <p class="section-subtitle">
@@ -158,15 +153,12 @@
       </div>
     </section>
 
-    <!-- Footer -->
     <footer class="footer">
-      <p class="footer-text">
-        RayaListly • Delade Köplista 
-      </p>
+      <p class="footer-text">RayaListly • Delade Köplista</p>
     </footer>
   </main>
 
-  <!-- ===== LOGIN MODAL (behövs för att showLogin() ska ha något att visa) ===== -->
+  <!-- LOGIN MODAL -->
   <section id="login-box" class="auth-modal" style="display:none;">
     <div class="auth-card">
       <button class="close-btn" onclick="closeAuth()">×</button>
@@ -175,10 +167,8 @@
       <input id="login-username" type="text" placeholder="Username" autocomplete="username" />
       <input id="login-password" type="password" placeholder="Password" autocomplete="current-password" />
 
-
       <button id="loginSubmitBtn" type="button" class="btn btn-primary">Log in</button>
-      
-      <!-- Glömt lösenord-länk -->
+
       <a class="forgot-link" href="ForgotPassw3.html">Forgot password?</a>
 
       <p class="auth-switch">
@@ -188,24 +178,23 @@
     </div>
   </section>
 
-  <!-- ===== SIGNUP MODAL ===== -->
+  <!-- SIGNUP MODAL -->
   <section id="signup-box" class="auth-modal" style="display:none;">
     <div class="auth-card">
       <button class="close-btn" onclick="closeAuth()">×</button>
       <h2>Skapa konto</h2>
 
-      <input type="email" placeholder="Email" autocomplete="email" />
-      <input type="text" placeholder="Full name" autocomplete="name" />
-      <input type="text" placeholder="Username" autocomplete="username" />
-      <input type="password" placeholder="Password" autocomplete="new-password" />
+      <input id="signup-email" type="email" placeholder="Email" autocomplete="email" />
+      <input id="signup-fullname" type="text" placeholder="Full name" autocomplete="name" />
+      <input id="signup-username" type="text" placeholder="Username" autocomplete="username" />
+      <input id="signup-password" type="password" placeholder="Password" autocomplete="new-password" />
 
       <label class="auth-terms">
-        <input type="checkbox" id ="terms-checkbox" />
+        <input type="checkbox" id="terms-checkbox" />
         Jag godkänner villkoren
       </label>
 
-
-      <button id="signupSubmitBtn" type="button" class="btn btn-primary" disabled >Create account</button>
+      <button id="signupSubmitBtn" type="button" class="btn btn-primary" disabled>Create account</button>
 
       <p class="auth-switch">
         Har du redan konto?
@@ -214,24 +203,6 @@
     </div>
   </section>
 
-  <!-- Din befintliga fil -->
   <script src="1.js"></script>
-
-  <!-- En liten koppling: knapparna öppnar rätt modal -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const loginBtn = document.getElementById("open-login");
-      const signupBtn = document.getElementById("open-signup");
-      const ctaBtn = document.getElementById("cta-get-started");
-
-      if (loginBtn && typeof showLogin === "function") loginBtn.addEventListener("click", showLogin);
-      if (signupBtn && typeof showSignup === "function") signupBtn.addEventListener("click", showSignup);
-      if (ctaBtn && typeof showSignup === "function") ctaBtn.addEventListener("click", showSignup);
-
-      document.getElementById("go-signup")?.addEventListener("click", showSignup);
-      document.getElementById("go-login")?.addEventListener("click", showLogin);
-    });
-  </script>
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </body>
 </html>
