@@ -5,6 +5,10 @@ const $$ = (selector, root = document) => root.querySelectorAll(selector);
 function hide(el) { if (el) el.style.display = "none"; }
 function show(el) { if (el) el.style.display = "block"; }
 
+function show(el) {
+  if (el) el.style.display = "block";
+}
+
 async function postJSON(url, body) {
   const res = await fetch(url, {
     method: "POST",
@@ -16,6 +20,20 @@ async function postJSON(url, body) {
   return { res, data };
 }
 
+
+function showLogin() {
+  hide($("#signup-box"));
+  hide($("#verify-box"));
+  show($("#login-box"));
+}
+
+function showSignup() {
+  hide($("#login-box"));
+  hide($("#verify-box"));
+  show($("#signup-box"));
+}
+
+// Sätter login-status i localStorage
 function setLoggedIn(flag) {
   if (flag) localStorage.setItem("isLoggedIn", "true");
   else localStorage.removeItem("isLoggedIn");
@@ -95,6 +113,14 @@ function handleLogout() {
 }
 
 // --- INITIALISERING OCH MY ACCOUNT LOGIK ---
+// Stänger login och signup
+function closeAuth() {
+  hide($("#login-box"));
+  hide($("#signup-box"));
+}
+
+
+
 window.addEventListener("load", () => {
   protectPrivatePage();
 
@@ -146,6 +172,7 @@ window.addEventListener("load", () => {
 
   // Stoppa stängning vid klick inuti rutan
   accountSection?.addEventListener("click", (e) => e.stopPropagation());
+  // SLUT PÅ MY ACCOUNT LOGIK ---
 
   // Befintliga event listeners
   $("#loginSubmitBtn")?.addEventListener("click", handleLogin);
