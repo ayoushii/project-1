@@ -1,4 +1,3 @@
-// Den här filen styr login, signup och logout
 // + skyddar privata sidor
 
 const $ = (selector, root = document) => root.querySelector(selector);
