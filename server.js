@@ -3,13 +3,16 @@ const mysql = require("mysql2");
 const path = require("path");
 const bcrypt = require("bcrypt");
 
+
+require("dotenv").config();
+
 const app = express();
 app.use(express.json());
 
 // Frontend-filer (HTML/CSS/JS/images) ligger i /public
 app.use(express.static(path.join(__dirname, "public")));
 
-// ===== DB: läser från .env =====
+// DB:
 const dbConfig = {
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -34,7 +37,7 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "PublicHome1.html"));
 });
 
-// ===== Skapa konto =====
+//Skapa konto 
 app.post("/register", async (req, res) => {
   console.log("REGISTER HIT:", req.body);
 
@@ -103,7 +106,7 @@ app.post("/login", (req, res) => {
   });
 });
 
-// ===== Sök användare (för att lägga till som kontakt) =====
+// ===== Sök användare (för att lägga till som kontakt / eller skicka request) =====
 app.get("/users/search", (req, res) => {
   const q = (req.query.q || "").trim();
 
@@ -154,7 +157,7 @@ app.get("/contacts", (req, res) => {
   });
 });
 
-// ===== Lägg till kontakt =====
+// ===== Lägg till kontakt (din gamla route, behåller den) =====
 app.post("/contacts", (req, res) => {
   const userId = Number(req.body.userId);
   const q = (req.body.q || "").trim();
@@ -226,6 +229,162 @@ app.delete("/contacts/:contactId", (req, res) => {
     return res.json({ message: "Kontakt borttagen." });
   });
 });
+
+
+
+// FRIEND REQUESTS (nytt)
+
+// Skicka request till någon som finns (via username eller email)
+app.post("/friend-requests", (req, res) => {
+  const fromUserId = Number(req.body.fromUserId);
+  const q = (req.body.q || "").trim();
+
+  if (!fromUserId || !q) {
+    return res.status(400).json({ message: "fromUserId och q krävs" });
+  }
+
+  // Hitta mottagaren
+  const findSql = `
+    SELECT id, username, email
+    FROM users
+    WHERE username = ? OR email = ?
+    LIMIT 1
+  `;
+
+  db.query(findSql, [q, q], (err, rows) => {
+    if (err) {
+      console.log("FR FIND USER ERROR:", err.message);
+      return res.status(500).json({ message: "Database error" });
+    }
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Ingen användare hittades." });
+    }
+
+    const toUser = rows[0];
+
+    if (toUser.id === fromUserId) {
+      return res.status(400).json({ message: "Du kan inte skicka request till dig själv." });
+    }
+
+
+    const contactCheckSql = `
+      SELECT 1 FROM contacts
+      WHERE user_id=? AND contact_user_id=?
+      LIMIT 1
+    `;
+
+    db.query(contactCheckSql, [fromUserId, toUser.id], (err2, rows2) => {
+      if (err2) return res.status(500).json({ message: "Database error" });
+      if (rows2.length > 0) return res.status(400).json({ message: "Ni är redan kontakter." });
+
+      // Skapa request (unik key stoppar dubletter)
+      const insertSql = `
+        INSERT INTO friend_requests (from_user_id, to_user_id, status)
+        VALUES (?, ?, 'pending')
+      `;
+
+      db.query(insertSql, [fromUserId, toUser.id], (err3) => {
+        if (err3) {
+          if (err3.code === "ER_DUP_ENTRY") {
+            return res.status(400).json({ message: "Request finns redan." });
+          }
+          console.log("FR INSERT ERROR:", err3.message);
+          return res.status(500).json({ message: "Database error" });
+        }
+
+        return res.status(201).json({ message: "Request skickad!", toUser });
+      });
+    });
+  });
+});
+
+// Hämta mina inkommande requests (pending)
+app.get("/friend-requests", (req, res) => {
+  const userId = Number(req.query.userId);
+  if (!userId) return res.status(400).json({ message: "Missing userId" });
+
+  const sql = `
+    SELECT fr.id, fr.from_user_id, u.username, u.email, fr.created_at
+    FROM friend_requests fr
+    JOIN users u ON u.id = fr.from_user_id
+    WHERE fr.to_user_id = ? AND fr.status='pending'
+    ORDER BY fr.created_at DESC
+  `;
+
+  db.query(sql, [userId], (err, rows) => {
+    if (err) {
+      console.log("FR GET ERROR:", err.message);
+      return res.status(500).json({ message: "Database error" });
+    }
+    return res.json({ requests: rows });
+  });
+});
+
+// Accept -> markera accepted + lägg kontakter åt båda håll
+app.post("/friend-requests/:id/accept", (req, res) => {
+  const requestId = Number(req.params.id);
+  const userId = Number(req.body.userId);
+
+  if (!requestId || !userId) {
+    return res.status(400).json({ message: "requestId och userId krävs" });
+  }
+
+  const getSql = `
+    SELECT id, from_user_id, to_user_id, status
+    FROM friend_requests
+    WHERE id=? LIMIT 1
+  `;
+
+  db.query(getSql, [requestId], (err, rows) => {
+    if (err) return res.status(500).json({ message: "Database error" });
+    if (rows.length === 0) return res.status(404).json({ message: "Request hittades inte." });
+
+    const fr = rows[0];
+
+    // bara den som tar emot requesten får acceptera
+    if (fr.to_user_id !== userId) return res.status(403).json({ message: "Not allowed." });
+    if (fr.status !== "pending") return res.status(400).json({ message: "Request är inte pending." });
+
+    // Markera accepted
+    const updateSql = `UPDATE friend_requests SET status='accepted' WHERE id=?`;
+    db.query(updateSql, [requestId], (err2) => {
+      if (err2) return res.status(500).json({ message: "Database error" });
+
+      // Lägg kontakter åt båda håll (som “riktiga” friends)
+      const insertContact = `INSERT INTO contacts (user_id, contact_user_id) VALUES (?, ?)`;
+
+      db.query(insertContact, [fr.to_user_id, fr.from_user_id], () => {
+        db.query(insertContact, [fr.from_user_id, fr.to_user_id], () => {
+          return res.json({ message: "Request accepted!" });
+        });
+      });
+    });
+  });
+});
+
+
+app.post("/friend-requests/:id/decline", (req, res) => {
+  const requestId = Number(req.params.id);
+  const userId = Number(req.body.userId);
+
+  if (!requestId || !userId) {
+    return res.status(400).json({ message: "requestId och userId krävs" });
+  }
+
+  const sql = `
+    UPDATE friend_requests
+    SET status='declined'
+    WHERE id=? AND to_user_id=? AND status='pending'
+  `;
+
+  db.query(sql, [requestId, userId], (err, result) => {
+    if (err) return res.status(500).json({ message: "Database error" });
+    if (result.affectedRows === 0) return res.status(404).json({ message: "Request hittades inte." });
+    return res.json({ message: "Request declined." });
+  });
+});
+
 
 // Startar servern
 const PORT = process.env.PORT || 5000;
