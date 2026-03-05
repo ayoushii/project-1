@@ -175,6 +175,8 @@
       <input id="login-username" type="text" placeholder="Username" autocomplete="username" />
       <input id="login-password" type="password" placeholder="Password" autocomplete="current-password" />
 
+      <div class="g-recaptcha" data-sitekey="6LcSNoAsAAAAAMbrtW8AJH-33_sLFfjGAG5QSfNG"></div>
+
       <button id="loginSubmitBtn" type="button" class="btn btn-primary">Log in</button>
       
       <!-- Glömt lösenord-länk -->
@@ -203,6 +205,7 @@
         Jag godkänner villkoren
       </label>
 
+
       <button id="signupSubmitBtn" type="button" class="btn btn-primary" disabled >Create account</button>
 
       <p class="auth-switch">
@@ -230,5 +233,6 @@
       document.getElementById("go-login")?.addEventListener("click", showLogin);
     });
   </script>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </body>
 </html>

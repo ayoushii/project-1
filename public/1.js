@@ -92,11 +92,18 @@ async function handleLogin() {
     alert("Please enter credentials.");
     return;
   }
+  const recaptchaToken = window.grecaptcha ? grecaptcha.getResponse() : "";
+
+  if (!recaptchaToken) {
+    alert("Verify reCAPTCHA.");
+    return;
+  }
 
   try {
-    const { res, data } = await postJSON("/login", { username, password });
+    const { res, data } = await postJSON("/login", { username, password, recaptchaToken });
 
     if (!res.ok) {
+      if (window.grecaptcha) grecaptcha.reset();
       alert(data.message || "Login failed.");
       return;
     }
@@ -105,10 +112,14 @@ async function handleLogin() {
     setLoggedIn(true);
     setUserId(data.userId);
 
+    if (window.grecaptcha) grecaptcha.reset();
+
     // Skickar användaren till privata startsidan
+    
     window.location.href = "PrivateHome2.html";
   } catch (err) {
     console.error(err);
+    if (window.grecaptcha) grecaptcha.reset();
     alert("Server error.");
   }
 }

@@ -9,12 +9,32 @@ app.use(express.json());
 // Serverar frontend från /public
 app.use(express.static(path.join(__dirname, "public")));
 
-// DB config (som du redan har)
+// reCAPTCHA verify helper
+async function verifyRecaptcha(token) {
+  const RECAPTCHA_SECRET_KEY = "6LeUJ4AsAAAAAN2prpEs8VvjiuI_d4zdtKSoFMNm";
+
+  try {
+    const form = new URLSearchParams();
+    form.append("secret", RECAPTCHA_SECRET_KEY);
+    form.append("response", token);
+
+    const r = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+      method: "POST",
+      body: form,
+    });
+
+    return await r.json(); // { success: true/false, ... }
+  } catch (e) {
+    console.log("reCAPTCHA verify error:", e.message);
+    return { success: false };
+  }
+}
 const dbConfig = {
-  host: "localhost",
-  user: "appuser",
-  password: "Rama@20052005@",
+  host: "project1-db.c3oom6q4ag16.eu-north-1.rds.amazonaws.com",
+  user: "admin",
+  password: "MyStrongPass123!",
   database: "project1",
+  port: 3306,
 };
 
 // Kopplar upp mot DB
@@ -37,7 +57,15 @@ app.get("/", (req, res) => {
 app.post("/register", async (req, res) => {
   console.log("REGISTER HIT:", req.body);
 
-  const { username, email, password } = req.body;
+  const { username, email, password, recaptchaToken } = req.body;
+
+   if (!recaptchaToken) {
+    return res.status(400).json({ message: "Verify reCAPTCHA." });
+  }
+  const check = await verifyRecaptcha(recaptchaToken);
+  if (!check.success) {
+    return res.status(403).json({ message: "reCAPTCHA failed." });
+  }
 
   if (!username || !email || !password) {
     return res.status(400).json({ message: "Username, email och password krävs" });
@@ -46,7 +74,6 @@ app.post("/register", async (req, res) => {
   try {
     const password_hash = await bcrypt.hash(password, 10);
 
-    // Din tabell heter password_hash (inte password)
     const sqlUser =
       "INSERT INTO users (username, email, password_hash, is_verified) VALUES (?, ?, ?, 1)";
 
@@ -69,8 +96,16 @@ app.post("/register", async (req, res) => {
 });
 
 // LOGIN
-app.post("/login", (req, res) => {
-  const { username, password } = req.body;
+app.post("/login", async (req, res) => {
+  const { username, password, recaptchaToken } = req.body;
+
+  if (!recaptchaToken) {
+    return res.status(400).json({ message: "Verify reCAPTCHA." });
+  }
+  const check = await verifyRecaptcha(recaptchaToken);
+  if (!check.success) {
+    return res.status(403).json({ message: "reCAPTCHA failed." });
+  }
 
   if (!username || !password) {
     return res.status(400).json({ message: "Username och password krävs" });
@@ -96,13 +131,7 @@ app.post("/login", (req, res) => {
   });
 });
 
-
-// ----------------------------------------------------
-// CONTACTS / USERS - grejer för contacts.html
-// ----------------------------------------------------
-
 // Sök användare i DB (username eller email)
-// Används av contacts.js när man trycker på "Search"
 app.get("/users/search", (req, res) => {
   const q = (req.query.q || "").trim();
 
@@ -129,7 +158,6 @@ app.get("/users/search", (req, res) => {
   });
 });
 
-
 // Hämta alla kontakter för en user
 app.get("/contacts", (req, res) => {
   const userId = Number(req.query.userId);
@@ -154,11 +182,10 @@ app.get("/contacts", (req, res) => {
   });
 });
 
-
-// Lägg till kontakt (bara om användaren finns i users-tabellen)
+// Lägg till kontakt
 app.post("/contacts", (req, res) => {
   const userId = Number(req.body.userId);
-  const q = (req.body.q || "").trim(); // kan vara username eller email
+  const q = (req.body.q || "").trim();
 
   if (!userId || !q) {
     return res.status(400).json({ message: "userId och q krävs" });
@@ -183,12 +210,10 @@ app.post("/contacts", (req, res) => {
 
     const contactUser = rows[0];
 
-    // Lite basic skydd: du ska inte kunna adda dig själv
     if (contactUser.id === userId) {
       return res.status(400).json({ message: "Du kan inte lägga till dig själv." });
     }
 
-    // UNIQUE KEY i tabellen gör att man inte kan lägga samma kontakt 2 gånger
     const insertSql = `INSERT INTO contacts (user_id, contact_user_id) VALUES (?, ?)`;
 
     db.query(insertSql, [userId, contactUser.id], (err2) => {
@@ -205,8 +230,7 @@ app.post("/contacts", (req, res) => {
   });
 });
 
-
-// Ta bort kontakt (tar bort raden i contacts-tabellen)
+// Ta bort kontakt
 app.delete("/contacts/:contactId", (req, res) => {
   const contactId = Number(req.params.contactId);
   const userId = Number(req.query.userId);
@@ -215,7 +239,6 @@ app.delete("/contacts/:contactId", (req, res) => {
     return res.status(400).json({ message: "contactId och userId krävs" });
   }
 
-  // Jag tar bort bara om den kontakten tillhör den user som skickar requesten
   const sql = `DELETE FROM contacts WHERE id = ? AND user_id = ?`;
 
   db.query(sql, [contactId, userId], (err, result) => {
@@ -231,7 +254,6 @@ app.delete("/contacts/:contactId", (req, res) => {
     return res.json({ message: "Kontakt borttagen." });
   });
 });
-
 
 // Start server
 const PORT = process.env.PORT || 5000;
