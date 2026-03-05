@@ -162,9 +162,36 @@ function closeAuth() {
 }
 
 // När sidan laddas
+// När sidan laddas
 window.addEventListener("load", () => {
   protectPrivatePage();
 
+  // --- KOD FÖR ATT VISA/DÖLJA MY ACCOUNT ---
+  const accountBtn = document.getElementById("account-link");
+  const accountSection = document.getElementById("account-section");
+
+  if (accountBtn && accountSection) {
+    accountBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      accountSection.classList.toggle("hidden");
+      
+      if (!accountSection.classList.contains("hidden")) {
+        console.log("Hämtar användarinfo...");
+        // Här kan du anropa en funktion som fyller i data senare
+      }
+    });
+  }
+
+  // Stäng My Account om man klickar utanför rutan
+  document.addEventListener("click", () => {
+    accountSection?.classList.add("hidden");
+  });
+
+  // Förhindra att rutan stängs om man klickar inuti den
+  accountSection?.addEventListener("click", (e) => e.stopPropagation());
+  // --- SLUT PÅ MY ACCOUNT LOGIK ---
+
+  // Event Listeners för knappar
   $("#loginSubmitBtn")?.addEventListener("click", handleLogin);
   $("#signupSubmitBtn")?.addEventListener("click", handleSignup);
   $("#logout-btn")?.addEventListener("click", handleLogout);
@@ -178,20 +205,20 @@ window.addEventListener("load", () => {
 
   // Terms-checkbox styr signup-knappen
   const terms = $("#terms-checkbox");
-  const btn = $("#signupSubmitBtn");
+  const signupBtn = $("#signupSubmitBtn");
 
   function syncButton() {
-    if (!btn || !terms) return;
-    btn.disabled = !terms.checked;
+    if (!signupBtn || !terms) return;
+    signupBtn.disabled = !terms.checked;
   }
 
-  if (terms && btn) {
+  if (terms && signupBtn) {
     syncButton();
     terms.addEventListener("change", syncButton);
   }
-});
+}); // <--- Här stängs load-funktionen på rätt ställe
 
-// Lösenordsändring (bara UI, inte kopplad till DB än)
+// Lösenordsändring (bara UI)
 async function saveNewPassword(newPassword) {
   if (newPassword.length < 6) {
     alert("Password must be at least 6 characters.");
@@ -204,8 +231,6 @@ async function saveNewPassword(newPassword) {
   if (passwordInput && editBtn) {
     passwordInput.setAttribute("readonly", true);
     editBtn.innerText = "Change";
-    editBtn.style.backgroundColor = "";
-    editBtn.style.color = "";
     alert("Password updated!");
   }
 }
