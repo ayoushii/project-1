@@ -1,5 +1,9 @@
-/* ===== Mobile-friendly tweaks ===== */
 @media (max-width: 700px) {
+  .main-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+
   header {
     height: auto;
     padding: 16px;
@@ -16,26 +20,15 @@
     justify-content: flex-end;
   }
 
-  .main-layout {
-    padding: 18px 14px;
-    gap: 18px;
-  }
-
-  .side-box {
-    min-height: auto;
-    max-width: 100%;
-    border-radius: 18px;
-  }
-
   .search-container {
     min-width: auto;
     width: 100%;
   }
 
-  .search-bar,
-  .result-card {
-    max-width: 100%;
-    border-radius: 16px;
+  .side-box {
+    width: 100%;
+    max-width: 760px;
+    min-height: auto;
   }
 
   .search-bar {
@@ -43,23 +36,14 @@
     align-items: stretch;
   }
 
-  #search-input {
+  #search-btn,
+  .add-btn {
     width: 100%;
-  }
-
-  #search-btn {
-    width: 100%;
-    justify-content: center;
   }
 
   .result-card {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .add-btn {
-    width: 100%;
-    justify-content: center;
   }
 
   .mini-card {
@@ -68,20 +52,8 @@
     gap: 10px;
   }
 
-  .card-btns {
-    justify-content: space-between;
-  }
-
   .accept-btn,
   .decline-btn {
     width: 49%;
-  }
-
-  .contact-item {
-    justify-content: space-between;
-  }
-
-  .contact-item span {
-    flex: 1;
   }
 }
