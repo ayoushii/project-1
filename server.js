@@ -221,22 +221,41 @@ app.delete("/contacts/:contactId", (req, res) => {
     return res.status(400).json({ message: "contactId och userId krävs" });
   }
 
-  const sql = `DELETE FROM contacts WHERE id = ? AND user_id = ?`;
+  const findSql = `
+    SELECT contact_user_id
+    FROM contacts
+    WHERE id = ? AND user_id = ?
+    LIMIT 1
+  `;
 
-  db.query(sql, [contactId, userId], (err, result) => {
+  db.query(findSql, [contactId, userId], (err, rows) => {
     if (err) {
-      console.log("DELETE CONTACT ERROR:", err.message);
+      console.log("DELETE CONTACT FIND ERROR:", err.message);
       return res.status(500).json({ message: "Database error" });
     }
 
-    if (result.affectedRows === 0) {
+    if (rows.length === 0) {
       return res.status(404).json({ message: "Kontakt hittades inte." });
     }
 
-    return res.json({ message: "Kontakt borttagen." });
+    const otherUserId = rows[0].contact_user_id;
+
+    const deleteSql = `
+      DELETE FROM contacts
+      WHERE (user_id = ? AND contact_user_id = ?)
+         OR (user_id = ? AND contact_user_id = ?)
+    `;
+
+    db.query(deleteSql, [userId, otherUserId, otherUserId, userId], (err2) => {
+      if (err2) {
+        console.log("DELETE CONTACT ERROR:", err2.message);
+        return res.status(500).json({ message: "Database error" });
+      }
+
+      return res.json({ message: "Kontakt borttagen." });
+    });
   });
 });
-
 
 
 // FRIEND REQUESTS (nytt)
@@ -306,7 +325,7 @@ app.post("/friend-requests", (req, res) => {
   });
 });
 
-// Hämta mina inkommande requests (pending)
+// Hämta mina inkommande requests 
 app.get("/friend-requests", (req, res) => {
   const userId = Number(req.query.userId);
   if (!userId) return res.status(400).json({ message: "Missing userId" });
@@ -328,7 +347,7 @@ app.get("/friend-requests", (req, res) => {
   });
 });
 
-// Accept -> markera accepted + lägg kontakter åt båda håll
+// Accept request och lägg till båda användarna i contacts
 app.post("/friend-requests/:id/accept", (req, res) => {
   const requestId = Number(req.params.id);
   const userId = Number(req.body.userId);
@@ -340,36 +359,52 @@ app.post("/friend-requests/:id/accept", (req, res) => {
   const getSql = `
     SELECT id, from_user_id, to_user_id, status
     FROM friend_requests
-    WHERE id=? LIMIT 1
+    WHERE id = ?
+    LIMIT 1
   `;
 
   db.query(getSql, [requestId], (err, rows) => {
     if (err) return res.status(500).json({ message: "Database error" });
-    if (rows.length === 0) return res.status(404).json({ message: "Request hittades inte." });
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Request hittades inte." });
+    }
 
     const fr = rows[0];
 
-    // bara den som tar emot requesten får acceptera
-    if (fr.to_user_id !== userId) return res.status(403).json({ message: "Not allowed." });
-    if (fr.status !== "pending") return res.status(400).json({ message: "Request är inte pending." });
+    if (fr.to_user_id !== userId) {
+      return res.status(403).json({ message: "Not allowed." });
+    }
 
-    // Markera accepted
-    const updateSql = `UPDATE friend_requests SET status='accepted' WHERE id=?`;
-    db.query(updateSql, [requestId], (err2) => {
-      if (err2) return res.status(500).json({ message: "Database error" });
+    if (fr.status !== "pending") {
+      return res.status(400).json({ message: "Request är inte pending." });
+    }
 
-      // Lägg kontakter åt båda håll (som “riktiga” friends)
-      const insertContact = `INSERT INTO contacts (user_id, contact_user_id) VALUES (?, ?)`;
+    const insertSql = `INSERT INTO contacts (user_id, contact_user_id) VALUES (?, ?)`;
 
-      db.query(insertContact, [fr.to_user_id, fr.from_user_id], () => {
-        db.query(insertContact, [fr.from_user_id, fr.to_user_id], () => {
+    db.query(insertSql, [fr.to_user_id, fr.from_user_id], (err2) => {
+      if (err2 && err2.code !== "ER_DUP_ENTRY") {
+        return res.status(500).json({ message: "Database error" });
+      }
+
+      db.query(insertSql, [fr.from_user_id, fr.to_user_id], (err3) => {
+        if (err3 && err3.code !== "ER_DUP_ENTRY") {
+          return res.status(500).json({ message: "Database error" });
+        }
+
+        const deleteSql = `DELETE FROM friend_requests WHERE id = ?`;
+
+        db.query(deleteSql, [requestId], (err4) => {
+          if (err4) {
+            return res.status(500).json({ message: "Database error" });
+          }
+
           return res.json({ message: "Request accepted!" });
         });
       });
     });
   });
 });
-
 
 app.post("/friend-requests/:id/decline", (req, res) => {
   const requestId = Number(req.params.id);
@@ -380,18 +415,20 @@ app.post("/friend-requests/:id/decline", (req, res) => {
   }
 
   const sql = `
-    UPDATE friend_requests
-    SET status='declined'
-    WHERE id=? AND to_user_id=? AND status='pending'
+    DELETE FROM friend_requests
+    WHERE id = ? AND to_user_id = ? AND status = 'pending'
   `;
 
   db.query(sql, [requestId, userId], (err, result) => {
     if (err) return res.status(500).json({ message: "Database error" });
-    if (result.affectedRows === 0) return res.status(404).json({ message: "Request hittades inte." });
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Request hittades inte." });
+    }
+
     return res.json({ message: "Request declined." });
   });
 });
-
 
 // Startar servern
 const PORT = process.env.PORT || 5000;
