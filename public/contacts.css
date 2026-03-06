@@ -1,3 +1,5 @@
+/* contacts.css (modern & clean) */
+
 * {
   margin: 0;
   padding: 0;
@@ -10,62 +12,25 @@ body {
   color: #111;
 }
 
-/* HEADER*/
-header.meny-rad {
+/* ---------- Header ---------- */
+header {
   width: 100%;
-  min-height: 110px;
+  height: 150px;
   background: #fff;
   box-shadow: 0 10px 25px rgba(0,0,0,0.08);
   display: flex;
   align-items: center;
   padding: 0 28px;
-  gap: 18px;
 }
 
-header.meny-rad img {
+header img {
   width: 220px;
   height: auto;
-  transform: none;
+  transform: none;          /* VIKTIGT: tar bort din scale(2) */
+  margin: 0;
 }
 
-.top-actions {
-  margin-left: auto;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.btn-link { text-decoration: none; }
-
-.action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
-  border-radius: 14px;
-  border: 1px solid rgba(0,0,0,0.15);
-  background: #fff;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.08);
-}
-
-.action-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 14px 28px rgba(0,0,0,0.12);
-  opacity: 0.98;
-}
-
-.action-btn--logout {
-  border: 1px solid rgba(231, 76, 60, 0.35);
-}
-
-.action-btn--logout i {
-  color: #e74c3c;
-}
-
-/* MAIN LAYOUT */
+/* ---------- Main layout (3 kolumner) ---------- */
 .main-layout {
   max-width: 1400px;
   margin: 0 auto;
@@ -76,12 +41,12 @@ header.meny-rad img {
   justify-content: space-between;
 }
 
-/* SIDE CARDS */
+/* ---------- Cards (side-box) ---------- */
 .side-box {
   flex: 1;
   min-width: 280px;
   max-width: 360px;
-  background: rgba(255,255,255,0.92);
+  background: rgba(255,255,255,0.9);
   border: 1px solid rgba(0,0,0,0.10);
   border-radius: 22px;
   padding: 18px;
@@ -98,13 +63,13 @@ header.meny-rad img {
 .side-box h2 {
   text-align: center;
   font-size: 22px;
-  font-weight: 800;
+  font-weight: 700;
   padding-bottom: 12px;
   margin-bottom: 16px;
   border-bottom: 1px solid rgba(0,0,0,0.08);
 }
 
-/* SEARCH */
+/* ---------- Search (mitten) ---------- */
 .search-container {
   flex: 2;
   min-width: 420px;
@@ -148,7 +113,7 @@ header.meny-rad img {
   padding: 12px 16px;
   background: #111;
   color: #fff;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
   transition: transform 0.15s ease, opacity 0.15s ease;
 }
@@ -158,7 +123,7 @@ header.meny-rad img {
   opacity: 0.95;
 }
 
-/* RESULT CARD */
+/* ---------- Result card ---------- */
 .result-card {
   width: 100%;
   max-width: 680px;
@@ -173,16 +138,8 @@ header.meny-rad img {
   gap: 12px;
 }
 
-.result-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.result-left i { color: #2ecc71; }
-
 #username-display {
-  font-weight: 800;
+  font-weight: 700;
   color: #111;
 }
 
@@ -192,7 +149,7 @@ header.meny-rad img {
   padding: 10px 14px;
   background: #4CAF50;
   color: #fff;
-  font-weight: 900;
+  font-weight: 800;
   cursor: pointer;
   transition: transform 0.15s ease, opacity 0.15s ease;
 }
@@ -202,7 +159,7 @@ header.meny-rad img {
   opacity: 0.95;
 }
 
-/* FRIEND REQUEST LIST */
+/* ---------- Friend request rows ---------- */
 #requests-list {
   display: flex;
   flex-direction: column;
@@ -212,7 +169,7 @@ header.meny-rad img {
 .mini-card {
   border: 1px solid rgba(0,0,0,0.12);
   border-radius: 16px;
-  padding: 12px;
+  padding: 12px 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -226,8 +183,11 @@ header.meny-rad img {
   box-shadow: 0 14px 25px rgba(0,0,0,0.10);
 }
 
-.user-name { font-weight: 800; }
+.user-name {
+  font-weight: 700;
+}
 
+/* Buttons */
 .card-btns {
   display: flex;
   gap: 10px;
@@ -239,12 +199,19 @@ header.meny-rad img {
   border-radius: 12px;
   padding: 8px 12px;
   cursor: pointer;
-  font-weight: 900;
+  font-weight: 800;
   transition: transform 0.15s ease, opacity 0.15s ease;
 }
 
-.accept-btn { background: #2ecc71; color: #fff; }
-.decline-btn { background: #e74c3c; color: #fff; }
+.accept-btn {
+  background: #2ecc71;
+  color: #fff;
+}
+
+.decline-btn {
+  background: #e74c3c;
+  color: #fff;
+}
 
 .accept-btn:hover,
 .decline-btn:hover {
@@ -252,7 +219,7 @@ header.meny-rad img {
   opacity: 0.92;
 }
 
-/*CONTACTS LIST */
+/* ---------- Contacts list ---------- */
 #my-contacts-list {
   list-style: none;
   padding: 6px;
@@ -265,23 +232,85 @@ header.meny-rad img {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px;
+  padding: 12px 12px;
   border: 1px solid rgba(0,0,0,0.10);
   border-radius: 16px;
   background: #fff;
   box-shadow: 0 10px 18px rgba(0,0,0,0.06);
+  animation: fadeIn 0.25s ease;
 }
 
-.contact-item i { font-size: 20px; color: #222; }
+.contact-item i {
+  font-size: 20px;
+  color: #222;
+}
 
-.contact-item .decline-btn {
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1050px) {
+  .main-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .side-box, .search-container {
+    width: 100%;
+    max-width: 760px;
+  }
+
+  .search-container {
+    min-width: auto;
+  }
+}
+/* ===== Top action buttons (Back / Log out) ===== */
+.top-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
   margin-left: auto;
-  padding: 6px 10px;
-  font-weight: 800;
-  border-radius: 10px;
 }
 
-/*TEXT HELPERS */
+.btn-link {
+  text-decoration: none;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.15);
+  background: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+}
+
+.action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(0,0,0,0.12);
+  opacity: 0.98;
+}
+
+.action-btn:active {
+  transform: translateY(0px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.10);
+}
+
+.action-btn--logout {
+  border: 1px solid rgba(231, 76, 60, 0.35);
+}
+
+.action-btn--logout i {
+  color: #e74c3c;
+}
+
 .helper-text,
 .empty-text {
   margin-top: 14px;
@@ -290,7 +319,16 @@ header.meny-rad img {
   line-height: 1.4;
 }
 
-/*TOAST */
+.result-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.result-left i {
+  color: #2ecc71;
+}
+/* ===== Toast (messages) ===== */
 .toast {
   position: fixed;
   right: 18px;
@@ -298,7 +336,7 @@ header.meny-rad img {
   padding: 12px 14px;
   border-radius: 14px;
   color: #fff;
-  font-weight: 800;
+  font-weight: 700;
   box-shadow: 0 14px 30px rgba(0,0,0,0.18);
   opacity: 0;
   transform: translateY(8px);
@@ -307,50 +345,19 @@ header.meny-rad img {
   pointer-events: none;
 }
 
-.toast--show { opacity: 1; transform: translateY(0); }
+.toast--show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 .toast--info { background: #111; }
 .toast--success { background: #2ecc71; }
 .toast--warning { background: #f39c12; }
 .toast--danger { background: #e74c3c; }
 
-/*MOBILE */
-@media (max-width: 700px) {
-  .main-layout {
-    flex-direction: column;
-    align-items: center;
-    padding: 18px 14px;
-    gap: 18px;
-  }
-
-  header.meny-rad {
-    height: auto;
-    padding: 16px;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  header.meny-rad img { width: 170px; }
-
-  .top-actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
-
-  .search-container { min-width: auto; width: 100%; }
-
-  .side-box {
-    width: 100%;
-    max-width: 760px;
-    min-height: auto;
-    border-radius: 18px;
-  }
-
-  .search-bar { flex-direction: column; align-items: stretch; }
-  #search-btn, .add-btn { width: 100%; }
-
-  .result-card { flex-direction: column; align-items: stretch; }
-
-  .mini-card { flex-direction: column; align-items: stretch; gap: 10px; }
-  .card-btns { justify-content: space-between; }
-  .accept-btn, .decline-btn { width: 49%; }
+/* Liten remove-knapp i contacts listan */
+.contact-item .decline-btn {
+  padding: 6px 10px;
+  font-weight: 700;
+  border-radius: 10px;
 }

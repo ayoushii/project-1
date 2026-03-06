@@ -228,9 +228,11 @@ function renderFriendRequests(requests) {
   requests.forEach((r) => {
     const card = document.createElement("div");
     card.className = "mini-card";
+
+    // vi sparar requestId så accept/decline vet vilken request det gäller
     card.dataset.requestId = r.id;
 
-    // backend skickar "username" och "email" från JOIN users
+    // backend skickar username + email + from_user_id
     card.innerHTML = `
       <span class="user-name">${r.username}</span>
       <div class="card-btns">

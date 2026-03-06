@@ -21,10 +21,17 @@ const dbConfig = {
   port: Number(process.env.DB_PORT || 3306),
 };
 
-const db = mysql.createConnection(dbConfig);
+const db = mysql.createPool({
+  ...dbConfig,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 0,
+});
 
-// Kollar att vi får kontakt med databasen när servern startar
-db.connect((err) => {
+// Kolla DB vid start (och logga snyggt)
+db.query("SELECT 1", (err) => {
   if (err) {
     console.log("DB ERROR:", err.message);
     return;
