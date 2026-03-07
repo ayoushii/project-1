@@ -1,0 +1,108 @@
+/* 1. Grundinställningar */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f7f6;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px; /* Ger lite luft på små skärmar */
+    box-sizing: border-box;
+}
+
+/* 2. Den vita rutan (Kroppen) */
+.create-container {
+    background-color: #ffffff;
+    width: 100%;       /* Tar upp hela bredden på små skärmar */
+    max-width: 450px;  /* Blir aldrig bredare än 450px på stora skärmar */
+    padding: 30px;
+    border-radius: 30px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    transition: all 0.3s ease; /* Gör övergångar mjukare */
+}
+
+/* 3. Inmatningsfält och knappar */
+input[type="text"] {
+    width: 100%;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid #eee;
+    border-radius: 15px;
+    background-color: #f9f9f9;
+    font-size: 16px;
+    box-sizing: border-box;
+    outline: none;
+}
+
+.add-item-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+#addItemBtn {
+    background-color: #333;
+    color: white;
+    border: none;
+    border-radius: 15px;
+    padding: 0 25px;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+/* 4. RESPONSIVA REGLER (Media Queries) */
+
+/* För mobiler (små skärmar under 480px) */
+@media (max-width: 480px) {
+    .create-container {
+        padding: 20px;
+        border-radius: 20px; /* Något mindre runda hörn för att spara plats */
+    }
+
+    h2 {
+        font-size: 20px; /* Mindre text så den får plats på en rad */
+    }
+
+    #addItemBtn {
+        padding: 0 15px; /* Smalare knapp för att ge plats åt textfältet */
+    }
+    
+    .main-save-btn {
+        padding: 12px;
+        font-size: 14px;
+    }
+}
+
+/* För surfplattor och mellan-skärmar (upp till 768px) */
+@media (max-width: 768px) {
+    body {
+        align-items: flex-start; /* Flytta upp rutan lite så den syns bättre över tangentbordet */
+        padding-top: 40px;
+    }
+}
+
+/* 5. Spara-knappen */
+.main-save-btn {
+    width: 100%;
+    padding: 16px;
+    background-color: #fff;
+    border: 2px solid #333;
+    color: #333;
+    font-weight: bold;
+    font-size: 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.main-save-btn:hover {
+    background-color: #333;
+    color: #fff;
+}
+
+.submenu li a {
+    display: block; /* Gör att hela raden går att klicka på, inte bara texten */
+    padding: 10px;
+}
