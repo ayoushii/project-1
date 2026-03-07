@@ -2,6 +2,8 @@ const express = require("express");
 const mysql = require("mysql2");
 const path = require("path");
 const bcrypt = require("bcrypt");
+const { Resend } = require("resend");
+const crypto = require("crypto");
 
 
 require("dotenv").config();
@@ -29,6 +31,8 @@ const db = mysql.createPool({
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
 });
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Kolla DB vid start (och logga snyggt)
 db.query("SELECT 1", (err) => {
@@ -427,6 +431,149 @@ app.post("/friend-requests/:id/decline", (req, res) => {
     }
 
     return res.json({ message: "Request declined." });
+  });
+});
+
+
+
+app.post("/forgot-password", (req, res) => {
+  const email = (req.body.email || "").trim();
+
+  if (!email) {
+    return res.status(400).json({ message: "Email krävs." });
+  }
+
+  const findUserSql = `
+    SELECT id, email
+    FROM users
+    WHERE email = ?
+    LIMIT 1
+  `;
+
+  db.query(findUserSql, [email], (err, rows) => {
+    if (err) {
+      console.log("FORGOT PASSWORD ERROR:", err.message);
+      return res.status(500).json({ message: "Database error" });
+    }
+
+    if (rows.length === 0) {
+      return res.json({ message: "Om email finns skickas en reset-länk." });
+    }
+
+    const user = rows[0];
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+    const deleteOldSql = `DELETE FROM password_resets WHERE user_id = ?`;
+
+    db.query(deleteOldSql, [user.id], (err2) => {
+      if (err2) {
+        console.log("DELETE OLD TOKEN ERROR:", err2.message);
+        return res.status(500).json({ message: "Database error" });
+      }
+
+      const insertSql = `
+        INSERT INTO password_resets (user_id, token, expires_at)
+        VALUES (?, ?, ?)
+      `;
+
+      db.query(insertSql, [user.id, token, expiresAt], async (err3) => {
+        if (err3) {
+          console.log("INSERT RESET TOKEN ERROR:", err3.message);
+          return res.status(500).json({ message: "Database error" });
+        }
+
+        const resetLink = `${process.env.BASE_URL}/ResetPassword.html?token=${token}`;
+
+        try {
+          await resend.emails.send({
+            from: process.env.MAIL_FROM,
+            to: user.email,
+            subject: "Reset your password",
+            html: `
+              <h2>Reset password</h2>
+              <p>You requested a password reset.</p>
+              <p>Click the link below to choose a new password:</p>
+              <p><a href="${resetLink}">${resetLink}</a></p>
+              <p>This link expires in 30 minutes.</p>
+            `,
+          });
+
+          return res.json({ message: "Check your email!" });
+        } catch (mailErr) {
+          console.log("RESEND ERROR:", mailErr);
+          return res.status(500).json({ message: "Could not send email." });
+        }
+      });
+    });
+  });
+});
+
+app.post("/reset-password", async (req, res) => {
+  const token = (req.body.token || "").trim();
+  const password = req.body.password;
+
+  if (!token || !password) {
+    return res.status(400).json({ message: "Token och lösenord krävs." });
+  }
+
+  if (String(password).length < 6) {
+    return res.status(400).json({ message: "Lösenordet måste vara minst 6 tecken." });
+  }
+
+  const sql = `
+    SELECT user_id, expires_at
+    FROM password_resets
+    WHERE token = ?
+    LIMIT 1
+  `;
+
+  db.query(sql, [token], async (err, rows) => {
+    if (err) {
+      console.log("RESET PASSWORD ERROR:", err.message);
+      return res.status(500).json({ message: "Database error" });
+    }
+
+    if (rows.length === 0) {
+      return res.status(400).json({ message: "Ogiltig eller gammal länk." });
+    }
+
+    const resetRow = rows[0];
+
+    if (new Date() > new Date(resetRow.expires_at)) {
+      return res.status(400).json({ message: "Länken har gått ut." });
+    }
+
+    try {
+      const password_hash = await bcrypt.hash(password, 10);
+
+      const updateSql = `
+        UPDATE users
+        SET password_hash = ?
+        WHERE id = ?
+      `;
+
+      db.query(updateSql, [password_hash, resetRow.user_id], (err2) => {
+        if (err2) {
+          console.log("UPDATE PASSWORD ERROR:", err2.message);
+          return res.status(500).json({ message: "Database error" });
+        }
+
+        const deleteSql = `DELETE FROM password_resets WHERE user_id = ?`;
+
+        db.query(deleteSql, [resetRow.user_id], (err3) => {
+          if (err3) {
+            console.log("DELETE RESET TOKEN ERROR:", err3.message);
+            return res.status(500).json({ message: "Database error" });
+          }
+
+          return res.json({ message: "Lösenordet har uppdaterats." });
+        });
+      });
+    } catch (e) {
+      console.log("HASH ERROR:", e.message);
+      return res.status(500).json({ message: "Serverfel." });
+    }
   });
 });
 
