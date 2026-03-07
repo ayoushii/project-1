@@ -1,31 +1,21 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-  <meta charset="utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <title>RayaListly - Create Private List</title>
-  <link rel="icon" href="bilder/icon.png" />
-
-  <link rel="stylesheet" href="privatelist.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
-
-  
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RayaListly - Create Private List</title>
+    <link rel="stylesheet" href="privatelist.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
 </head>
-
 <body>
 
-
-  
-
     <div class="create-container">
-        
-        <header>
+        <header class="list-header">
             <a href="PrivateHome2.html" class="back-btn">
-                <i class="fa-solid fa-arrow-left"></i> Tillbaka
+                <i class="fa-solid fa-arrow-left"></i>
             </a>
             <h2>New Private List</h2>
+            <button class="share-btn"><i class="fa-solid fa-share-nodes"></i></button>
         </header>
 
         <main>
@@ -33,14 +23,12 @@
                 <input type="text" id="listNameInput" placeholder="Namn på listan (t.ex. Hemmet)">
             </div>
 
-            <div class="item-section">
-                <div class="add-item-row">
-                    <input type="text" id="itemNameInput" placeholder="Lägg till vara...">
-                    <button id="addItemBtn"><i class="fa-solid fa-plus"></i></button>
-                </div>
-                
-                <ul id="visualItemList"></ul>
+            <div class="add-item-row">
+                <input type="text" id="itemNameInput" placeholder="Lägg till vara...">
+                <button id="addItemBtn"><i class="fa-solid fa-plus"></i></button>
             </div>
+
+            <ul id="visualItemList"></ul>
 
             <button id="saveListBtn" class="main-save-btn">Save to "My Lists"</button>
         </main>

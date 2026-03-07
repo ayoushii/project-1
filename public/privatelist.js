@@ -1,86 +1,62 @@
-// 1. MINNET: En lista (array) som håller reda på dina varor i datorns minne
 let shoppingItems = [];
 
-// 2. NERVERNA: Vi kopplar ihop koden med elementen i din HTML
 const addItemBtn = document.getElementById('addItemBtn');
 const itemNameInput = document.getElementById('itemNameInput');
 const visualItemList = document.getElementById('visualItemList');
 const listNameInput = document.getElementById('listNameInput');
 const saveListBtn = document.getElementById('saveListBtn');
 
-// 3. LYSSNA PÅ KLICK: Vad händer när man trycker på "+"?
-addItemBtn.addEventListener('click', function() {
-    const itemValue = itemNameInput.value.trim(); // Hämtar vad du skrivit
-
-    if (itemValue !== "") {
-        // Lägg till varan i vårt minne (arrayen)
-        shoppingItems.push(itemValue);
-        
-        // Uppdatera listan som syns på skärmen
-        renderList();
-        
-        // Töm rutan så man kan skriva nästa sak
+// Lägg till vara
+addItemBtn.addEventListener('click', () => {
+    const val = itemNameInput.value.trim();
+    if (val) {
+        shoppingItems.push({ text: val, completed: false });
         itemNameInput.value = "";
-        itemNameInput.focus(); 
-    } else {
-        alert("Skriv in en vara först!");
+        renderList();
     }
 });
 
-// 4. ENTER-FUNKTION: Gör så att man kan trycka på Enter istället för att klicka på +
-itemNameInput.addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') {
-        addItemBtn.click(); // Detta "låtsas" klicka på plus-knappen åt dig
-    }
-});
-
-// 5. VISA PÅ SKÄRMEN: Denna funktion ritar ut listan på nytt varje gång den ändras
+// Rita ut listan
 function renderList() {
-    visualItemList.innerHTML = ""; // Rensa först så det inte blir dubbelt
-
+    visualItemList.innerHTML = "";
     shoppingItems.forEach((item, index) => {
         const li = document.createElement('li');
+        li.className = "item-row";
         li.innerHTML = `
-            <span>${item}</span>
-            <button onclick="removeItem(${index})" style="margin-left:10px; color:red; cursor:pointer;">
-                <i class="fa-solid fa-trash"></i>
-            </button>
+            <div class="item-left">
+                <input type="checkbox" class="item-checkbox" ${item.completed ? 'checked' : ''} onchange="toggleComplete(${index})">
+                <span class="item-text ${item.completed ? 'completed' : ''}">${item.text}</span>
+            </div>
+            <div class="item-actions">
+                <button class="edit-btn" onclick="editItem(${index})"><i class="fa-solid fa-pen"></i></button>
+                <button class="delete-btn" onclick="removeItem(${index})"><i class="fa-solid fa-trash"></i></button>
+            </div>
         `;
         visualItemList.appendChild(li);
     });
 }
 
-// 6. TA BORT: Om man ångrar en vara i listan
-window.removeItem = function(index) {
-    shoppingItems.splice(index, 1); // Ta bort från minnet
-    renderList(); // Rita om listan på skärmen
+// Funktioner för knapparna
+window.toggleComplete = (index) => {
+    shoppingItems[index].completed = !shoppingItems[index].completed;
+    renderList();
 };
 
-// 7. SPARA: Vad händer när man trycker på "Save"?
-saveListBtn.addEventListener('click', function() {
-    const listName = listNameInput.value.trim();
+window.removeItem = (index) => {
+    shoppingItems.splice(index, 1);
+    renderList();
+};
 
-    if (listName === "") {
-        alert("Du måste ge din lista ett namn!");
-        return;
+window.editItem = (index) => {
+    const newText = prompt("Redigera vara:", shoppingItems[index].text);
+    if (newText) {
+        shoppingItems[index].text = newText;
+        renderList();
     }
+};
 
-    if (shoppingItems.length === 0) {
-        alert("Din lista är tom, lägg till några varor först.");
-        return;
-    }
-
-    // Skapa ett "paket" (JSON) med all data
-    const finalData = {
-        title: listName,
-        items: shoppingItems,
-        category: 'private'
-    };
-
-    console.log("Sparar paket till distribuerat system:", finalData);
-    alert("Listan '" + listName + "' har sparats!");
-    
-    // Nästa steg: Skicka till databasen och navigera till "Show my list"
-    // window.location.href = "show-my-list.html"; 
+saveListBtn.addEventListener('click', () => {
+    if (!listNameInput.value.trim()) return alert("Namnge listan!");
+    alert("Listan '" + listNameInput.value + "' sparad!");
+    console.log("Data att skicka till databas:", { title: listNameInput.value, items: shoppingItems });
 });
-
