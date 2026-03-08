@@ -1,14 +1,12 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   const myCreatedLists = document.getElementById("myCreatedLists");
   const toggleCreateMenuBtn = document.getElementById("toggleCreateMenuBtn");
   const createMenu = document.getElementById("mySubmenu");
+  const historyListsEl = document.getElementById("historyLists");
 
-  function getAllLists() {
-    return JSON.parse(localStorage.getItem("rayaLists")) || [];
-  }
-
-  function setAllLists(lists) {
-    localStorage.setItem("rayaLists", JSON.stringify(lists));
+  function getUserId() {
+    const id = localStorage.getItem("userId");
+    return id ? Number(id) : 0;
   }
 
   function getHistoryLists() {
@@ -28,78 +26,116 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function toggleCreateMenu() {
     if (!createMenu) return;
-
     createMenu.style.display =
       createMenu.style.display === "block" ? "none" : "block";
   }
 
-  function moveListToHistory(listName) {
-    const allLists = getAllLists();
-    const historyLists = getHistoryLists();
+  async function fetchLists() {
+    const userId = getUserId();
+    if (!userId) return [];
 
-    const updatedLists = allLists.filter((name) => name !== listName);
+    try {
+      const res = await fetch(`/lists?userId=${encodeURIComponent(userId)}`);
+      const data = await res.json();
 
-    if (!historyLists.includes(listName)) {
-      historyLists.push(listName);
+      if (!res.ok) {
+        console.error("GET LISTS ERROR:", data.message);
+        return [];
+      }
+
+      return data.lists || [];
+    } catch (err) {
+      console.error("Could not fetch lists:", err);
+      return [];
     }
-
-    setAllLists(updatedLists);
-    setHistoryLists(historyLists);
-
-    loadLists();
-    loadHistoryLists();
   }
 
-  function restoreListFromHistory(listName) {
-    const allLists = getAllLists();
-    const historyLists = getHistoryLists();
+  async function deleteListFromDB(listId) {
+    const userId = getUserId();
+    if (!userId || !listId) return { ok: false, message: "Missing userId or listId." };
 
-    if (!allLists.includes(listName)) {
-      allLists.push(listName);
+    try {
+      const res = await fetch(`/lists/${listId}?userId=${encodeURIComponent(userId)}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        return {
+          ok: false,
+          message: data.message || "Could not delete the list.",
+        };
+      }
+
+      return { ok: true, data };
+    } catch (err) {
+      console.error("DELETE LIST ERROR:", err);
+      return {
+        ok: false,
+        message: "Server error while deleting the list.",
+      };
     }
-
-    const updatedHistory = historyLists.filter((name) => name !== listName);
-
-    setAllLists(allLists);
-    setHistoryLists(updatedHistory);
-
-    loadLists();
-    loadHistoryLists();
   }
 
-  function deleteListForever(listName) {
+  function moveListToHistory(list) {
     const historyLists = getHistoryLists();
-    const updatedHistory = historyLists.filter((name) => name !== listName);
 
+    if (!historyLists.find((x) => x.id === list.id)) {
+      historyLists.push(list);
+      setHistoryLists(historyLists);
+    }
+  }
+
+  function restoreListFromHistory(listId) {
+    const historyLists = getHistoryLists();
+    const updatedHistory = historyLists.filter((x) => x.id !== listId);
     setHistoryLists(updatedHistory);
-    localStorage.removeItem(`rayaListItems_${listName}`);
-    localStorage.removeItem(`rayaListMembers_${listName}`);
-
     loadHistoryLists();
   }
 
-  function createSavedListItem(listName) {
+  function deleteListForever(listId) {
+    const historyLists = getHistoryLists();
+    const updatedHistory = historyLists.filter((x) => x.id !== listId);
+    setHistoryLists(updatedHistory);
+    loadHistoryLists();
+  }
+
+  function createSavedListItem(list) {
     const li = document.createElement("li");
     li.className = "saved-list-item";
 
     const link = document.createElement("a");
-    link.href = `other.html?name=${encodeURIComponent(listName)}`;
-    link.textContent = listName;
+    link.href = `other.html?id=${encodeURIComponent(list.id)}`;
+    link.textContent = list.title;
     link.className = "saved-list-link";
 
     const deleteBtn = document.createElement("button");
     deleteBtn.type = "button";
     deleteBtn.className = "delete-list-btn";
-    deleteBtn.setAttribute("aria-label", `Move ${listName} to history`);
+    deleteBtn.setAttribute("aria-label", `Delete ${list.title}`);
 
     const icon = document.createElement("i");
     icon.className = "fa-solid fa-trash";
     deleteBtn.appendChild(icon);
 
-    deleteBtn.addEventListener("click", (event) => {
+    deleteBtn.addEventListener("click", async (event) => {
       event.preventDefault();
       event.stopPropagation();
-      moveListToHistory(listName);
+
+      const confirmed = confirm(`Delete the list "${list.title}"?`);
+      if (!confirmed) return;
+
+      const result = await deleteListFromDB(list.id);
+
+      if (!result.ok) {
+        alert(result.message);
+        return;
+      }
+
+      moveListToHistory(list);
+      await loadLists();
+      loadHistoryLists();
     });
 
     li.appendChild(link);
@@ -108,13 +144,13 @@ document.addEventListener("DOMContentLoaded", () => {
     return li;
   }
 
-  function createHistoryListItem(listName) {
+  function createHistoryListItem(list) {
     const li = document.createElement("li");
     li.className = "history-list-item";
 
     const link = document.createElement("a");
-    link.href = `other.html?name=${encodeURIComponent(listName)}`;
-    link.textContent = listName;
+    link.href = "#";
+    link.textContent = list.title;
     link.className = "history-list-link";
 
     const actions = document.createElement("div");
@@ -123,6 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const restoreBtn = document.createElement("button");
     restoreBtn.type = "button";
     restoreBtn.className = "restore-list-btn";
+    restoreBtn.title = "Remove from history";
 
     const restoreIcon = document.createElement("i");
     restoreIcon.className = "fa-solid fa-rotate-left";
@@ -131,12 +168,13 @@ document.addEventListener("DOMContentLoaded", () => {
     restoreBtn.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      restoreListFromHistory(listName);
+      restoreListFromHistory(list.id);
     });
 
     const deleteBtn = document.createElement("button");
     deleteBtn.type = "button";
     deleteBtn.className = "delete-history-btn";
+    deleteBtn.title = "Delete from history";
 
     const deleteIcon = document.createElement("i");
     deleteIcon.className = "fa-solid fa-trash";
@@ -145,7 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
     deleteBtn.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
-      deleteListForever(listName);
+      deleteListForever(list.id);
     });
 
     actions.appendChild(restoreBtn);
@@ -157,10 +195,10 @@ document.addEventListener("DOMContentLoaded", () => {
     return li;
   }
 
-  function loadLists() {
+  async function loadLists() {
     if (!myCreatedLists) return;
 
-    const allLists = getAllLists();
+    const allLists = await fetchLists();
     myCreatedLists.innerHTML = "";
 
     if (allLists.length === 0) {
@@ -168,44 +206,41 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    allLists.forEach((listName) => {
-      myCreatedLists.appendChild(createSavedListItem(listName));
+    allLists.forEach((list) => {
+      myCreatedLists.appendChild(createSavedListItem(list));
     });
   }
 
   function loadHistoryLists() {
-    const historyContainer = document.getElementById("historyLists");
-    if (!historyContainer) return;
+    if (!historyListsEl) return;
 
     const historyLists = getHistoryLists();
-    historyContainer.innerHTML = "";
+    historyListsEl.innerHTML = "";
 
     if (historyLists.length === 0) {
-      historyContainer.appendChild(createEmptyListMessage("No history yet"));
+      historyListsEl.appendChild(createEmptyListMessage("No history yet"));
       return;
     }
 
-    historyLists.forEach((listName) => {
-      historyContainer.appendChild(createHistoryListItem(listName));
+    historyLists.forEach((list) => {
+      historyListsEl.appendChild(createHistoryListItem(list));
     });
   }
 
   toggleCreateMenuBtn?.addEventListener("click", toggleCreateMenu);
 
-  loadLists();
+  await loadLists();
   loadHistoryLists();
 });
 
 function toggleSavedLists() {
   const menu = document.getElementById("savedListsMenu");
   if (!menu) return;
-
   menu.style.display = menu.style.display === "block" ? "none" : "block";
 }
 
 function toggleHistoryLists() {
   const menu = document.getElementById("historyMenu");
   if (!menu) return;
-
   menu.style.display = menu.style.display === "block" ? "none" : "block";
 }

@@ -13,48 +13,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   const addMemberBtn = document.getElementById("addMemberBtn");
   const listMembers = document.getElementById("listMembers");
 
+  let currentListId = null;
   let currentListName = null;
   let contactsCache = [];
-
-  if (logoLink) {
-    logoLink.addEventListener("click", (event) => {
-      event.preventDefault();
-
-      if (localStorage.getItem("isLoggedIn") === "true") {
-        window.location.href = "PrivateHome2.html";
-      } else {
-        window.location.href = "PublicHome1.html";
-      }
-    });
-  }
-
-  function getAllLists() {
-    return JSON.parse(localStorage.getItem("rayaLists")) || [];
-  }
-
-  function setAllLists(lists) {
-    localStorage.setItem("rayaLists", JSON.stringify(lists));
-  }
+  let currentItems = [];
 
   function getUserId() {
     const id = localStorage.getItem("userId");
     return id ? Number(id) : 0;
-  }
-
-  function getItemsForList(listName) {
-    return JSON.parse(localStorage.getItem(`rayaListItems_${listName}`)) || [];
-  }
-
-  function setItemsForList(listName, items) {
-    localStorage.setItem(`rayaListItems_${listName}`, JSON.stringify(items));
-  }
-
-  function getMembersForList(listName) {
-    return JSON.parse(localStorage.getItem(`rayaListMembers_${listName}`)) || [];
-  }
-
-  function setMembersForList(listName, members) {
-    localStorage.setItem(`rayaListMembers_${listName}`, JSON.stringify(members));
   }
 
   function updateListNameDisplays(listName) {
@@ -82,6 +48,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (addMemberBtn) addMemberBtn.disabled = disabled;
   }
 
+  if (logoLink) {
+    logoLink.addEventListener("click", (event) => {
+      event.preventDefault();
+
+      if (localStorage.getItem("isLoggedIn") === "true") {
+        window.location.href = "PrivateHome2.html";
+      } else {
+        window.location.href = "PublicHome1.html";
+      }
+    });
+  }
+
   async function loadContactsFromDB() {
     const userId = getUserId();
 
@@ -93,13 +71,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     try {
       const res = await fetch(`/contacts?userId=${encodeURIComponent(userId)}`);
-
-      let data = {};
-      try {
-        data = await res.json();
-      } catch (e) {
-        data = {};
-      }
+      const data = await res.json();
 
       if (!res.ok) {
         contactsCache = [];
@@ -134,52 +106,24 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  function renderMembers() {
+  function renderMembersPlaceholder() {
     if (!listMembers) return;
 
     listMembers.innerHTML = "";
 
-    if (!currentListName) {
-      const li = document.createElement("li");
-      li.className = "member-placeholder";
-      li.textContent = "Create the list first";
-      listMembers.appendChild(li);
-      return;
-    }
-
-    const members = getMembersForList(currentListName);
-
-    if (members.length === 0) {
-      const li = document.createElement("li");
-      li.className = "member-placeholder";
-      li.textContent = "No members";
-      listMembers.appendChild(li);
-      return;
-    }
-
-    members.forEach((memberName) => {
-      const li = document.createElement("li");
-      li.className = "member-chip";
-
-      const icon = document.createElement("i");
-      icon.className = "fa-solid fa-user";
-
-      const text = document.createElement("span");
-      text.textContent = memberName;
-
-      li.appendChild(icon);
-      li.appendChild(text);
-      listMembers.appendChild(li);
-    });
+    const li = document.createElement("li");
+    li.className = "member-placeholder";
+    li.textContent = "Members will be connected in the share step";
+    listMembers.appendChild(li);
   }
 
-  function createToggleButton(index, completed) {
+  function createToggleButton(item) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "item-toggle";
-    button.setAttribute("data-index", index);
+    button.setAttribute("data-item-id", item.id);
 
-    if (completed) {
+    if (item.is_completed) {
       button.classList.add("is-completed");
     }
 
@@ -190,12 +134,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     return button;
   }
 
-  function createItemName(name, completed) {
+  function createItemName(item) {
     const span = document.createElement("span");
     span.className = "item-name";
-    span.textContent = name;
+    span.textContent = item.text;
 
-    if (completed) {
+    if (item.is_completed) {
       span.classList.add("is-completed");
     }
 
@@ -206,7 +150,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const badge = document.createElement("span");
     badge.className = "item-badge";
 
-    if (item.completed) {
+    if (item.is_completed) {
       badge.classList.add("is-done");
       badge.textContent = "Bought";
     } else {
@@ -216,11 +160,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     return badge;
   }
 
-  function createDeleteButton(index) {
+  function createDeleteButton(item) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "delete-btn";
-    button.setAttribute("data-delete-index", index);
+    button.setAttribute("data-delete-item-id", item.id);
     button.setAttribute("aria-label", "Delete item");
 
     const icon = document.createElement("i");
@@ -230,18 +174,18 @@ document.addEventListener("DOMContentLoaded", async () => {
     return button;
   }
 
-  function createShoppingItem(item, index) {
+  function createShoppingItem(item) {
     const li = document.createElement("li");
     li.className = "shopping-item";
 
-    const toggleButton = createToggleButton(index, item.completed);
-    const itemName = createItemName(item.name, item.completed);
+    const toggleButton = createToggleButton(item);
+    const itemName = createItemName(item);
 
     const actions = document.createElement("div");
     actions.className = "item-actions";
 
     const badge = createItemBadge(item);
-    const deleteButton = createDeleteButton(index);
+    const deleteButton = createDeleteButton(item);
 
     actions.appendChild(badge);
     actions.appendChild(deleteButton);
@@ -258,109 +202,182 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     shoppingList.innerHTML = "";
 
-    if (!currentListName) {
+    if (!currentListId) {
       const li = document.createElement("li");
       li.className = "empty-list-item";
       li.textContent = "Create the list first";
       shoppingList.appendChild(li);
       updateItemsCount([]);
-      renderMembers();
+      renderMembersPlaceholder();
       return;
     }
 
-    const items = getItemsForList(currentListName);
-
-    if (items.length === 0) {
+    if (currentItems.length === 0) {
       const li = document.createElement("li");
       li.className = "empty-list-item";
       li.textContent = "No items yet";
       shoppingList.appendChild(li);
-      updateItemsCount(items);
-      renderMembers();
+      updateItemsCount(currentItems);
+      renderMembersPlaceholder();
       return;
     }
 
-    items.forEach((item, index) => {
-      shoppingList.appendChild(createShoppingItem(item, index));
+    currentItems.forEach((item) => {
+      shoppingList.appendChild(createShoppingItem(item));
     });
 
-    updateItemsCount(items);
-    renderMembers();
+    updateItemsCount(currentItems);
+    renderMembersPlaceholder();
   }
 
-  function openList(listName) {
-    currentListName = listName;
-    updateListNameDisplays(listName);
-    renderItems();
+  async function loadItems() {
+    const userId = getUserId();
+    if (!currentListId || !userId) return;
 
-    if (listNameInput) {
-      listNameInput.value = listName;
-      listNameInput.disabled = true;
+    try {
+      const res = await fetch(`/lists/${currentListId}/items?userId=${encodeURIComponent(userId)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Could not load items.");
+        return;
+      }
+
+      currentItems = data.items || [];
+      renderItems();
+    } catch (err) {
+      console.error("LOAD ITEMS ERROR:", err);
     }
-
-    if (createListBtn) {
-      createListBtn.disabled = true;
-      createListBtn.textContent = "Created";
-    }
-
-    setControlsDisabled(false);
   }
 
-  function createNewList() {
+  async function openList(listId) {
+    const userId = getUserId();
+    if (!listId || !userId) return;
+
+    try {
+      const res = await fetch(`/lists/${listId}?userId=${encodeURIComponent(userId)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Could not open list.");
+        return;
+      }
+
+      currentListId = data.list.id;
+      currentListName = data.list.title;
+
+      updateListNameDisplays(currentListName);
+
+      if (listNameInput) {
+        listNameInput.value = currentListName;
+        listNameInput.disabled = true;
+      }
+
+      if (createListBtn) {
+        createListBtn.disabled = true;
+        createListBtn.textContent = "Created";
+      }
+
+      setControlsDisabled(false);
+      await loadItems();
+    } catch (err) {
+      console.error("OPEN LIST ERROR:", err);
+    }
+  }
+
+  async function createNewList() {
+    const userId = getUserId();
     const listName = listNameInput?.value.trim();
 
-    if (!listName) {
-      alert("Write a list name first.");
+    if (!userId) {
+      alert("You must be logged in.");
       return;
     }
 
-    const allLists = getAllLists();
-
-    if (!allLists.includes(listName)) {
-      allLists.push(listName);
-      setAllLists(allLists);
-      setItemsForList(listName, []);
-      setMembersForList(listName, []);
+    if (!listName) {
+      alert("Please enter a list name first.");
+      return;
     }
 
-    openList(listName);
+    try {
+      const res = await fetch("/lists", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          userId,
+          title: listName,
+          listType: "other"
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Could not create list.");
+        return;
+      }
+
+      window.location.href = `other.html?id=${encodeURIComponent(data.listId)}`;
+    } catch (err) {
+      console.error("CREATE LIST ERROR:", err);
+      alert("Server error while creating the list.");
+    }
   }
 
-  function addItemToCurrentList() {
+  async function addItemToCurrentList() {
+    const userId = getUserId();
     const itemName = itemInput?.value.trim();
-    const quantity = quantityInput?.value.trim();
-    const unit = unitSelect?.value;
+    const quantity = quantityInput?.value.trim() || "1";
+    const unit = unitSelect?.value || "pcs";
 
-    if (!currentListName) {
+    if (!currentListId) {
       alert("Create the list first.");
       return;
     }
 
     if (!itemName) {
-      alert("Write an item first.");
+      alert("Please write an item name.");
       return;
     }
 
-    const items = getItemsForList(currentListName);
+    try {
+      const res = await fetch(`/lists/${currentListId}/items`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          userId,
+          text: itemName,
+          quantity,
+          unit
+        })
+      });
 
-    items.push({
-      name: itemName,
-      quantity: quantity || "1",
-      unit: unit || "pcs",
-      completed: false
-    });
+      const data = await res.json();
 
-    setItemsForList(currentListName, items);
+      if (!res.ok) {
+        alert(data.message || "Could not add item.");
+        return;
+      }
 
-    itemInput.value = "";
-    if (quantityInput) quantityInput.value = "";
-    if (unitSelect) unitSelect.value = "pcs";
+      itemInput.value = "";
+      if (quantityInput) quantityInput.value = "";
+      if (unitSelect) unitSelect.value = "pcs";
 
-    renderItems();
+      await loadItems();
+    } catch (err) {
+      console.error("ADD ITEM ERROR:", err);
+      alert("Server error while adding the item.");
+    }
   }
 
-  function addMemberToCurrentList() {
-    if (!currentListName) {
+  async function addMemberToCurrentList() {
+    const userId = getUserId();
+
+    if (!currentListId) {
       alert("Create the list first.");
       return;
     }
@@ -368,56 +385,102 @@ document.addEventListener("DOMContentLoaded", async () => {
     const selectedName = memberSelect?.value.trim();
 
     if (!selectedName) {
-      alert("Select a contact first.");
+      alert("Please select a contact first.");
       return;
     }
 
-    const members = getMembersForList(currentListName);
+    try {
+      const res = await fetch(`/lists/${currentListId}/share`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          userId,
+          q: selectedName,
+          permission: "edit"
+        })
+      });
 
-    if (!members.includes(selectedName)) {
-      members.push(selectedName);
-      setMembersForList(currentListName, members);
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Could not share the list.");
+        return;
+      }
+
+      alert(`List shared with ${selectedName}.`);
+      memberSelect.value = "";
+    } catch (err) {
+      console.error("SHARE LIST ERROR:", err);
+      alert("Server error while sharing the list.");
     }
-
-    memberSelect.value = "";
-    renderMembers();
   }
 
-  function handleListClick(event) {
-    const toggleBtn = event.target.closest("[data-index]");
-    const deleteBtn = event.target.closest("[data-delete-index]");
-
-    if (!currentListName) return;
-
-    const items = getItemsForList(currentListName);
+  async function handleListClick(event) {
+    const toggleBtn = event.target.closest("[data-item-id]");
+    const deleteBtn = event.target.closest("[data-delete-item-id]");
+    const userId = getUserId();
 
     if (toggleBtn) {
-      const index = Number(toggleBtn.getAttribute("data-index"));
+      const itemId = Number(toggleBtn.getAttribute("data-item-id"));
 
-      if (!Number.isNaN(index) && items[index]) {
-        items[index].completed = !items[index].completed;
-        setItemsForList(currentListName, items);
-        renderItems();
+      try {
+        const item = currentItems.find((x) => x.id === itemId);
+        if (!item) return;
+
+        const res = await fetch(`/items/${itemId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            userId,
+            is_completed: !item.is_completed
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Could not update the item.");
+          return;
+        }
+
+        await loadItems();
+      } catch (err) {
+        console.error("TOGGLE ITEM ERROR:", err);
       }
     }
 
     if (deleteBtn) {
-      const index = Number(deleteBtn.getAttribute("data-delete-index"));
+      const itemId = Number(deleteBtn.getAttribute("data-delete-item-id"));
 
-      if (!Number.isNaN(index) && items[index]) {
-        items.splice(index, 1);
-        setItemsForList(currentListName, items);
-        renderItems();
+      try {
+        const res = await fetch(`/items/${itemId}?userId=${encodeURIComponent(userId)}`, {
+          method: "DELETE"
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Could not delete the item.");
+          return;
+        }
+
+        await loadItems();
+      } catch (err) {
+        console.error("DELETE ITEM ERROR:", err);
       }
     }
   }
 
   function loadListFromURL() {
     const params = new URLSearchParams(window.location.search);
-    const listNameFromURL = params.get("name");
+    const listIdFromURL = Number(params.get("id"));
 
-    if (listNameFromURL) {
-      openList(listNameFromURL);
+    if (listIdFromURL) {
+      openList(listIdFromURL);
     } else {
       updateListNameDisplays("New List");
       setControlsDisabled(true);
@@ -453,7 +516,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   shoppingList?.addEventListener("click", handleListClick);
 
   toggleMemberPickerBtn?.addEventListener("click", () => {
-    if (!currentListName) {
+    if (!currentListId) {
       alert("Create the list first.");
       return;
     }

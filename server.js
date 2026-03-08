@@ -5,26 +5,18 @@ const bcrypt = require("bcrypt");
 const { Resend } = require("resend");
 const crypto = require("crypto");
 
-
 require("dotenv").config();
 
 const app = express();
 app.use(express.json());
-
-// Frontend-filer (HTML/CSS/JS/images) ligger i /public
 app.use(express.static(path.join(__dirname, "public")));
 
-// DB:
-const dbConfig = {
+const db = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
   port: Number(process.env.DB_PORT || 3306),
-};
-
-const db = mysql.createPool({
-  ...dbConfig,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -34,7 +26,6 @@ const db = mysql.createPool({
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Kolla DB vid start (och logga snyggt)
 db.query("SELECT 1", (err) => {
   if (err) {
     console.log("DB ERROR:", err.message);
@@ -43,85 +34,152 @@ db.query("SELECT 1", (err) => {
   console.log("DB connected!");
 });
 
-// Startsidan (när man går in på domänen)
+// ---------- Helpers ----------
+
+function getAccessibleListSql() {
+  return `
+    SELECT l.*
+    FROM lists l
+    LEFT JOIN list_shares s ON l.id = s.list_id
+    WHERE l.id = ?
+      AND (l.owner_id = ? OR s.shared_with_user_id = ?)
+    LIMIT 1
+  `;
+}
+
+// ---------- Pages ----------
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "PublicHome1.html"));
 });
 
-//Skapa konto 
+// ---------- Auth ----------
+
 app.post("/register", async (req, res) => {
-  console.log("REGISTER HIT:", req.body);
+  const { fullName, username, email, password } = req.body;
 
-  const { username, email, password } = req.body;
-
-  // Snabb input-check så vi slipper trasiga inserts
-  if (!username || !email || !password) {
-    return res.status(400).json({ message: "Username, email och password krävs" });
+  if (!fullName || !username || !email || !password) {
+    return res.status(400).json({
+      message: "Full name, username, email and password are required.",
+    });
   }
 
   if (String(password).length < 6) {
-    return res.status(400).json({ message: "Lösenordet måste vara minst 6 tecken." });
+    return res.status(400).json({
+      message: "Password must be at least 6 characters long.",
+    });
   }
 
   try {
-    // Hashar lösenordet innan vi sparar (aldrig plain text i DB)
-    const password_hash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 10);
 
-    const sqlUser =
-      "INSERT INTO users (username, email, password_hash, is_verified) VALUES (?, ?, ?, 1)";
+    const sql = `
+      INSERT INTO users (full_name, username, email, password_hash, is_verified)
+      VALUES (?, ?, ?, ?, 1)
+    `;
 
-    db.query(sqlUser, [username, email, password_hash], (err) => {
+    db.query(sql, [fullName, username, email, passwordHash], (err) => {
       if (err) {
-        console.log("SQL USER INSERT ERROR:", err.code, err.message);
+        console.log("REGISTER ERROR:", err.code, err.message);
 
         if (err.code === "ER_DUP_ENTRY") {
-          return res.status(400).json({ message: "Username eller email finns redan" });
+          return res.status(400).json({
+            message: "Username or email already exists.",
+          });
         }
 
-        return res.status(500).json({ message: "Database error" });
+        return res.status(500).json({ message: "Database error." });
       }
 
-      return res.status(201).json({ message: "Konto skapat! Du kan logga in nu." });
+      return res.status(201).json({
+        message: "Account created successfully. You can log in now.",
+      });
     });
-  } catch (e) {
-    console.log("REGISTER ERROR:", e);
-    return res.status(500).json({ message: "Serverfel" });
+  } catch (error) {
+    console.log("REGISTER SERVER ERROR:", error.message);
+    return res.status(500).json({ message: "Server error." });
   }
 });
 
-// ===== Logga in =====
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
 
   if (!username || !password) {
-    return res.status(400).json({ message: "Username och password krävs" });
+    return res.status(400).json({
+      message: "Username and password are required.",
+    });
   }
 
-  // Vi hämtar bara det vi behöver: id + hash
-  const sql = "SELECT id, password_hash FROM users WHERE username=? LIMIT 1";
+  const sql = `
+    SELECT id, password_hash
+    FROM users
+    WHERE username = ?
+    LIMIT 1
+  `;
 
   db.query(sql, [username], async (err, rows) => {
-    if (err) return res.status(500).json({ message: "Database error" });
+    if (err) {
+      return res.status(500).json({ message: "Database error." });
+    }
 
     if (rows.length === 0) {
-      return res.status(401).json({ message: "Fel username eller lösenord" });
+      return res.status(401).json({
+        message: "Invalid username or password.",
+      });
     }
 
     const user = rows[0];
-
     const ok = await bcrypt.compare(password, user.password_hash);
-    if (!ok) return res.status(401).json({ message: "Fel username eller lösenord" });
 
-    // Frontend sparar userId i localStorage (behövs för contacts)
-    return res.json({ message: "Login OK", userId: user.id });
+    if (!ok) {
+      return res.status(401).json({
+        message: "Invalid username or password.",
+      });
+    }
+
+    return res.json({
+      message: "Login successful.",
+      userId: user.id,
+    });
   });
 });
 
-// ===== Sök användare (för att lägga till som kontakt / eller skicka request) =====
+app.get("/user/:id", (req, res) => {
+  const userId = Number(req.params.id);
+
+  if (!userId) {
+    return res.status(400).json({ message: "Invalid user ID." });
+  }
+
+  const sql = `
+    SELECT id, full_name, username, email
+    FROM users
+    WHERE id = ?
+    LIMIT 1
+  `;
+
+  db.query(sql, [userId], (err, rows) => {
+    if (err) {
+      console.log("GET USER ERROR:", err.message);
+      return res.status(500).json({ message: "Database error." });
+    }
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    return res.json(rows[0]);
+  });
+});
+
+// ---------- Users search ----------
+
 app.get("/users/search", (req, res) => {
   const q = (req.query.q || "").trim();
 
-  if (!q) return res.status(400).json({ message: "Missing search query" });
+  if (!q) {
+    return res.status(400).json({ message: "Search query is required." });
+  }
 
   const sql = `
     SELECT id, username, email
@@ -133,22 +191,25 @@ app.get("/users/search", (req, res) => {
   db.query(sql, [q, q], (err, rows) => {
     if (err) {
       console.log("SEARCH USER ERROR:", err.message);
-      return res.status(500).json({ message: "Database error" });
+      return res.status(500).json({ message: "Database error." });
     }
 
     if (rows.length === 0) {
-      return res.status(404).json({ message: "Ingen användare hittades." });
+      return res.status(404).json({ message: "User not found." });
     }
 
     return res.json({ user: rows[0] });
   });
 });
 
-// ===== Hämta kontakter =====
+// ---------- Contacts ----------
+
 app.get("/contacts", (req, res) => {
   const userId = Number(req.query.userId);
 
-  if (!userId) return res.status(400).json({ message: "Missing userId" });
+  if (!userId) {
+    return res.status(400).json({ message: "userId is required." });
+  }
 
   const sql = `
     SELECT c.id AS contactId, u.id AS userId, u.username, u.email
@@ -161,20 +222,19 @@ app.get("/contacts", (req, res) => {
   db.query(sql, [userId], (err, rows) => {
     if (err) {
       console.log("GET CONTACTS ERROR:", err.message);
-      return res.status(500).json({ message: "Database error" });
+      return res.status(500).json({ message: "Database error." });
     }
 
     return res.json({ contacts: rows });
   });
 });
 
-// ===== Lägg till kontakt (din gamla route, behåller den) =====
 app.post("/contacts", (req, res) => {
   const userId = Number(req.body.userId);
   const q = (req.body.q || "").trim();
 
   if (!userId || !q) {
-    return res.status(400).json({ message: "userId och q krävs" });
+    return res.status(400).json({ message: "userId and q are required." });
   }
 
   const findSql = `
@@ -186,43 +246,55 @@ app.post("/contacts", (req, res) => {
 
   db.query(findSql, [q, q], (err, rows) => {
     if (err) {
-      console.log("FIND USER ERROR:", err.message);
-      return res.status(500).json({ message: "Database error" });
+      console.log("FIND CONTACT USER ERROR:", err.message);
+      return res.status(500).json({ message: "Database error." });
     }
 
     if (rows.length === 0) {
-      return res.status(404).json({ message: "Ingen användare hittades." });
+      return res.status(404).json({ message: "User not found." });
     }
 
     const contactUser = rows[0];
 
     if (contactUser.id === userId) {
-      return res.status(400).json({ message: "Du kan inte lägga till dig själv." });
+      return res.status(400).json({
+        message: "You cannot add yourself as a contact.",
+      });
     }
 
-    const insertSql = `INSERT INTO contacts (user_id, contact_user_id) VALUES (?, ?)`;
+    const insertSql = `
+      INSERT INTO contacts (user_id, contact_user_id)
+      VALUES (?, ?)
+    `;
 
     db.query(insertSql, [userId, contactUser.id], (err2) => {
       if (err2) {
         if (err2.code === "ER_DUP_ENTRY") {
-          return res.status(400).json({ message: "Den här kontakten finns redan." });
+          return res.status(400).json({
+            message: "This contact already exists.",
+          });
         }
+
         console.log("INSERT CONTACT ERROR:", err2.message);
-        return res.status(500).json({ message: "Database error" });
+        return res.status(500).json({ message: "Database error." });
       }
 
-      return res.status(201).json({ message: "Kontakt sparad!", contact: contactUser });
+      return res.status(201).json({
+        message: "Contact added successfully.",
+        contact: contactUser,
+      });
     });
   });
 });
 
-// ===== Ta bort kontakt =====
 app.delete("/contacts/:contactId", (req, res) => {
   const contactId = Number(req.params.contactId);
   const userId = Number(req.query.userId);
 
   if (!contactId || !userId) {
-    return res.status(400).json({ message: "contactId och userId krävs" });
+    return res.status(400).json({
+      message: "contactId and userId are required.",
+    });
   }
 
   const findSql = `
@@ -235,11 +307,11 @@ app.delete("/contacts/:contactId", (req, res) => {
   db.query(findSql, [contactId, userId], (err, rows) => {
     if (err) {
       console.log("DELETE CONTACT FIND ERROR:", err.message);
-      return res.status(500).json({ message: "Database error" });
+      return res.status(500).json({ message: "Database error." });
     }
 
     if (rows.length === 0) {
-      return res.status(404).json({ message: "Kontakt hittades inte." });
+      return res.status(404).json({ message: "Contact not found." });
     }
 
     const otherUserId = rows[0].contact_user_id;
@@ -253,27 +325,26 @@ app.delete("/contacts/:contactId", (req, res) => {
     db.query(deleteSql, [userId, otherUserId, otherUserId, userId], (err2) => {
       if (err2) {
         console.log("DELETE CONTACT ERROR:", err2.message);
-        return res.status(500).json({ message: "Database error" });
+        return res.status(500).json({ message: "Database error." });
       }
 
-      return res.json({ message: "Kontakt borttagen." });
+      return res.json({ message: "Contact removed successfully." });
     });
   });
 });
 
+// ---------- Friend Requests ----------
 
-// FRIEND REQUESTS (nytt)
-
-// Skicka request till någon som finns (via username eller email)
 app.post("/friend-requests", (req, res) => {
   const fromUserId = Number(req.body.fromUserId);
   const q = (req.body.q || "").trim();
 
   if (!fromUserId || !q) {
-    return res.status(400).json({ message: "fromUserId och q krävs" });
+    return res.status(400).json({
+      message: "fromUserId and q are required.",
+    });
   }
 
-  // Hitta mottagaren
   const findSql = `
     SELECT id, username, email
     FROM users
@@ -284,31 +355,39 @@ app.post("/friend-requests", (req, res) => {
   db.query(findSql, [q, q], (err, rows) => {
     if (err) {
       console.log("FR FIND USER ERROR:", err.message);
-      return res.status(500).json({ message: "Database error" });
+      return res.status(500).json({ message: "Database error." });
     }
 
     if (rows.length === 0) {
-      return res.status(404).json({ message: "Ingen användare hittades." });
+      return res.status(404).json({ message: "User not found." });
     }
 
     const toUser = rows[0];
 
     if (toUser.id === fromUserId) {
-      return res.status(400).json({ message: "Du kan inte skicka request till dig själv." });
+      return res.status(400).json({
+        message: "You cannot send a request to yourself.",
+      });
     }
 
-
     const contactCheckSql = `
-      SELECT 1 FROM contacts
-      WHERE user_id=? AND contact_user_id=?
+      SELECT 1
+      FROM contacts
+      WHERE user_id = ? AND contact_user_id = ?
       LIMIT 1
     `;
 
     db.query(contactCheckSql, [fromUserId, toUser.id], (err2, rows2) => {
-      if (err2) return res.status(500).json({ message: "Database error" });
-      if (rows2.length > 0) return res.status(400).json({ message: "Ni är redan kontakter." });
+      if (err2) {
+        return res.status(500).json({ message: "Database error." });
+      }
 
-      // Skapa request (unik key stoppar dubletter)
+      if (rows2.length > 0) {
+        return res.status(400).json({
+          message: "You are already contacts.",
+        });
+      }
+
       const insertSql = `
         INSERT INTO friend_requests (from_user_id, to_user_id, status)
         VALUES (?, ?, 'pending')
@@ -317,47 +396,57 @@ app.post("/friend-requests", (req, res) => {
       db.query(insertSql, [fromUserId, toUser.id], (err3) => {
         if (err3) {
           if (err3.code === "ER_DUP_ENTRY") {
-            return res.status(400).json({ message: "Request finns redan." });
+            return res.status(400).json({
+              message: "A request already exists.",
+            });
           }
+
           console.log("FR INSERT ERROR:", err3.message);
-          return res.status(500).json({ message: "Database error" });
+          return res.status(500).json({ message: "Database error." });
         }
 
-        return res.status(201).json({ message: "Request skickad!", toUser });
+        return res.status(201).json({
+          message: "Friend request sent successfully.",
+          toUser,
+        });
       });
     });
   });
 });
 
-// Hämta mina inkommande requests 
 app.get("/friend-requests", (req, res) => {
   const userId = Number(req.query.userId);
-  if (!userId) return res.status(400).json({ message: "Missing userId" });
+
+  if (!userId) {
+    return res.status(400).json({ message: "userId is required." });
+  }
 
   const sql = `
     SELECT fr.id, fr.from_user_id, u.username, u.email, fr.created_at
     FROM friend_requests fr
     JOIN users u ON u.id = fr.from_user_id
-    WHERE fr.to_user_id = ? AND fr.status='pending'
+    WHERE fr.to_user_id = ? AND fr.status = 'pending'
     ORDER BY fr.created_at DESC
   `;
 
   db.query(sql, [userId], (err, rows) => {
     if (err) {
-      console.log("FR GET ERROR:", err.message);
-      return res.status(500).json({ message: "Database error" });
+      console.log("GET FRIEND REQUESTS ERROR:", err.message);
+      return res.status(500).json({ message: "Database error." });
     }
+
     return res.json({ requests: rows });
   });
 });
 
-// Accept request och lägg till båda användarna i contacts
 app.post("/friend-requests/:id/accept", (req, res) => {
   const requestId = Number(req.params.id);
   const userId = Number(req.body.userId);
 
   if (!requestId || !userId) {
-    return res.status(400).json({ message: "requestId och userId krävs" });
+    return res.status(400).json({
+      message: "requestId and userId are required.",
+    });
   }
 
   const getSql = `
@@ -368,10 +457,12 @@ app.post("/friend-requests/:id/accept", (req, res) => {
   `;
 
   db.query(getSql, [requestId], (err, rows) => {
-    if (err) return res.status(500).json({ message: "Database error" });
+    if (err) {
+      return res.status(500).json({ message: "Database error." });
+    }
 
     if (rows.length === 0) {
-      return res.status(404).json({ message: "Request hittades inte." });
+      return res.status(404).json({ message: "Friend request not found." });
     }
 
     const fr = rows[0];
@@ -381,30 +472,35 @@ app.post("/friend-requests/:id/accept", (req, res) => {
     }
 
     if (fr.status !== "pending") {
-      return res.status(400).json({ message: "Request är inte pending." });
+      return res.status(400).json({ message: "This request is not pending." });
     }
 
-    const insertSql = `INSERT INTO contacts (user_id, contact_user_id) VALUES (?, ?)`;
+    const insertSql = `
+      INSERT INTO contacts (user_id, contact_user_id)
+      VALUES (?, ?)
+    `;
 
     db.query(insertSql, [fr.to_user_id, fr.from_user_id], (err2) => {
       if (err2 && err2.code !== "ER_DUP_ENTRY") {
-        return res.status(500).json({ message: "Database error" });
+        return res.status(500).json({ message: "Database error." });
       }
 
       db.query(insertSql, [fr.from_user_id, fr.to_user_id], (err3) => {
         if (err3 && err3.code !== "ER_DUP_ENTRY") {
-          return res.status(500).json({ message: "Database error" });
+          return res.status(500).json({ message: "Database error." });
         }
 
-        const deleteSql = `DELETE FROM friend_requests WHERE id = ?`;
+        db.query(
+          "DELETE FROM friend_requests WHERE id = ?",
+          [requestId],
+          (err4) => {
+            if (err4) {
+              return res.status(500).json({ message: "Database error." });
+            }
 
-        db.query(deleteSql, [requestId], (err4) => {
-          if (err4) {
-            return res.status(500).json({ message: "Database error" });
+            return res.json({ message: "Friend request accepted." });
           }
-
-          return res.json({ message: "Request accepted!" });
-        });
+        );
       });
     });
   });
@@ -415,7 +511,9 @@ app.post("/friend-requests/:id/decline", (req, res) => {
   const userId = Number(req.body.userId);
 
   if (!requestId || !userId) {
-    return res.status(400).json({ message: "requestId och userId krävs" });
+    return res.status(400).json({
+      message: "requestId and userId are required.",
+    });
   }
 
   const sql = `
@@ -424,52 +522,562 @@ app.post("/friend-requests/:id/decline", (req, res) => {
   `;
 
   db.query(sql, [requestId, userId], (err, result) => {
-    if (err) return res.status(500).json({ message: "Database error" });
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Request hittades inte." });
+    if (err) {
+      return res.status(500).json({ message: "Database error." });
     }
 
-    return res.json({ message: "Request declined." });
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Friend request not found." });
+    }
+
+    return res.json({ message: "Friend request declined." });
   });
 });
 
+// ---------- Lists ----------
 
+app.post("/lists", (req, res) => {
+  const userId = Number(req.body.userId);
+  const title = (req.body.title || "").trim();
+  const listType = (req.body.listType || "other").trim();
+
+  if (!userId || !title) {
+    return res.status(400).json({
+      message: "userId and title are required.",
+    });
+  }
+
+  const sql = `
+    INSERT INTO lists (owner_id, title, list_type)
+    VALUES (?, ?, ?)
+  `;
+
+  db.query(sql, [userId, title, listType], (err, result) => {
+    if (err) {
+      console.log("CREATE LIST ERROR:", err.message);
+      return res.status(500).json({ message: "Database error." });
+    }
+
+    return res.status(201).json({
+      message: "List created successfully.",
+      listId: result.insertId,
+    });
+  });
+});
+
+app.get("/lists", (req, res) => {
+  const userId = Number(req.query.userId);
+
+  if (!userId) {
+    return res.status(400).json({ message: "userId is required." });
+  }
+
+  const sql = `
+    SELECT DISTINCT
+      l.id,
+      l.title,
+      l.list_type,
+      l.owner_id,
+      l.created_at,
+      l.updated_at,
+      CASE
+        WHEN l.owner_id = ? THEN 'owner'
+        ELSE 'shared'
+      END AS relation_type
+    FROM lists l
+    LEFT JOIN list_shares s ON l.id = s.list_id
+    WHERE l.owner_id = ? OR s.shared_with_user_id = ?
+    ORDER BY l.updated_at DESC, l.id DESC
+  `;
+
+  db.query(sql, [userId, userId, userId], (err, rows) => {
+    if (err) {
+      console.log("GET LISTS ERROR:", err.message);
+      return res.status(500).json({ message: "Database error." });
+    }
+
+    return res.json({ lists: rows });
+  });
+});
+
+app.get("/lists/:id", (req, res) => {
+  const listId = Number(req.params.id);
+  const userId = Number(req.query.userId);
+
+  if (!listId || !userId) {
+    return res.status(400).json({
+      message: "listId and userId are required.",
+    });
+  }
+
+  db.query(getAccessibleListSql(), [listId, userId, userId], (err, rows) => {
+    if (err) {
+      console.log("GET LIST ERROR:", err.message);
+      return res.status(500).json({ message: "Database error." });
+    }
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "List not found." });
+    }
+
+    return res.json({ list: rows[0] });
+  });
+});
+
+app.delete("/lists/:id", (req, res) => {
+  const listId = Number(req.params.id);
+  const userId = Number(req.query.userId);
+
+  if (!listId || !userId) {
+    return res.status(400).json({
+      message: "listId and userId are required.",
+    });
+  }
+
+  const sql = `
+    SELECT id
+    FROM lists
+    WHERE id = ? AND owner_id = ?
+    LIMIT 1
+  `;
+
+  db.query(sql, [listId, userId], (err, rows) => {
+    if (err) {
+      console.log("DELETE LIST ERROR:", err.message);
+      return res.status(500).json({ message: "Database error." });
+    }
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        message: "List not found or access denied.",
+      });
+    }
+
+    db.query("DELETE FROM lists WHERE id = ?", [listId], (err2) => {
+      if (err2) {
+        return res.status(500).json({ message: "Database error." });
+      }
+
+      return res.json({ message: "List deleted successfully." });
+    });
+  });
+});
+
+app.get("/lists/:id/items", (req, res) => {
+  const listId = Number(req.params.id);
+  const userId = Number(req.query.userId);
+
+  if (!listId || !userId) {
+    return res.status(400).json({
+      message: "listId and userId are required.",
+    });
+  }
+
+  db.query(getAccessibleListSql(), [listId, userId, userId], (err, rows) => {
+    if (err) {
+      console.log("GET LIST ITEMS ACCESS ERROR:", err.message);
+      return res.status(500).json({ message: "Database error." });
+    }
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "List not found." });
+    }
+
+    const sql = `
+      SELECT id, text, quantity, unit, is_completed, position_index, created_at
+      FROM list_items
+      WHERE list_id = ?
+      ORDER BY position_index ASC, id ASC
+    `;
+
+    db.query(sql, [listId], (err2, items) => {
+      if (err2) {
+        console.log("GET LIST ITEMS ERROR:", err2.message);
+        return res.status(500).json({ message: "Database error." });
+      }
+
+      return res.json({ items });
+    });
+  });
+});
+
+app.post("/lists/:id/items", (req, res) => {
+  const listId = Number(req.params.id);
+  const userId = Number(req.body.userId);
+  const text = (req.body.text || "").trim();
+  const quantity = (req.body.quantity || "1").toString().trim();
+  const unit = (req.body.unit || "pcs").toString().trim();
+
+  if (!listId || !userId || !text) {
+    return res.status(400).json({
+      message: "listId, userId and text are required.",
+    });
+  }
+
+  db.query(getAccessibleListSql(), [listId, userId, userId], (err, rows) => {
+    if (err) {
+      console.log("ADD ITEM ACCESS ERROR:", err.message);
+      return res.status(500).json({ message: "Database error." });
+    }
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "List not found." });
+    }
+
+    const list = rows[0];
+
+    if (list.owner_id !== userId) {
+      const permissionSql = `
+        SELECT permission
+        FROM list_shares
+        WHERE list_id = ? AND shared_with_user_id = ?
+        LIMIT 1
+      `;
+
+      db.query(permissionSql, [listId, userId], (err2, shareRows) => {
+        if (err2) {
+          console.log("ADD ITEM PERMISSION ERROR:", err2.message);
+          return res.status(500).json({ message: "Database error." });
+        }
+
+        if (shareRows.length === 0 || shareRows[0].permission !== "edit") {
+          return res.status(403).json({
+            message: "You do not have permission to edit this list.",
+          });
+        }
+
+        insertItem();
+      });
+    } else {
+      insertItem();
+    }
+
+    function insertItem() {
+      const posSql = `
+        SELECT COALESCE(MAX(position_index), -1) AS maxPos
+        FROM list_items
+        WHERE list_id = ?
+      `;
+
+      db.query(posSql, [listId], (err3, posRows) => {
+        if (err3) {
+          console.log("ITEM POSITION ERROR:", err3.message);
+          return res.status(500).json({ message: "Database error." });
+        }
+
+        const nextPos = Number(posRows[0].maxPos) + 1;
+
+        const insertSql = `
+          INSERT INTO list_items (list_id, text, quantity, unit, position_index)
+          VALUES (?, ?, ?, ?, ?)
+        `;
+
+        db.query(
+          insertSql,
+          [listId, text, quantity, unit, nextPos],
+          (err4, result) => {
+            if (err4) {
+              console.log("ADD ITEM ERROR:", err4.message);
+              return res.status(500).json({ message: "Database error." });
+            }
+
+            return res.status(201).json({
+              message: "Item added successfully.",
+              itemId: result.insertId,
+            });
+          }
+        );
+      });
+    }
+  });
+});
+
+app.put("/items/:itemId", (req, res) => {
+  const itemId = Number(req.params.itemId);
+  const userId = Number(req.body.userId);
+  const text = req.body.text;
+  const isCompleted = req.body.is_completed;
+
+  if (!itemId || !userId) {
+    return res.status(400).json({
+      message: "itemId and userId are required.",
+    });
+  }
+
+  const findSql = `
+    SELECT li.id, li.list_id, l.owner_id
+    FROM list_items li
+    JOIN lists l ON l.id = li.list_id
+    LEFT JOIN list_shares s ON s.list_id = l.id AND s.shared_with_user_id = ?
+    WHERE li.id = ?
+      AND (l.owner_id = ? OR s.shared_with_user_id = ?)
+    LIMIT 1
+  `;
+
+  db.query(findSql, [userId, itemId, userId, userId], (err, rows) => {
+    if (err) {
+      console.log("UPDATE ITEM FIND ERROR:", err.message);
+      return res.status(500).json({ message: "Database error." });
+    }
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Item not found." });
+    }
+
+    const itemRow = rows[0];
+
+    function doUpdate() {
+      const fields = [];
+      const values = [];
+
+      if (typeof text === "string") {
+        fields.push("text = ?");
+        values.push(text.trim());
+      }
+
+      if (typeof isCompleted !== "undefined") {
+        fields.push("is_completed = ?");
+        values.push(isCompleted ? 1 : 0);
+      }
+
+      if (fields.length === 0) {
+        return res.status(400).json({ message: "Nothing to update." });
+      }
+
+      const sql = `
+        UPDATE list_items
+        SET ${fields.join(", ")}
+        WHERE id = ?
+      `;
+
+      values.push(itemId);
+
+      db.query(sql, values, (err2) => {
+        if (err2) {
+          console.log("UPDATE ITEM ERROR:", err2.message);
+          return res.status(500).json({ message: "Database error." });
+        }
+
+        return res.json({ message: "Item updated successfully." });
+      });
+    }
+
+    if (itemRow.owner_id === userId) {
+      return doUpdate();
+    }
+
+    const permissionSql = `
+      SELECT permission
+      FROM list_shares
+      WHERE list_id = ? AND shared_with_user_id = ?
+      LIMIT 1
+    `;
+
+    db.query(permissionSql, [itemRow.list_id, userId], (err3, shareRows) => {
+      if (err3) {
+        console.log("UPDATE ITEM PERMISSION ERROR:", err3.message);
+        return res.status(500).json({ message: "Database error." });
+      }
+
+      if (shareRows.length === 0 || shareRows[0].permission !== "edit") {
+        return res.status(403).json({
+          message: "You do not have permission to edit this list.",
+        });
+      }
+
+      return doUpdate();
+    });
+  });
+});
+
+app.delete("/items/:itemId", (req, res) => {
+  const itemId = Number(req.params.itemId);
+  const userId = Number(req.query.userId);
+
+  if (!itemId || !userId) {
+    return res.status(400).json({
+      message: "itemId and userId are required.",
+    });
+  }
+
+  const findSql = `
+    SELECT li.id, li.list_id, l.owner_id
+    FROM list_items li
+    JOIN lists l ON l.id = li.list_id
+    LEFT JOIN list_shares s ON s.list_id = l.id AND s.shared_with_user_id = ?
+    WHERE li.id = ?
+      AND (l.owner_id = ? OR s.shared_with_user_id = ?)
+    LIMIT 1
+  `;
+
+  db.query(findSql, [userId, itemId, userId, userId], (err, rows) => {
+    if (err) {
+      console.log("DELETE ITEM FIND ERROR:", err.message);
+      return res.status(500).json({ message: "Database error." });
+    }
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Item not found." });
+    }
+
+    const itemRow = rows[0];
+
+    function doDelete() {
+      db.query("DELETE FROM list_items WHERE id = ?", [itemId], (err2) => {
+        if (err2) {
+          console.log("DELETE ITEM ERROR:", err2.message);
+          return res.status(500).json({ message: "Database error." });
+        }
+
+        return res.json({ message: "Item deleted successfully." });
+      });
+    }
+
+    if (itemRow.owner_id === userId) {
+      return doDelete();
+    }
+
+    const permissionSql = `
+      SELECT permission
+      FROM list_shares
+      WHERE list_id = ? AND shared_with_user_id = ?
+      LIMIT 1
+    `;
+
+    db.query(permissionSql, [itemRow.list_id, userId], (err3, shareRows) => {
+      if (err3) {
+        console.log("DELETE ITEM PERMISSION ERROR:", err3.message);
+        return res.status(500).json({ message: "Database error." });
+      }
+
+      if (shareRows.length === 0 || shareRows[0].permission !== "edit") {
+        return res.status(403).json({
+          message: "You do not have permission to edit this list.",
+        });
+      }
+
+      return doDelete();
+    });
+  });
+});
+
+app.post("/lists/:id/share", (req, res) => {
+  const listId = Number(req.params.id);
+  const userId = Number(req.body.userId);
+  const q = (req.body.q || "").trim();
+  const permission = req.body.permission === "edit" ? "edit" : "view";
+
+  if (!listId || !userId || !q) {
+    return res.status(400).json({
+      message: "listId, userId and q are required.",
+    });
+  }
+
+  const ownerSql = `
+    SELECT id
+    FROM lists
+    WHERE id = ? AND owner_id = ?
+    LIMIT 1
+  `;
+
+  db.query(ownerSql, [listId, userId], (err, ownerRows) => {
+    if (err) {
+      console.log("SHARE LIST OWNER ERROR:", err.message);
+      return res.status(500).json({ message: "Database error." });
+    }
+
+    if (ownerRows.length === 0) {
+      return res.status(403).json({
+        message: "Only the owner can share this list.",
+      });
+    }
+
+    const findUserSql = `
+      SELECT id, username, email
+      FROM users
+      WHERE username = ? OR email = ?
+      LIMIT 1
+    `;
+
+    db.query(findUserSql, [q, q], (err2, userRows) => {
+      if (err2) {
+        console.log("SHARE LIST FIND USER ERROR:", err2.message);
+        return res.status(500).json({ message: "Database error." });
+      }
+
+      if (userRows.length === 0) {
+        return res.status(404).json({ message: "User not found." });
+      }
+
+      const targetUser = userRows[0];
+
+      if (targetUser.id === userId) {
+        return res.status(400).json({
+          message: "You cannot share a list with yourself.",
+        });
+      }
+
+      const insertSql = `
+        INSERT INTO list_shares (list_id, shared_with_user_id, permission)
+        VALUES (?, ?, ?)
+      `;
+
+      db.query(insertSql, [listId, targetUser.id, permission], (err3) => {
+        if (err3) {
+          if (err3.code === "ER_DUP_ENTRY") {
+            return res.status(400).json({
+              message: "This list is already shared with that user.",
+            });
+          }
+
+          console.log("SHARE LIST INSERT ERROR:", err3.message);
+          return res.status(500).json({ message: "Database error." });
+        }
+
+        return res.status(201).json({
+          message: "List shared successfully.",
+          user: targetUser,
+        });
+      });
+    });
+  });
+});
+
+// ---------- Password reset ----------
 
 app.post("/forgot-password", (req, res) => {
   const email = (req.body.email || "").trim();
 
   if (!email) {
-    return res.status(400).json({ message: "Email krävs." });
+    return res.status(400).json({ message: "Email is required." });
   }
 
-  const findUserSql = `
+  const sql = `
     SELECT id, email
     FROM users
     WHERE email = ?
     LIMIT 1
   `;
 
-  db.query(findUserSql, [email], (err, rows) => {
+  db.query(sql, [email], (err, rows) => {
     if (err) {
       console.log("FORGOT PASSWORD ERROR:", err.message);
-      return res.status(500).json({ message: "Database error" });
+      return res.status(500).json({ message: "Database error." });
     }
 
     if (rows.length === 0) {
-      return res.json({ message: "Om email finns skickas en reset-länk." });
+      return res.json({
+        message: "If the email exists, a reset link will be sent.",
+      });
     }
 
     const user = rows[0];
     const token = crypto.randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
 
-    const deleteOldSql = `DELETE FROM password_resets WHERE user_id = ?`;
-
-    db.query(deleteOldSql, [user.id], (err2) => {
+    db.query("DELETE FROM password_resets WHERE user_id = ?", [user.id], (err2) => {
       if (err2) {
-        console.log("DELETE OLD TOKEN ERROR:", err2.message);
-        return res.status(500).json({ message: "Database error" });
+        return res.status(500).json({ message: "Database error." });
       }
 
       const insertSql = `
@@ -479,8 +1087,7 @@ app.post("/forgot-password", (req, res) => {
 
       db.query(insertSql, [user.id, token, expiresAt], async (err3) => {
         if (err3) {
-          console.log("INSERT RESET TOKEN ERROR:", err3.message);
-          return res.status(500).json({ message: "Database error" });
+          return res.status(500).json({ message: "Database error." });
         }
 
         const resetLink = `${process.env.BASE_URL}/ResetPassword.html?token=${token}`;
@@ -499,7 +1106,7 @@ app.post("/forgot-password", (req, res) => {
             `,
           });
 
-          return res.json({ message: "Check your email!" });
+          return res.json({ message: "Check your email." });
         } catch (mailErr) {
           console.log("RESEND ERROR:", mailErr);
           return res.status(500).json({ message: "Could not send email." });
@@ -514,11 +1121,15 @@ app.post("/reset-password", async (req, res) => {
   const password = req.body.password;
 
   if (!token || !password) {
-    return res.status(400).json({ message: "Token och lösenord krävs." });
+    return res.status(400).json({
+      message: "Token and password are required.",
+    });
   }
 
   if (String(password).length < 6) {
-    return res.status(400).json({ message: "Lösenordet måste vara minst 6 tecken." });
+    return res.status(400).json({
+      message: "Password must be at least 6 characters long.",
+    });
   }
 
   const sql = `
@@ -531,54 +1142,120 @@ app.post("/reset-password", async (req, res) => {
   db.query(sql, [token], async (err, rows) => {
     if (err) {
       console.log("RESET PASSWORD ERROR:", err.message);
-      return res.status(500).json({ message: "Database error" });
+      return res.status(500).json({ message: "Database error." });
     }
 
     if (rows.length === 0) {
-      return res.status(400).json({ message: "Ogiltig eller gammal länk." });
+      return res.status(400).json({
+        message: "Invalid or expired reset link.",
+      });
     }
 
     const resetRow = rows[0];
 
     if (new Date() > new Date(resetRow.expires_at)) {
-      return res.status(400).json({ message: "Länken har gått ut." });
+      return res.status(400).json({
+        message: "This reset link has expired.",
+      });
     }
 
     try {
-      const password_hash = await bcrypt.hash(password, 10);
+      const passwordHash = await bcrypt.hash(password, 10);
 
-      const updateSql = `
-        UPDATE users
-        SET password_hash = ?
-        WHERE id = ?
-      `;
-
-      db.query(updateSql, [password_hash, resetRow.user_id], (err2) => {
-        if (err2) {
-          console.log("UPDATE PASSWORD ERROR:", err2.message);
-          return res.status(500).json({ message: "Database error" });
-        }
-
-        const deleteSql = `DELETE FROM password_resets WHERE user_id = ?`;
-
-        db.query(deleteSql, [resetRow.user_id], (err3) => {
-          if (err3) {
-            console.log("DELETE RESET TOKEN ERROR:", err3.message);
-            return res.status(500).json({ message: "Database error" });
+      db.query(
+        "UPDATE users SET password_hash = ? WHERE id = ?",
+        [passwordHash, resetRow.user_id],
+        (err2) => {
+          if (err2) {
+            return res.status(500).json({ message: "Database error." });
           }
 
-          return res.json({ message: "Lösenordet har uppdaterats." });
-        });
-      });
-    } catch (e) {
-      console.log("HASH ERROR:", e.message);
-      return res.status(500).json({ message: "Serverfel." });
+          db.query(
+            "DELETE FROM password_resets WHERE user_id = ?",
+            [resetRow.user_id],
+            (err3) => {
+              if (err3) {
+                return res.status(500).json({ message: "Database error." });
+              }
+
+              return res.json({ message: "Password updated successfully." });
+            }
+          );
+        }
+      );
+    } catch (error) {
+      console.log("RESET PASSWORD HASH ERROR:", error.message);
+      return res.status(500).json({ message: "Server error." });
     }
   });
 });
 
-// Startar servern
+app.post("/change-password", async (req, res) => {
+  const userId = Number(req.body.userId);
+  const currentPassword = req.body.currentPassword;
+  const newPassword = req.body.newPassword;
+
+  if (!userId || !currentPassword || !newPassword) {
+    return res.status(400).json({
+      message: "userId, currentPassword and newPassword are required.",
+    });
+  }
+
+  if (String(newPassword).length < 6) {
+    return res.status(400).json({
+      message: "New password must be at least 6 characters long.",
+    });
+  }
+
+  const sql = `
+    SELECT password_hash
+    FROM users
+    WHERE id = ?
+    LIMIT 1
+  `;
+
+  db.query(sql, [userId], async (err, rows) => {
+    if (err) {
+      console.log("CHANGE PASSWORD ERROR:", err.message);
+      return res.status(500).json({ message: "Database error." });
+    }
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    try {
+      const ok = await bcrypt.compare(currentPassword, rows[0].password_hash);
+
+      if (!ok) {
+        return res.status(401).json({
+          message: "Current password is incorrect.",
+        });
+      }
+
+      const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+      db.query(
+        "UPDATE users SET password_hash = ? WHERE id = ?",
+        [newPasswordHash, userId],
+        (err2) => {
+          if (err2) {
+            return res.status(500).json({ message: "Database error." });
+          }
+
+          return res.json({ message: "Password changed successfully." });
+        }
+      );
+    } catch (error) {
+      console.log("CHANGE PASSWORD HASH ERROR:", error.message);
+      return res.status(500).json({ message: "Server error." });
+    }
+  });
+});
+
+// ---------- Start server ----------
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+  console.log(`Server running on port ${PORT}`);
 });
