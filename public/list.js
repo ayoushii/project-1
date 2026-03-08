@@ -26,19 +26,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   function toggleCreateMenu() {
     if (!createMenu) return;
-    createMenu.style.display =
-      createMenu.style.display === "block" ? "none" : "block";
+    createMenu.style.display = createMenu.style.display === "block" ? "none" : "block";
   }
 
   function getListPage(list) {
-    if (list.list_type === "private") {
-      return "privatelist.html";
-    }
-
-    if (list.list_type === "family") {
-      return "familylist.html";
-    }
-
+    if (list.list_type === "private") return "privatelist.html";
+    if (list.list_type === "family") return "familylist.html";
     return "other.html";
   }
 
@@ -128,36 +121,39 @@ document.addEventListener("DOMContentLoaded", async () => {
     link.textContent = list.title;
     link.className = "saved-list-link";
 
-    const deleteBtn = document.createElement("button");
-    deleteBtn.type = "button";
-    deleteBtn.className = "delete-list-btn";
-    deleteBtn.setAttribute("aria-label", `Delete ${list.title}`);
-
-    const icon = document.createElement("i");
-    icon.className = "fa-solid fa-trash";
-    deleteBtn.appendChild(icon);
-
-    deleteBtn.addEventListener("click", async (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      const confirmed = confirm(`Delete the list "${list.title}"?`);
-      if (!confirmed) return;
-
-      const result = await deleteListFromDB(list.id);
-
-      if (!result.ok) {
-        alert(result.message);
-        return;
-      }
-
-      moveListToHistory(list);
-      await loadLists();
-      loadHistoryLists();
-    });
-
     li.appendChild(link);
-    li.appendChild(deleteBtn);
+
+    if (list.relation_type === "owner") {
+      const deleteBtn = document.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.className = "delete-list-btn";
+      deleteBtn.setAttribute("aria-label", `Delete ${list.title}`);
+
+      const icon = document.createElement("i");
+      icon.className = "fa-solid fa-trash";
+      deleteBtn.appendChild(icon);
+
+      deleteBtn.addEventListener("click", async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const confirmed = confirm(`Delete the list "${list.title}"?`);
+        if (!confirmed) return;
+
+        const result = await deleteListFromDB(list.id);
+
+        if (!result.ok) {
+          alert(result.message);
+          return;
+        }
+
+        moveListToHistory(list);
+        await loadLists();
+        loadHistoryLists();
+      });
+
+      li.appendChild(deleteBtn);
+    }
 
     return li;
   }

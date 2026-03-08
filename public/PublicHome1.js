@@ -1,7 +1,6 @@
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => root.querySelectorAll(selector);
 
-// Hjälper till att visa och gömma modaler
 function hide(el) {
   if (el) {
     el.classList.add("hidden-modal");
@@ -14,7 +13,6 @@ function show(el) {
   }
 }
 
-// Skickar data till backend
 async function postJSON(url, body) {
   const res = await fetch(url, {
     method: "POST",
@@ -32,25 +30,21 @@ async function postJSON(url, body) {
   return { res, data };
 }
 
-// Öppnar login-rutan
 function showLogin() {
   hide($("#signup-box"));
   show($("#login-box"));
 }
 
-// Öppnar signup-rutan
 function showSignup() {
   hide($("#login-box"));
   show($("#signup-box"));
 }
 
-// Stänger båda rutorna
 function closeAuth() {
   hide($("#login-box"));
   hide($("#signup-box"));
 }
 
-// Sparar login-status
 function setLoggedIn(flag) {
   if (flag) {
     localStorage.setItem("isLoggedIn", "true");
@@ -59,14 +53,12 @@ function setLoggedIn(flag) {
   }
 }
 
-// Sparar userId
 function setUserId(id) {
   if (id) {
     localStorage.setItem("userId", String(id));
   }
 }
 
-// Login
 async function handleLogin() {
   const username = $("#login-username")?.value.trim();
   const password = $("#login-password")?.value;
@@ -93,7 +85,6 @@ async function handleLogin() {
   }
 }
 
-// Signup
 async function handleSignup() {
   const email = $("#signup-email")?.value.trim() || "";
   const fullName = $("#signup-fullname")?.value.trim() || "";

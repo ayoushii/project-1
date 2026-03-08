@@ -14,13 +14,18 @@ const memberSelect = document.getElementById("memberSelect");
 const addMemberBtn = document.getElementById("addMemberBtn");
 const memberList = document.getElementById("memberList");
 const ownerText = document.getElementById("ownerText");
+const memberActionInfo = document.getElementById("memberActionInfo");
 
+const pendingRequestsSection = document.getElementById("pendingRequestsSection");
+const pendingRequestsList = document.getElementById("pendingRequestsList");
 
 let currentListId = null;
 let currentListName = null;
 let shoppingItems = [];
 let contactsCache = [];
 let sharedMembers = [];
+let currentUserRole = null;
+let pendingShareRequests = [];
 
 function getUserId() {
   const id = localStorage.getItem("userId");
@@ -146,19 +151,8 @@ function createItemRow(item) {
   const text = createItemText(item);
   const badge = createBadge(item);
 
-  const editBtn = createActionButton(
-    "edit-btn",
-    "fa-solid fa-pen",
-    "data-edit-item-id",
-    item.id
-  );
-
-  const deleteBtn = createActionButton(
-    "delete-btn",
-    "fa-solid fa-trash",
-    "data-delete-item-id",
-    item.id
-  );
+  const editBtn = createActionButton("edit-btn", "fa-solid fa-pen", "data-edit-item-id", item.id);
+  const deleteBtn = createActionButton("delete-btn", "fa-solid fa-trash", "data-delete-item-id", item.id);
 
   left.appendChild(checkBtn);
   left.appendChild(text);
@@ -221,18 +215,21 @@ function createMemberChip(member, index) {
   const text = document.createElement("span");
   text.textContent = member.username;
 
-  const removeBtn = document.createElement("button");
-  removeBtn.type = "button";
-  removeBtn.className = "member-remove-btn";
-  removeBtn.setAttribute("data-member-remove-index", index);
-
-  const removeIcon = document.createElement("i");
-  removeIcon.className = "fa-solid fa-xmark";
-  removeBtn.appendChild(removeIcon);
-
   li.appendChild(icon);
   li.appendChild(text);
-  li.appendChild(removeBtn);
+
+  if (currentUserRole === "owner") {
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "member-remove-btn";
+    removeBtn.setAttribute("data-member-remove-index", index);
+
+    const removeIcon = document.createElement("i");
+    removeIcon.className = "fa-solid fa-xmark";
+    removeBtn.appendChild(removeIcon);
+
+    li.appendChild(removeBtn);
+  }
 
   return li;
 }
@@ -255,6 +252,154 @@ function renderMembers() {
   sharedMembers.forEach((member, index) => {
     memberList.appendChild(createMemberChip(member, index));
   });
+}
+
+function createPendingRequestRow(request) {
+  const li = document.createElement("li");
+  li.className = "member-chip";
+
+  const icon = document.createElement("i");
+  icon.className = "fa-solid fa-user-clock";
+
+  const text = document.createElement("span");
+  text.textContent = `${request.requester_username} wants to add ${request.target_username}`;
+
+  const actions = document.createElement("div");
+  actions.style.display = "inline-flex";
+  actions.style.alignItems = "center";
+  actions.style.gap = "8px";
+
+  const acceptBtn = document.createElement("button");
+  acceptBtn.type = "button";
+  acceptBtn.className = "member-add-btn";
+  acceptBtn.setAttribute("data-accept-request-id", request.id);
+  acceptBtn.innerHTML = `<i class="fa-solid fa-check"></i><span>Accept</span>`;
+
+  const declineBtn = document.createElement("button");
+  declineBtn.type = "button";
+  declineBtn.className = "member-remove-btn";
+  declineBtn.setAttribute("data-decline-request-id", request.id);
+  declineBtn.innerHTML = `<i class="fa-solid fa-xmark"></i>`;
+
+  actions.appendChild(acceptBtn);
+  actions.appendChild(declineBtn);
+
+  li.appendChild(icon);
+  li.appendChild(text);
+  li.appendChild(actions);
+
+  return li;
+}
+
+function renderPendingRequests() {
+  if (!pendingRequestsSection || !pendingRequestsList) return;
+
+  if (currentUserRole !== "owner") {
+    pendingRequestsSection.classList.add("hidden-box");
+    pendingRequestsList.innerHTML = "";
+    return;
+  }
+
+  pendingRequestsSection.classList.remove("hidden-box");
+  pendingRequestsList.innerHTML = "";
+
+  if (!currentListId) {
+    pendingRequestsList.appendChild(createEmptyState("Create the list first."));
+    return;
+  }
+
+  if (pendingShareRequests.length === 0) {
+    pendingRequestsList.appendChild(createEmptyState("No pending requests."));
+    return;
+  }
+
+  pendingShareRequests.forEach((request) => {
+    pendingRequestsList.appendChild(createPendingRequestRow(request));
+  });
+}
+
+async function loadPendingShareRequests() {
+  const userId = getUserId();
+
+  if (!userId || !currentListId || currentUserRole !== "owner") {
+    pendingShareRequests = [];
+    renderPendingRequests();
+    return;
+  }
+
+  try {
+    const res = await fetch(`/list-share-requests?userId=${encodeURIComponent(userId)}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      pendingShareRequests = [];
+      renderPendingRequests();
+      return;
+    }
+
+    pendingShareRequests = (data.requests || []).filter(
+      (request) => Number(request.list_id) === Number(currentListId)
+    );
+
+    renderPendingRequests();
+  } catch (error) {
+    console.error("LOAD PENDING SHARE REQUESTS ERROR:", error);
+    pendingShareRequests = [];
+    renderPendingRequests();
+  }
+}
+
+async function acceptShareRequest(requestId) {
+  const userId = getUserId();
+
+  try {
+    const res = await fetch(`/list-share-requests/${requestId}/accept`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ userId })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Could not accept request.");
+      return;
+    }
+
+    await loadPendingShareRequests();
+    await loadMembers();
+  } catch (error) {
+    console.error("ACCEPT SHARE REQUEST ERROR:", error);
+    alert("Server error while accepting request.");
+  }
+}
+
+async function declineShareRequest(requestId) {
+  const userId = getUserId();
+
+  try {
+    const res = await fetch(`/list-share-requests/${requestId}/decline`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ userId })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Could not decline request.");
+      return;
+    }
+
+    await loadPendingShareRequests();
+  } catch (error) {
+    console.error("DECLINE SHARE REQUEST ERROR:", error);
+    alert("Server error while declining request.");
+  }
 }
 
 async function createFamilyList() {
@@ -293,6 +438,20 @@ async function createFamilyList() {
 
     currentListId = data.listId;
     currentListName = listName;
+    currentUserRole = "owner";
+    pendingShareRequests = [];
+
+    if (toggleMemberPickerBtn) {
+      toggleMemberPickerBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Add member`;
+    }
+
+    if (ownerText) {
+      ownerText.innerHTML = `Owned by <strong>you</strong>`;
+    }
+
+    if (memberActionInfo) {
+      memberActionInfo.textContent = "You can add members directly to this list.";
+    }
 
     updateListNameDisplays(listName);
 
@@ -301,6 +460,7 @@ async function createFamilyList() {
     createListBtn.textContent = "Created";
 
     setControlsDisabled(false);
+    renderPendingRequests();
     return true;
   } catch (error) {
     console.error("CREATE FAMILY LIST ERROR:", error);
@@ -339,6 +499,48 @@ async function loadOwnerName(ownerId) {
     ownerText.textContent = "";
   }
 }
+
+async function loadUserRole() {
+  const userId = getUserId();
+
+  if (!userId || !currentListId) {
+    currentUserRole = null;
+    return;
+  }
+
+  try {
+    const res = await fetch(`/lists/${currentListId}/role?userId=${encodeURIComponent(userId)}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      currentUserRole = null;
+      if (memberActionInfo) memberActionInfo.textContent = "";
+      return;
+    }
+
+    currentUserRole = data.role;
+
+    if (toggleMemberPickerBtn) {
+      if (currentUserRole === "owner") {
+        toggleMemberPickerBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Add member`;
+
+        if (memberActionInfo) {
+          memberActionInfo.textContent = "You can add members directly to this list.";
+        }
+      } else {
+        toggleMemberPickerBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Request member`;
+
+        if (memberActionInfo) {
+          memberActionInfo.textContent = "You can request new members from the owner.";
+        }
+      }
+    }
+  } catch (error) {
+    console.error("LOAD ROLE ERROR:", error);
+    if (memberActionInfo) memberActionInfo.textContent = "";
+  }
+}
+
 async function loadListById(listId) {
   const userId = getUserId();
 
@@ -356,8 +558,9 @@ async function loadListById(listId) {
     currentListId = data.list.id;
     currentListName = data.list.title;
 
-    updateListNameDisplays(currentListName);
+    await loadUserRole();
 
+    updateListNameDisplays(currentListName);
     await loadOwnerName(data.list.owner_id);
 
     listNameInput.value = currentListName;
@@ -367,6 +570,8 @@ async function loadListById(listId) {
     createListBtn.textContent = "Created";
 
     setControlsDisabled(false);
+
+    await loadPendingShareRequests();
   } catch (error) {
     console.error("LOAD FAMILY LIST ERROR:", error);
     alert("Server error while loading the family list.");
@@ -577,8 +782,14 @@ async function addMemberToFamilyList() {
     return;
   }
 
+  const isOwner = currentUserRole === "owner";
+
+  const endpoint = isOwner
+    ? `/lists/${currentListId}/share`
+    : `/lists/${currentListId}/share-request`;
+
   try {
-    const res = await fetch(`/lists/${currentListId}/share`, {
+    const res = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -590,20 +801,28 @@ async function addMemberToFamilyList() {
       })
     });
 
-    const data = await res.json();
+    let data = {};
+    try {
+      data = await res.json();
+    } catch (e) {
+      data = {};
+    }
 
     if (!res.ok) {
-      alert(data.message || "Could not share the list.");
+      alert(data.message || "Could not process request.");
       return;
     }
 
-
     memberSelect.value = "";
-    await loadMembers();
 
+    if (isOwner) {
+      await loadMembers();
+    } else {
+      alert("Request sent to the owner.");
+    }
   } catch (error) {
-    console.error("SHARE FAMILY LIST ERROR:", error);
-    alert("Server error while sharing the list.");
+    console.error("ADD MEMBER ERROR:", error);
+    alert("Server error.");
   }
 }
 
@@ -637,6 +856,7 @@ async function removeMember(index) {
     alert("Server error while removing member.");
   }
 }
+
 async function saveFamilyList() {
   if (!currentListId) {
     alert("Create the list first.");
@@ -657,16 +877,20 @@ function loadListFromURL() {
 
   if (listId) {
     currentListId = listId;
-    loadListById(listId).then(async() => {
+    loadListById(listId).then(async () => {
       await loadItems();
       await loadMembers();
+      await loadPendingShareRequests();
     });
   } else {
     updateListNameDisplays("New Family List");
     if (ownerText) ownerText.textContent = "";
+    if (memberActionInfo) memberActionInfo.textContent = "";
+    pendingShareRequests = [];
     setControlsDisabled(true);
     renderList();
     renderMembers();
+    renderPendingRequests();
   }
 }
 
@@ -719,6 +943,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!removeBtn) return;
 
     removeMember(Number(removeBtn.getAttribute("data-member-remove-index")));
+  });
+
+  pendingRequestsList?.addEventListener("click", (event) => {
+    const acceptBtn = event.target.closest("[data-accept-request-id]");
+    const declineBtn = event.target.closest("[data-decline-request-id]");
+
+    if (acceptBtn) {
+      acceptShareRequest(Number(acceptBtn.getAttribute("data-accept-request-id")));
+    }
+
+    if (declineBtn) {
+      declineShareRequest(Number(declineBtn.getAttribute("data-decline-request-id")));
+    }
   });
 
   visualItemList?.addEventListener("click", (event) => {

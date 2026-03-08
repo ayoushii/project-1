@@ -1,30 +1,25 @@
 const $ = (selector, root = document) => root.querySelector(selector);
 
-// Kollar om användaren är inloggad
 function isLoggedIn() {
   return localStorage.getItem("isLoggedIn") === "true";
 }
 
-// Tar bort sparad login-data
 function clearAuth() {
   localStorage.removeItem("isLoggedIn");
   localStorage.removeItem("userId");
 }
 
-// Skyddar privata sidor
 function protectPrivatePage() {
   if (!isLoggedIn()) {
     window.location.href = "PublicHome1.html";
   }
 }
 
-// Logout
 function handleLogout() {
   clearAuth();
   window.location.href = "PublicHome1.html";
 }
 
-// Hämtar användarens profil till My Account
 async function fetchUserProfile() {
   const userId = localStorage.getItem("userId");
   if (!userId) return;
@@ -39,17 +34,9 @@ async function fetchUserProfile() {
     const usernameInput = document.getElementById("acc-username");
     const emailInput = document.getElementById("acc-email");
 
-    if (nameInput) {
-      nameInput.value = userData.full_name || "";
-    }
-
-    if (usernameInput) {
-      usernameInput.value = userData.username || "";
-    }
-
-    if (emailInput) {
-      emailInput.value = userData.email || "";
-    }
+    if (nameInput) nameInput.value = userData.full_name || "";
+    if (usernameInput) usernameInput.value = userData.username || "";
+    if (emailInput) emailInput.value = userData.email || "";
   } catch (err) {
     console.error("Could not load user profile:", err);
   }
@@ -109,6 +96,118 @@ async function handleChangePassword() {
   }
 }
 
+async function loadListShareRequests() {
+  const userId = localStorage.getItem("userId");
+  const listEl = document.getElementById("listShareRequestsList");
+
+  if (!userId || !listEl) return;
+
+  try {
+    const res = await fetch(`/list-share-requests?userId=${encodeURIComponent(userId)}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      listEl.innerHTML = `<li class="request-empty">Could not load requests.</li>`;
+      return;
+    }
+
+    const requests = data.requests || [];
+
+    if (requests.length === 0) {
+      listEl.innerHTML = `<li class="request-empty">No pending requests.</li>`;
+      return;
+    }
+
+    listEl.innerHTML = "";
+
+    requests.forEach((request) => {
+      const li = document.createElement("li");
+      li.className = "request-item";
+
+      li.innerHTML = `
+        <div class="request-text">
+          <strong>${request.requester_username}</strong> wants to add
+          <strong>${request.target_username}</strong> to
+          <strong>${request.list_title}</strong>
+        </div>
+
+        <div class="request-actions">
+          <button class="accept-request-btn" data-request-id="${request.id}" type="button">
+            Accept
+          </button>
+
+          <button class="decline-request-btn" data-request-id="${request.id}" type="button">
+            Decline
+          </button>
+        </div>
+      `;
+
+      listEl.appendChild(li);
+    });
+  } catch (error) {
+    console.error("LOAD LIST SHARE REQUESTS ERROR:", error);
+    listEl.innerHTML = `<li class="request-empty">Server error while loading requests.</li>`;
+  }
+}
+
+async function acceptListShareRequest(requestId) {
+  const userId = localStorage.getItem("userId");
+
+  if (!userId || !requestId) return;
+
+  try {
+    const res = await fetch(`/list-share-requests/${requestId}/accept`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ userId })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Could not accept request.");
+      return;
+    }
+
+    alert(data.message || "Request accepted.");
+    await loadListShareRequests();
+  } catch (error) {
+    console.error("ACCEPT LIST SHARE REQUEST ERROR:", error);
+    alert("Server error while accepting request.");
+  }
+}
+
+async function declineListShareRequest(requestId) {
+  const userId = localStorage.getItem("userId");
+
+  if (!userId || !requestId) return;
+
+  try {
+    const res = await fetch(`/list-share-requests/${requestId}/decline`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ userId })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Could not decline request.");
+      return;
+    }
+
+    alert(data.message || "Request declined.");
+    await loadListShareRequests();
+  } catch (error) {
+    console.error("DECLINE LIST SHARE REQUEST ERROR:", error);
+    alert("Server error while declining request.");
+  }
+}
+
 window.addEventListener("load", () => {
   protectPrivatePage();
 
@@ -151,6 +250,26 @@ window.addEventListener("load", () => {
     logoLink.addEventListener("click", (event) => {
       event.preventDefault();
       window.location.href = "PrivateHome2.html";
+    });
+  }
+
+  loadListShareRequests();
+
+  const requestsList = document.getElementById("listShareRequestsList");
+  if (requestsList) {
+    requestsList.addEventListener("click", (event) => {
+      const acceptBtn = event.target.closest(".accept-request-btn");
+      const declineBtn = event.target.closest(".decline-request-btn");
+
+      if (acceptBtn) {
+        const requestId = Number(acceptBtn.getAttribute("data-request-id"));
+        acceptListShareRequest(requestId);
+      }
+
+      if (declineBtn) {
+        const requestId = Number(declineBtn.getAttribute("data-request-id"));
+        declineListShareRequest(requestId);
+      }
     });
   }
 });

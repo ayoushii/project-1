@@ -1,24 +1,20 @@
 const $ = (selector, root = document) => root.querySelector(selector);
 
-// Reads the logged-in user from localStorage
 function getUserId() {
   const id = localStorage.getItem("userId");
   return id ? Number(id) : 0;
 }
 
-// Checks if the user is logged in
 function isLoggedIn() {
   return localStorage.getItem("isLoggedIn") === "true";
 }
 
-// Clears login data and returns to the public page
 function clearAuthAndGoHome() {
   localStorage.removeItem("isLoggedIn");
   localStorage.removeItem("userId");
   window.location.href = "PublicHome1.html";
 }
 
-// Small message popup instead of alerts
 function toast(message, type = "info") {
   const el = $("#toast");
 
@@ -35,10 +31,8 @@ function toast(message, type = "info") {
   }, 2200);
 }
 
-// Keeps track of the latest search result
 let lastFoundUser = null;
 
-// Searches a user in the database
 async function searchUserInDB(query) {
   const res = await fetch(`/users/search?q=${encodeURIComponent(query)}`);
 
@@ -51,10 +45,6 @@ async function searchUserInDB(query) {
 
   return { res, data };
 }
-
-// ----------------------
-// CONTACTS
-// ----------------------
 
 async function loadContactsFromDB() {
   const userId = getUserId();
@@ -86,15 +76,11 @@ function renderContactsList(contacts) {
   list.innerHTML = "";
 
   if (contacts.length === 0) {
-    if (empty) {
-      empty.style.display = "block";
-    }
+    if (empty) empty.style.display = "block";
     return;
   }
 
-  if (empty) {
-    empty.style.display = "none";
-  }
+  if (empty) empty.style.display = "none";
 
   contacts.forEach((contact) => {
     const li = document.createElement("li");
@@ -156,10 +142,6 @@ async function onContactsListClick(event) {
   toast("Contact removed.", "info");
   await loadContactsFromDB();
 }
-
-// ----------------------
-// SEARCH AND SEND REQUEST
-// ----------------------
 
 async function performSearch() {
   const input = $("#search-input");
@@ -235,13 +217,8 @@ async function sendFriendRequest() {
 
     toast("Friend request sent!", "success");
 
-    if (resultBox) {
-      resultBox.classList.add("hidden-result");
-    }
-
-    if (input) {
-      input.value = "";
-    }
+    if (resultBox) resultBox.classList.add("hidden-result");
+    if (input) input.value = "";
 
     lastFoundUser = null;
   } catch (err) {
@@ -249,10 +226,6 @@ async function sendFriendRequest() {
     toast("Server error while sending request.", "danger");
   }
 }
-
-// ----------------------
-// FRIEND REQUESTS
-// ----------------------
 
 async function loadFriendRequests() {
   const userId = getUserId();
@@ -338,8 +311,6 @@ async function onRequestsClick(event) {
     }
 
     toast("Accepted and added to contacts.", "success");
-    card.remove();
-
     await loadContactsFromDB();
     await loadFriendRequests();
     return;
@@ -367,14 +338,9 @@ async function onRequestsClick(event) {
     }
 
     toast("Request declined.", "info");
-    card.remove();
     await loadFriendRequests();
   }
 }
-
-// ----------------------
-// PAGE START
-// ----------------------
 
 document.addEventListener("DOMContentLoaded", async () => {
   if (!isLoggedIn()) {
@@ -383,7 +349,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   $("#logout-btn")?.addEventListener("click", clearAuthAndGoHome);
-
   $("#search-btn")?.addEventListener("click", performSearch);
 
   $("#search-input")?.addEventListener("keypress", (event) => {
@@ -393,7 +358,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   $("#send-request-btn")?.addEventListener("click", sendFriendRequest);
-
   $("#my-contacts-list")?.addEventListener("click", onContactsListClick);
   $("#requests-list")?.addEventListener("click", onRequestsClick);
 

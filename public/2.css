@@ -568,6 +568,119 @@ body {
   transform: scale(1.05);
 }
 
+.request-card {
+  margin-top: 24px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
+  border: 1px solid #e2ebe6;
+  border-radius: 22px;
+  padding: 24px;
+  box-shadow: 0 10px 24px rgba(31, 41, 55, 0.06);
+}
+
+.request-card-header {
+  margin-bottom: 18px;
+}
+
+.request-card-header h2 {
+  font-size: 24px;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.request-card-header p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.request-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.request-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(31, 41, 55, 0.04);
+}
+
+.request-text {
+  flex: 1;
+  color: var(--text);
+  line-height: 1.5;
+  font-size: 15px;
+}
+
+.request-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.accept-request-btn,
+.decline-request-btn {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.accept-request-btn {
+  background: linear-gradient(90deg, var(--green) 0%, var(--blue) 100%);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(126, 169, 214, 0.18);
+}
+
+.accept-request-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.02);
+}
+
+.decline-request-btn {
+  background: #fff;
+  color: var(--danger);
+  border: 1px solid rgba(217, 107, 95, 0.25);
+}
+
+.decline-request-btn:hover {
+  background: rgba(217, 107, 95, 0.08);
+}
+
+.request-empty {
+  padding: 16px;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  text-align: center;
+  color: var(--muted);
+  background: #fbfdfc;
+}
+
+@media (max-width: 700px) {
+  .request-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .request-actions {
+    width: 100%;
+  }
+
+  .accept-request-btn,
+  .decline-request-btn {
+    width: 100%;
+  }
+}
 /* På lite mindre skärmar läggs korten under varandra */
 @media (max-width: 1100px) {
   .quick-cards {
