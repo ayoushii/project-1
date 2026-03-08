@@ -30,6 +30,18 @@ document.addEventListener("DOMContentLoaded", async () => {
       createMenu.style.display === "block" ? "none" : "block";
   }
 
+  function getListPage(list) {
+    if (list.list_type === "private") {
+      return "privatelist.html";
+    }
+
+    if (list.list_type === "family") {
+      return "familylist.html";
+    }
+
+    return "other.html";
+  }
+
   async function fetchLists() {
     const userId = getUserId();
     if (!userId) return [];
@@ -52,11 +64,17 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function deleteListFromDB(listId) {
     const userId = getUserId();
-    if (!userId || !listId) return { ok: false, message: "Missing userId or listId." };
+
+    if (!userId || !listId) {
+      return {
+        ok: false,
+        message: "Missing userId or listId."
+      };
+    }
 
     try {
       const res = await fetch(`/lists/${listId}?userId=${encodeURIComponent(userId)}`, {
-        method: "DELETE",
+        method: "DELETE"
       });
 
       const data = await res.json();
@@ -64,7 +82,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!res.ok) {
         return {
           ok: false,
-          message: data.message || "Could not delete the list.",
+          message: data.message || "Could not delete the list."
         };
       }
 
@@ -73,7 +91,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       console.error("DELETE LIST ERROR:", err);
       return {
         ok: false,
-        message: "Server error while deleting the list.",
+        message: "Server error while deleting the list."
       };
     }
   }
@@ -106,7 +124,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     li.className = "saved-list-item";
 
     const link = document.createElement("a");
-    link.href = `other.html?id=${encodeURIComponent(list.id)}`;
+    link.href = `${getListPage(list)}?id=${encodeURIComponent(list.id)}`;
     link.textContent = list.title;
     link.className = "saved-list-link";
 

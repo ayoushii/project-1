@@ -2,8 +2,8 @@ const express = require("express");
 const mysql = require("mysql2");
 const path = require("path");
 const bcrypt = require("bcrypt");
-const { Resend } = require("resend");
 const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 
 require("dotenv").config();
 
@@ -24,7 +24,20 @@ const db = mysql.createPool({
   keepAliveInitialDelay: 0,
 });
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+transporter.verify((error, success) => {
+  if (error) {
+    console.log("MAIL VERIFY ERROR:", error);
+  } else {
+    console.log("Mail server is ready.");
+  }
+});
 
 db.query("SELECT 1", (err) => {
   if (err) {
@@ -33,8 +46,6 @@ db.query("SELECT 1", (err) => {
   }
   console.log("DB connected!");
 });
-
-// ---------- Helpers ----------
 
 function getAccessibleListSql() {
   return `
@@ -47,13 +58,9 @@ function getAccessibleListSql() {
   `;
 }
 
-// ---------- Pages ----------
-
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "PublicHome1.html"));
 });
-
-// ---------- Auth ----------
 
 app.post("/register", async (req, res) => {
   const { fullName, username, email, password } = req.body;
@@ -172,8 +179,6 @@ app.get("/user/:id", (req, res) => {
   });
 });
 
-// ---------- Users search ----------
-
 app.get("/users/search", (req, res) => {
   const q = (req.query.q || "").trim();
 
@@ -201,8 +206,6 @@ app.get("/users/search", (req, res) => {
     return res.json({ user: rows[0] });
   });
 });
-
-// ---------- Contacts ----------
 
 app.get("/contacts", (req, res) => {
   const userId = Number(req.query.userId);
@@ -332,8 +335,6 @@ app.delete("/contacts/:contactId", (req, res) => {
     });
   });
 });
-
-// ---------- Friend Requests ----------
 
 app.post("/friend-requests", (req, res) => {
   const fromUserId = Number(req.body.fromUserId);
@@ -533,8 +534,6 @@ app.post("/friend-requests/:id/decline", (req, res) => {
     return res.json({ message: "Friend request declined." });
   });
 });
-
-// ---------- Lists ----------
 
 app.post("/lists", (req, res) => {
   const userId = Number(req.body.userId);
@@ -1043,31 +1042,32 @@ app.post("/lists/:id/share", (req, res) => {
   });
 });
 
-// ---------- Password reset ----------
-
 app.post("/forgot-password", (req, res) => {
+  const username = (req.body.username || "").trim();
   const email = (req.body.email || "").trim();
 
-  if (!email) {
-    return res.status(400).json({ message: "Email is required." });
+  if (!username || !email) {
+    return res.status(400).json({
+      message: "Username and email are required."
+    });
   }
 
-  const sql = `
-    SELECT id, email
+  const findUserSql = `
+    SELECT id, username, email
     FROM users
-    WHERE email = ?
+    WHERE username = ? AND email = ?
     LIMIT 1
   `;
 
-  db.query(sql, [email], (err, rows) => {
+  db.query(findUserSql, [username, email], (err, rows) => {
     if (err) {
       console.log("FORGOT PASSWORD ERROR:", err.message);
       return res.status(500).json({ message: "Database error." });
     }
 
     if (rows.length === 0) {
-      return res.json({
-        message: "If the email exists, a reset link will be sent.",
+      return res.status(404).json({
+        message: "No matching user was found."
       });
     }
 
@@ -1077,6 +1077,7 @@ app.post("/forgot-password", (req, res) => {
 
     db.query("DELETE FROM password_resets WHERE user_id = ?", [user.id], (err2) => {
       if (err2) {
+        console.log("DELETE OLD TOKEN ERROR:", err2.message);
         return res.status(500).json({ message: "Database error." });
       }
 
@@ -1087,30 +1088,33 @@ app.post("/forgot-password", (req, res) => {
 
       db.query(insertSql, [user.id, token, expiresAt], async (err3) => {
         if (err3) {
+          console.log("INSERT RESET TOKEN ERROR:", err3.message);
           return res.status(500).json({ message: "Database error." });
         }
 
         const resetLink = `${process.env.BASE_URL}/ResetPassword.html?token=${token}`;
 
-        try {
-          await resend.emails.send({
-            from: process.env.MAIL_FROM,
-            to: user.email,
-            subject: "Reset your password",
-            html: `
-              <h2>Reset password</h2>
-              <p>You requested a password reset.</p>
-              <p>Click the link below to choose a new password:</p>
-              <p><a href="${resetLink}">${resetLink}</a></p>
-              <p>This link expires in 30 minutes.</p>
-            `,
-          });
+        const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: user.email,
+          subject: "Reset your password - RayaListly",
+          html: `
+            <h2>Password Reset</h2>
+            <p>You requested to reset your password.</p>
+            <p>Click the link below:</p>
+            <a href="${resetLink}">${resetLink}</a>
+            <p>This link expires in 30 minutes.</p>
+          `
+        };
 
-          return res.json({ message: "Check your email." });
-        } catch (mailErr) {
-          console.log("RESEND ERROR:", mailErr);
-          return res.status(500).json({ message: "Could not send email." });
-        }
+        transporter.sendMail(mailOptions, (error) => {
+          if (error) {
+            console.log("MAIL ERROR:", error);
+            return res.status(500).json({ message: "Could not send email." });
+          }
+
+          return res.json({ message: "Check your email for the reset link." });
+        });
       });
     });
   });
@@ -1253,7 +1257,7 @@ app.post("/change-password", async (req, res) => {
   });
 });
 
-// ---------- Start server ----------
+// Start server
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

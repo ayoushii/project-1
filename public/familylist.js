@@ -14,10 +14,11 @@ const memberSelect = document.getElementById("memberSelect");
 const addMemberBtn = document.getElementById("addMemberBtn");
 const memberList = document.getElementById("memberList");
 
-let shoppingItems = [];
-let familyMembers = [];
-let contactsCache = [];
+let currentListId = null;
 let currentListName = null;
+let shoppingItems = [];
+let contactsCache = [];
+let sharedMembers = [];
 
 function getUserId() {
   const id = localStorage.getItem("userId");
@@ -26,22 +27,6 @@ function getUserId() {
 
 function isLoggedIn() {
   return localStorage.getItem("isLoggedIn") === "true";
-}
-
-function getAllLists() {
-  return JSON.parse(localStorage.getItem("rayaLists")) || [];
-}
-
-function setAllLists(lists) {
-  localStorage.setItem("rayaLists", JSON.stringify(lists));
-}
-
-function setItemsForList(listName, items) {
-  localStorage.setItem(`rayaListItems_${listName}`, JSON.stringify(items));
-}
-
-function setMembersForList(listName, members) {
-  localStorage.setItem(`rayaListMembers_${listName}`, JSON.stringify(members));
 }
 
 function updateListNameDisplays(text) {
@@ -63,6 +48,7 @@ function setControlsDisabled(disabled) {
 
 async function loadContactsFromDB() {
   const userId = getUserId();
+
   if (!userId) {
     contactsCache = [];
     renderMemberOptions();
@@ -71,13 +57,7 @@ async function loadContactsFromDB() {
 
   try {
     const res = await fetch(`/contacts?userId=${encodeURIComponent(userId)}`);
-
-    let data = {};
-    try {
-      data = await res.json();
-    } catch (e) {
-      data = {};
-    }
+    const data = await res.json();
 
     if (!res.ok) {
       contactsCache = [];
@@ -101,13 +81,13 @@ function createEmptyState(text) {
   return li;
 }
 
-function createCheckButton(index, completed) {
+function createCheckButton(item) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "check-btn";
-  button.setAttribute("data-index", index);
+  button.setAttribute("data-item-id", item.id);
 
-  if (completed) {
+  if (item.is_completed) {
     button.classList.add("checked");
   }
 
@@ -118,30 +98,30 @@ function createCheckButton(index, completed) {
   return button;
 }
 
-function createItemText(name, completed) {
+function createItemText(item) {
   const span = document.createElement("span");
   span.className = "item-text";
-  span.textContent = name;
+  span.textContent = item.text;
 
-  if (completed) {
+  if (item.is_completed) {
     span.classList.add("completed");
   }
 
   return span;
 }
 
-function createBadge(quantity, unit, completed) {
+function createBadge(item) {
   const badge = document.createElement("span");
   badge.className = "item-badge";
-  badge.textContent = completed ? "Bought" : `${quantity} ${unit}`;
+  badge.textContent = item.is_completed ? "Bought" : `${item.quantity} ${item.unit}`;
   return badge;
 }
 
-function createActionButton(className, iconClass, dataAttribute, index) {
+function createActionButton(className, iconClass, dataAttribute, value) {
   const button = document.createElement("button");
   button.type = "button";
   button.className = className;
-  button.setAttribute(dataAttribute, index);
+  button.setAttribute(dataAttribute, value);
 
   const icon = document.createElement("i");
   icon.className = iconClass;
@@ -150,7 +130,7 @@ function createActionButton(className, iconClass, dataAttribute, index) {
   return button;
 }
 
-function createItemRow(item, index) {
+function createItemRow(item) {
   const li = document.createElement("li");
   li.className = "item-row";
 
@@ -160,22 +140,22 @@ function createItemRow(item, index) {
   const actions = document.createElement("div");
   actions.className = "item-actions";
 
-  const checkBtn = createCheckButton(index, item.completed);
-  const text = createItemText(item.name, item.completed);
-  const badge = createBadge(item.quantity, item.unit, item.completed);
+  const checkBtn = createCheckButton(item);
+  const text = createItemText(item);
+  const badge = createBadge(item);
 
   const editBtn = createActionButton(
     "edit-btn",
     "fa-solid fa-pen",
-    "data-edit-index",
-    index
+    "data-edit-item-id",
+    item.id
   );
 
   const deleteBtn = createActionButton(
     "delete-btn",
     "fa-solid fa-trash",
-    "data-delete-index",
-    index
+    "data-delete-item-id",
+    item.id
   );
 
   left.appendChild(checkBtn);
@@ -196,7 +176,7 @@ function renderList() {
 
   visualItemList.innerHTML = "";
 
-  if (!currentListName) {
+  if (!currentListId && shoppingItems.length === 0) {
     visualItemList.appendChild(createEmptyState("Create the list first."));
     return;
   }
@@ -206,62 +186,9 @@ function renderList() {
     return;
   }
 
-  shoppingItems.forEach((item, index) => {
-    visualItemList.appendChild(createItemRow(item, index));
+  shoppingItems.forEach((item) => {
+    visualItemList.appendChild(createItemRow(item));
   });
-}
-
-function addItem() {
-  if (!currentListName) {
-    alert("Create the list first.");
-    return;
-  }
-
-  const itemName = itemNameInput.value.trim();
-  const quantity = quantityInput.value.trim() || "1";
-  const unit = unitSelect.value || "pcs";
-
-  if (!itemName) {
-    alert("Write an item first.");
-    return;
-  }
-
-  shoppingItems.push({
-    name: itemName,
-    quantity: quantity,
-    unit: unit,
-    completed: false
-  });
-
-  itemNameInput.value = "";
-  quantityInput.value = "";
-  unitSelect.value = "pcs";
-
-  renderList();
-}
-
-function toggleComplete(index) {
-  if (!shoppingItems[index]) return;
-
-  shoppingItems[index].completed = !shoppingItems[index].completed;
-  renderList();
-}
-
-function removeItem(index) {
-  if (!shoppingItems[index]) return;
-
-  shoppingItems.splice(index, 1);
-  renderList();
-}
-
-function editItem(index) {
-  if (!shoppingItems[index]) return;
-
-  const newName = prompt("Edit item name:", shoppingItems[index].name);
-  if (!newName || !newName.trim()) return;
-
-  shoppingItems[index].name = newName.trim();
-  renderList();
 }
 
 function renderMemberOptions() {
@@ -299,7 +226,6 @@ function createMemberChip(memberName, index) {
 
   const removeIcon = document.createElement("i");
   removeIcon.className = "fa-solid fa-xmark";
-
   removeBtn.appendChild(removeIcon);
 
   li.appendChild(icon);
@@ -314,70 +240,322 @@ function renderMembers() {
 
   memberList.innerHTML = "";
 
-  if (!currentListName) {
+  if (!currentListId && sharedMembers.length === 0) {
     memberList.appendChild(createEmptyState("Create the list first."));
     return;
   }
 
-  if (familyMembers.length === 0) {
+  if (sharedMembers.length === 0) {
     memberList.appendChild(createEmptyState("No members added yet."));
     return;
   }
 
-  familyMembers.forEach((memberName, index) => {
+  sharedMembers.forEach((memberName, index) => {
     memberList.appendChild(createMemberChip(memberName, index));
   });
 }
 
-function addMemberToFamilyList() {
-  if (!currentListName) {
+async function createFamilyList() {
+  const userId = getUserId();
+  const listName = listNameInput.value.trim();
+
+  if (!userId) {
+    alert("You must be logged in.");
+    return false;
+  }
+
+  if (!listName) {
+    alert("Please enter a list name.");
+    return false;
+  }
+
+  try {
+    const res = await fetch("/lists", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        userId,
+        title: listName,
+        listType: "family"
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Could not create family list.");
+      return false;
+    }
+
+    currentListId = data.listId;
+    currentListName = listName;
+
+    updateListNameDisplays(listName);
+
+    listNameInput.disabled = true;
+    createListBtn.disabled = true;
+    createListBtn.textContent = "Created";
+
+    setControlsDisabled(false);
+    return true;
+  } catch (error) {
+    console.error("CREATE FAMILY LIST ERROR:", error);
+    alert("Server error while creating the family list.");
+    return false;
+  }
+}
+
+async function loadListById(listId) {
+  const userId = getUserId();
+
+  if (!userId || !listId) return;
+
+  try {
+    const res = await fetch(`/lists/${listId}?userId=${encodeURIComponent(userId)}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Could not load the family list.");
+      return;
+    }
+
+    currentListId = data.list.id;
+    currentListName = data.list.title;
+
+    updateListNameDisplays(currentListName);
+
+    listNameInput.value = currentListName;
+    listNameInput.disabled = true;
+
+    createListBtn.disabled = true;
+    createListBtn.textContent = "Created";
+
+    setControlsDisabled(false);
+  } catch (error) {
+    console.error("LOAD FAMILY LIST ERROR:", error);
+    alert("Server error while loading the family list.");
+  }
+}
+
+async function loadItems() {
+  const userId = getUserId();
+
+  if (!userId || !currentListId) return;
+
+  try {
+    const res = await fetch(`/lists/${currentListId}/items?userId=${encodeURIComponent(userId)}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Could not load items.");
+      return;
+    }
+
+    shoppingItems = data.items || [];
+    renderList();
+  } catch (error) {
+    console.error("LOAD FAMILY ITEMS ERROR:", error);
+    alert("Server error while loading items.");
+  }
+}
+
+async function addItem() {
+  const userId = getUserId();
+
+  if (!currentListId) {
+    alert("Create the list first.");
+    return;
+  }
+
+  const itemName = itemNameInput.value.trim();
+  const quantity = quantityInput.value.trim() || "1";
+  const unit = unitSelect.value || "pcs";
+
+  if (!itemName) {
+    alert("Please write an item first.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`/lists/${currentListId}/items`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        userId,
+        text: itemName,
+        quantity,
+        unit
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Could not add item.");
+      return;
+    }
+
+    itemNameInput.value = "";
+    quantityInput.value = "";
+    unitSelect.value = "pcs";
+
+    await loadItems();
+  } catch (error) {
+    console.error("ADD FAMILY ITEM ERROR:", error);
+    alert("Server error while adding item.");
+  }
+}
+
+async function toggleComplete(itemId) {
+  const userId = getUserId();
+  const item = shoppingItems.find((x) => x.id === itemId);
+
+  if (!item) return;
+
+  try {
+    const res = await fetch(`/items/${itemId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        userId,
+        is_completed: !item.is_completed
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Could not update item.");
+      return;
+    }
+
+    await loadItems();
+  } catch (error) {
+    console.error("TOGGLE FAMILY ITEM ERROR:", error);
+    alert("Server error while updating item.");
+  }
+}
+
+async function removeItem(itemId) {
+  const userId = getUserId();
+
+  try {
+    const res = await fetch(`/items/${itemId}?userId=${encodeURIComponent(userId)}`, {
+      method: "DELETE"
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Could not delete item.");
+      return;
+    }
+
+    await loadItems();
+  } catch (error) {
+    console.error("DELETE FAMILY ITEM ERROR:", error);
+    alert("Server error while deleting item.");
+  }
+}
+
+async function editItem(itemId) {
+  const userId = getUserId();
+  const item = shoppingItems.find((x) => x.id === itemId);
+
+  if (!item) return;
+
+  const newName = prompt("Edit item name:", item.text);
+
+  if (!newName || !newName.trim()) return;
+
+  try {
+    const res = await fetch(`/items/${itemId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        userId,
+        text: newName.trim()
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Could not edit item.");
+      return;
+    }
+
+    await loadItems();
+  } catch (error) {
+    console.error("EDIT FAMILY ITEM ERROR:", error);
+    alert("Server error while editing item.");
+  }
+}
+
+async function addMemberToFamilyList() {
+  const userId = getUserId();
+
+  if (!currentListId) {
     alert("Create the list first.");
     return;
   }
 
   const selectedName = memberSelect.value.trim();
+
   if (!selectedName) {
     alert("Select a contact first.");
     return;
   }
 
-  if (!familyMembers.includes(selectedName)) {
-    familyMembers.push(selectedName);
-  }
+  try {
+    const res = await fetch(`/lists/${currentListId}/share`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        userId,
+        q: selectedName,
+        permission: "edit"
+      })
+    });
 
-  memberSelect.value = "";
-  renderMembers();
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Could not share the list.");
+      return;
+    }
+
+    if (!sharedMembers.includes(selectedName)) {
+      sharedMembers.push(selectedName);
+    }
+
+    memberSelect.value = "";
+    renderMembers();
+  } catch (error) {
+    console.error("SHARE FAMILY LIST ERROR:", error);
+    alert("Server error while sharing the list.");
+  }
 }
 
 function removeMember(index) {
-  if (!familyMembers[index]) return;
+  if (!sharedMembers[index]) return;
 
-  familyMembers.splice(index, 1);
+  sharedMembers.splice(index, 1);
   renderMembers();
 }
 
-function createFamilyList() {
-  const listName = listNameInput.value.trim();
-
-  if (!listName) {
-    alert("Please enter a list name.");
-    return;
-  }
-
-  currentListName = listName;
-  updateListNameDisplays(listName);
-
-  listNameInput.disabled = true;
-  createListBtn.disabled = true;
-  createListBtn.textContent = "Created";
-
-  setControlsDisabled(false);
-  renderList();
-  renderMembers();
-}
-
-function saveFamilyList() {
-  if (!currentListName) {
+async function saveFamilyList() {
+  if (!currentListId) {
     alert("Create the list first.");
     return;
   }
@@ -387,17 +565,25 @@ function saveFamilyList() {
     return;
   }
 
-  const allLists = getAllLists();
+  window.location.href = `familylist.html?id=${encodeURIComponent(currentListId)}`;
+}
 
-  if (!allLists.includes(currentListName)) {
-    allLists.push(currentListName);
-    setAllLists(allLists);
+function loadListFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  const listId = Number(params.get("id"));
+
+  if (listId) {
+    currentListId = listId;
+    loadListById(listId).then(() => {
+      loadItems();
+      renderMembers();
+    });
+  } else {
+    updateListNameDisplays("New Family List");
+    setControlsDisabled(true);
+    renderList();
+    renderMembers();
   }
-
-  setItemsForList(currentListName, shoppingItems);
-  setMembersForList(currentListName, familyMembers);
-
-  window.location.href = `other.html?name=${encodeURIComponent(currentListName)}`;
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -406,8 +592,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  updateListNameDisplays("New Family List");
-  setControlsDisabled(true);
+  await loadContactsFromDB();
+  loadListFromURL();
 
   createListBtn?.addEventListener("click", createFamilyList);
 
@@ -434,7 +620,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   saveListBtn?.addEventListener("click", saveFamilyList);
 
   toggleMemberPickerBtn?.addEventListener("click", () => {
-    if (!currentListName) {
+    if (!currentListId) {
       alert("Create the list first.");
       return;
     }
@@ -452,24 +638,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   visualItemList?.addEventListener("click", (event) => {
-    const checkBtn = event.target.closest("[data-index]");
-    const editBtn = event.target.closest("[data-edit-index]");
-    const deleteBtn = event.target.closest("[data-delete-index]");
+    const checkBtn = event.target.closest("[data-item-id]");
+    const editBtn = event.target.closest("[data-edit-item-id]");
+    const deleteBtn = event.target.closest("[data-delete-item-id]");
 
     if (checkBtn) {
-      toggleComplete(Number(checkBtn.getAttribute("data-index")));
+      toggleComplete(Number(checkBtn.getAttribute("data-item-id")));
     }
 
     if (editBtn) {
-      editItem(Number(editBtn.getAttribute("data-edit-index")));
+      editItem(Number(editBtn.getAttribute("data-edit-item-id")));
     }
 
     if (deleteBtn) {
-      removeItem(Number(deleteBtn.getAttribute("data-delete-index")));
+      removeItem(Number(deleteBtn.getAttribute("data-delete-item-id")));
     }
   });
-
-  await loadContactsFromDB();
-  renderList();
-  renderMembers();
 });

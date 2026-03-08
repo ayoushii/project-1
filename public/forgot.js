@@ -1,8 +1,8 @@
 const resetButton = document.getElementById("resetBtn");
+const usernameInput = document.getElementById("reset-username");
 const emailInput = document.getElementById("reset-email");
 const messageBox = document.getElementById("messageBox");
 
-// Visar ett meddelande under knappen
 function showMessage(text, type) {
   if (!messageBox) return;
 
@@ -16,47 +16,51 @@ function showMessage(text, type) {
   }
 }
 
-// Skickar förfrågan om att återställa lösenord
 async function handleResetPassword() {
+  const username = usernameInput?.value.trim();
   const email = emailInput?.value.trim();
 
-  if (!email) {
-    showMessage("Skriv din e-postadress först.", "error");
+  if (!username || !email) {
+    showMessage("Enter your username and email first.", "error");
     return;
   }
 
   try {
     resetButton.disabled = true;
-    resetButton.textContent = "Skickar...";
+    resetButton.textContent = "Sending...";
 
     const res = await fetch("/forgot-password", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "application/json"
       },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ username, email })
     });
 
     const data = await res.json();
 
     if (!res.ok) {
-      showMessage(data.message || "Något gick fel.", "error");
+      showMessage(data.message || "Something went wrong.", "error");
       return;
     }
 
-    showMessage(data.message || "Kolla din e-post!", "success");
+    showMessage(data.message || "Check your email.", "success");
   } catch (err) {
-    showMessage("Serverfel.", "error");
+    showMessage("Server error.", "error");
   } finally {
     resetButton.disabled = false;
-    resetButton.textContent = "Skicka återställningslänk";
+    resetButton.textContent = "Send reset link";
   }
 }
 
-// Klick på knappen
 resetButton?.addEventListener("click", handleResetPassword);
 
-// Enter i inputfältet gör samma sak
+usernameInput?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    handleResetPassword();
+  }
+});
+
 emailInput?.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     handleResetPassword();
