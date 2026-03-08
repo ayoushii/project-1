@@ -361,6 +361,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#my-contacts-list")?.addEventListener("click", onContactsListClick);
   $("#requests-list")?.addEventListener("click", onRequestsClick);
 
+  const logoLink = document.getElementById("logo-link");
+  if (logoLink) {
+    logoLink.addEventListener("click", (event) => {
+      event.preventDefault();
+      window.location.href = "PrivateHome2.html";
+    });
+  }
   await loadContactsFromDB();
   await loadFriendRequests();
 });

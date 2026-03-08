@@ -1,11 +1,11 @@
-/* Basic reset so everything starts clean */
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-/* Colors inspired by the RayaListly logo */
+/* Colors inspired by logo */
 :root {
   --bg: #f4f8f7;
   --bg-soft: #eef6f3;
@@ -42,32 +42,37 @@ body {
   min-height: 100vh;
 }
 
-/* Header at the top */
 .topbar {
   width: 100%;
-  min-height: 102px;
-  background: rgba(255, 255, 255, 0.94);
+  min-height: 96px;
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(139, 176, 79, 0.12);
-  box-shadow: var(--shadow-soft);
+  box-shadow: 0 6px 20px rgba(31, 41, 55, 0.05);
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 16px 28px;
+  align-items: center;
+  padding: 18px 28px;
 }
 
 .brand {
+  width: 120px;
+  height: 80px;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+  overflow: visible;
+  text-decoration: none;
 }
 
 .brand-logo {
-  width: 210px;
+  width: 120px;
   height: auto;
   display: block;
   object-fit: contain;
+  transform: scale(1.8);
+  transform-origin: left center;
 }
-
 /* Buttons on the right side of the header */
 .top-actions {
   display: flex;
@@ -79,26 +84,26 @@ body {
   text-decoration: none;
 }
 
-/* Shared button style for top buttons */
 .action-btn {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  padding: 11px 16px;
-  border-radius: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.10);
+  padding: 12px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
   background: var(--white);
   color: var(--text);
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.05);
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
 }
-
 .action-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 14px 24px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
 }
+
+
 
 .action-btn--logout {
   border: 1px solid rgba(217, 107, 95, 0.28);
@@ -489,6 +494,7 @@ body {
 }
 
 /* Mobile layout */
+
 @media (max-width: 700px) {
   .topbar {
     padding: 16px;
@@ -497,10 +503,15 @@ body {
     align-items: flex-start;
   }
 
-  .brand-logo {
-    width: 180px;
+  .brand {
+    width: auto;
+    height: auto;
   }
 
+  .brand-logo {
+    width: 135px;
+    transform: none;
+  }
   .top-actions {
     width: 100%;
     flex-wrap: wrap;

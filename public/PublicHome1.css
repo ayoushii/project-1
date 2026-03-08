@@ -37,32 +37,38 @@ body {
   color: var(--text);
   background: linear-gradient(180deg, #f6fbf8 0%, #edf5f8 55%, #fdfefe 100%);
 }
-
-/* Header med logga och knappar */
 .topbar {
   width: 100%;
-  min-height: 86px;
-  background: rgba(255, 255, 255, 0.94);
+  min-height: 96px;
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(139, 176, 79, 0.12);
-  box-shadow: 0 6px 18px rgba(31, 41, 55, 0.05);
+  box-shadow: 0 6px 20px rgba(31, 41, 55, 0.05);
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 12px 28px;
+  align-items: center;
+  padding: 18px 28px;
 }
 
-.brand {
+.logo-wrap {
+  width: 120px;
+  height: 80px;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+  overflow: visible;
+  text-decoration: none;
 }
 
 .brand-logo {
-  width: 175px;
+  width: 120px;
   height: auto;
   display: block;
   object-fit: contain;
+  transform: scale(1.8);
+  transform-origin: left center;
 }
+
 /* Knappar uppe till höger */
 .top-actions {
   display: flex;
@@ -524,6 +530,7 @@ body {
 }
 
 /* Anpassning för mobil */
+
 @media (max-width: 700px) {
   .topbar {
     padding: 16px;
@@ -532,8 +539,14 @@ body {
     align-items: flex-start;
   }
 
+  .logo-wrap {
+    width: auto;
+    height: auto;
+  }
+
   .brand-logo {
-    width: 165px;
+    width: 135px;
+    transform: none;
   }
 
   .top-actions {
