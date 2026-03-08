@@ -1,56 +1,76 @@
-// Sök användare + skicka friend request + accept/decline + visa contacts
-
 const $ = (selector, root = document) => root.querySelector(selector);
 
+// Reads the logged-in user from localStorage
 function getUserId() {
   const id = localStorage.getItem("userId");
   return id ? Number(id) : 0;
 }
 
+// Checks if the user is logged in
 function isLoggedIn() {
   return localStorage.getItem("isLoggedIn") === "true";
 }
 
+// Clears login data and returns to the public page
 function clearAuthAndGoHome() {
   localStorage.removeItem("isLoggedIn");
   localStorage.removeItem("userId");
   window.location.href = "PublicHome1.html";
 }
 
-// Liten toast så du slipper alerts överallt
-function toast(msg, type = "info") {
+// Small message popup instead of alerts
+function toast(message, type = "info") {
   const el = $("#toast");
-  if (!el) return alert(msg);
 
-  el.textContent = msg;
+  if (!el) {
+    alert(message);
+    return;
+  }
+
+  el.textContent = message;
   el.className = `toast toast--show toast--${type}`;
-  setTimeout(() => el.classList.remove("toast--show"), 2200);
+
+  setTimeout(() => {
+    el.classList.remove("toast--show");
+  }, 2200);
 }
 
-// Jag håller koll på senaste sökresultatet så "Send Request" vet vem
+// Keeps track of the latest search result
 let lastFoundUser = null;
 
-async function searchUserInDB(q) {
-  const res = await fetch(`/users/search?q=${encodeURIComponent(q)}`);
+// Searches a user in the database
+async function searchUserInDB(query) {
+  const res = await fetch(`/users/search?q=${encodeURIComponent(query)}`);
+
   let data = {};
-  try { data = await res.json(); } catch (e) {}
+  try {
+    data = await res.json();
+  } catch (e) {
+    data = {};
+  }
+
   return { res, data };
 }
 
-// =====================
+// ----------------------
 // CONTACTS
-// =====================
+// ----------------------
 
 async function loadContactsFromDB() {
   const userId = getUserId();
   if (!userId) return;
 
   const res = await fetch(`/contacts?userId=${encodeURIComponent(userId)}`);
+
   let data = {};
-  try { data = await res.json(); } catch (e) {}
+  try {
+    data = await res.json();
+  } catch (e) {
+    data = {};
+  }
 
   if (!res.ok) {
-    toast(data.message || "Kunde inte hämta kontakter.", "danger");
+    toast(data.message || "Could not load contacts.", "danger");
     return;
   }
 
@@ -60,25 +80,41 @@ async function loadContactsFromDB() {
 function renderContactsList(contacts) {
   const list = $("#my-contacts-list");
   const empty = $("#contacts-empty");
+
   if (!list) return;
 
   list.innerHTML = "";
 
   if (contacts.length === 0) {
-    if (empty) empty.style.display = "block";
+    if (empty) {
+      empty.style.display = "block";
+    }
     return;
   }
 
-  if (empty) empty.style.display = "none";
+  if (empty) {
+    empty.style.display = "none";
+  }
 
-  contacts.forEach((c) => {
+  contacts.forEach((contact) => {
     const li = document.createElement("li");
     li.className = "contact-item";
+
     li.innerHTML = `
-      <i class="fa-solid fa-user-circle"></i>
-      <span>${c.username}</span>
-      <button class="decline-btn" data-contact-id="${c.contactId}" type="button">Remove</button>
+      <div class="contact-left">
+        <div class="contact-avatar">
+          <i class="fa-solid fa-user"></i>
+        </div>
+        <span class="contact-name">${contact.username}</span>
+      </div>
+
+      <div class="contact-actions">
+        <button class="remove-btn" data-contact-id="${contact.contactId}" type="button">
+          Remove
+        </button>
+      </div>
     `;
+
     list.appendChild(li);
   });
 }
@@ -93,7 +129,11 @@ async function removeContactFromDB(contactId) {
   );
 
   let data = {};
-  try { data = await res.json(); } catch (e) {}
+  try {
+    data = await res.json();
+  } catch (e) {
+    data = {};
+  }
 
   if (!res.ok) {
     toast(data.message || "Could not remove the contact.", "danger");
@@ -103,8 +143,8 @@ async function removeContactFromDB(contactId) {
   return true;
 }
 
-async function onContactsListClick(e) {
-  const btn = e.target.closest("button[data-contact-id]");
+async function onContactsListClick(event) {
+  const btn = event.target.closest("button[data-contact-id]");
   if (!btn) return;
 
   const contactId = btn.getAttribute("data-contact-id");
@@ -113,13 +153,13 @@ async function onContactsListClick(e) {
   const ok = await removeContactFromDB(contactId);
   if (!ok) return;
 
-  toast("Removed.", "info");
+  toast("Contact removed.", "info");
   await loadContactsFromDB();
 }
 
-// =====================
-// SEARCH + SEND REQUEST
-// =====================
+// ----------------------
+// SEARCH AND SEND REQUEST
+// ----------------------
 
 async function performSearch() {
   const input = $("#search-input");
@@ -128,28 +168,29 @@ async function performSearch() {
 
   if (!input || !resultBox || !usernameDisplay) return;
 
-  const q = input.value.trim();
-  if (!q) {
-    toast("Enter username or email.", "warning");
+  const query = input.value.trim();
+
+  if (!query) {
+    toast("Enter a username or email first.", "warning");
     return;
   }
 
   try {
-    const { res, data } = await searchUserInDB(q);
+    const { res, data } = await searchUserInDB(query);
 
     if (!res.ok) {
       lastFoundUser = null;
-      resultBox.style.display = "none";
+      resultBox.classList.add("hidden-result");
       toast(data.message || "No user found.", "warning");
       return;
     }
 
     lastFoundUser = data.user;
-    usernameDisplay.textContent = `Found: ${lastFoundUser.username}`;
-    resultBox.style.display = "flex";
+    usernameDisplay.textContent = lastFoundUser.username;
+    resultBox.classList.remove("hidden-result");
   } catch (err) {
     console.error(err);
-    toast("Server error when searching.", "danger");
+    toast("Server error while searching.", "danger");
   }
 }
 
@@ -159,24 +200,33 @@ async function sendFriendRequest() {
   const resultBox = $("#result-box");
 
   if (!userId) {
-    toast("Du är inte inloggad.", "danger");
+    toast("You are not logged in.", "danger");
     return;
   }
 
   if (!lastFoundUser) {
-    toast("Search first, and make sure the user exists.", "warning");
+    toast("Search first and make sure the user exists.", "warning");
     return;
   }
 
   try {
     const res = await fetch("/friend-requests", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ fromUserId: userId, q: lastFoundUser.username }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        fromUserId: userId,
+        q: lastFoundUser.username,
+      }),
     });
 
     let data = {};
-    try { data = await res.json(); } catch (e) {}
+    try {
+      data = await res.json();
+    } catch (e) {
+      data = {};
+    }
 
     if (!res.ok) {
       toast(data.message || "Could not send request.", "danger");
@@ -185,29 +235,40 @@ async function sendFriendRequest() {
 
     toast("Friend request sent!", "success");
 
-    if (resultBox) resultBox.style.display = "none";
-    if (input) input.value = "";
+    if (resultBox) {
+      resultBox.classList.add("hidden-result");
+    }
+
+    if (input) {
+      input.value = "";
+    }
+
     lastFoundUser = null;
   } catch (err) {
     console.error(err);
-    toast("Server error when sending request.", "danger");
+    toast("Server error while sending request.", "danger");
   }
 }
 
-// =====================
-// FRIEND REQUESTS (load + accept/decline)
-// =====================
+// ----------------------
+// FRIEND REQUESTS
+// ----------------------
 
 async function loadFriendRequests() {
   const userId = getUserId();
   if (!userId) return;
 
   const res = await fetch(`/friend-requests?userId=${encodeURIComponent(userId)}`);
+
   let data = {};
-  try { data = await res.json(); } catch (e) {}
+  try {
+    data = await res.json();
+  } catch (e) {
+    data = {};
+  }
 
   if (!res.ok) {
-    console.log(data.message || "Kunde inte hämta friend requests");
+    console.log(data.message || "Could not load friend requests.");
     return;
   }
 
@@ -221,20 +282,17 @@ function renderFriendRequests(requests) {
   box.innerHTML = "";
 
   if (requests.length === 0) {
-    box.innerHTML = `<div class="empty-text">No requests.</div>`;
+    box.innerHTML = `<div class="empty-text">No friend requests right now.</div>`;
     return;
   }
 
-  requests.forEach((r) => {
+  requests.forEach((request) => {
     const card = document.createElement("div");
     card.className = "mini-card";
+    card.dataset.requestId = request.id;
 
-    // vi sparar requestId så accept/decline vet vilken request det gäller
-    card.dataset.requestId = r.id;
-
-    // backend skickar username + email + from_user_id
     card.innerHTML = `
-      <span class="user-name">${r.username}</span>
+      <span class="user-name">${request.username}</span>
       <div class="card-btns">
         <button class="accept-btn" type="button" data-action="accept">Accept</button>
         <button class="decline-btn" type="button" data-action="decline">Decline</button>
@@ -245,8 +303,8 @@ function renderFriendRequests(requests) {
   });
 }
 
-async function onRequestsClick(e) {
-  const btn = e.target.closest("button[data-action]");
+async function onRequestsClick(event) {
+  const btn = event.target.closest("button[data-action]");
   if (!btn) return;
 
   const card = btn.closest(".mini-card");
@@ -261,48 +319,62 @@ async function onRequestsClick(e) {
   if (action === "accept") {
     const res = await fetch(`/friend-requests/${encodeURIComponent(requestId)}/accept`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ userId }),
     });
 
     let data = {};
-    try { data = await res.json(); } catch (e) {}
+    try {
+      data = await res.json();
+    } catch (e) {
+      data = {};
+    }
 
     if (!res.ok) {
       toast(data.message || "Could not accept request.", "danger");
       return;
     }
 
-    toast("Accepted! Added to contacts.", "success");
+    toast("Accepted and added to contacts.", "success");
     card.remove();
 
     await loadContactsFromDB();
+    await loadFriendRequests();
     return;
   }
 
   if (action === "decline") {
     const res = await fetch(`/friend-requests/${encodeURIComponent(requestId)}/decline`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ userId }),
     });
 
     let data = {};
-    try { data = await res.json(); } catch (e) {}
+    try {
+      data = await res.json();
+    } catch (e) {
+      data = {};
+    }
 
     if (!res.ok) {
       toast(data.message || "Could not decline request.", "danger");
       return;
     }
 
-    toast("Declined.", "info");
+    toast("Request declined.", "info");
     card.remove();
+    await loadFriendRequests();
   }
 }
 
-// =====================
-// INIT
-// =====================
+// ----------------------
+// PAGE START
+// ----------------------
 
 document.addEventListener("DOMContentLoaded", async () => {
   if (!isLoggedIn()) {
@@ -313,8 +385,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#logout-btn")?.addEventListener("click", clearAuthAndGoHome);
 
   $("#search-btn")?.addEventListener("click", performSearch);
-  $("#search-input")?.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") performSearch();
+
+  $("#search-input")?.addEventListener("keypress", (event) => {
+    if (event.key === "Enter") {
+      performSearch();
+    }
   });
 
   $("#send-request-btn")?.addEventListener("click", sendFriendRequest);

@@ -1,27 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <title>RAYALISTLY - Contacts</title>
-  <link rel="icon" href="bilder/icon.png" />
+  <title>RayaListly - Contacts</title>
+  <link rel="icon" href="bilder/icon.png">
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="contacts.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="contacts.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 
 <body>
-
-  <!-- UPLOADED TEST 123 -->
-  <!-- ===== HEADER ===== -->
-  <header class="meny-rad">
-    <img src="bilder/logo.png" alt="RayaListly logo" />
+  <!-- Top header with logo and action buttons -->
+  <header class="topbar">
+    <div class="brand">
+      <img src="bilder/logo.png" alt="RayaListly logo" class="brand-logo">
+    </div>
 
     <div class="top-actions">
-      <a class="btn-link" href="PrivateHome2.html">
+      <a href="PrivateHome2.html" class="btn-link">
         <button type="button" class="action-btn action-btn--back">
           <i class="fa-solid fa-arrow-left"></i>
           Back
@@ -35,90 +34,105 @@
     </div>
   </header>
 
-  <!-- ===== MAIN ===== -->
-  <main class="main-layout">
-
-    <!-- ===== FRIEND REQUESTS ===== -->
-    <section class="side-box requests-section">
-      <h2>
-        <i class="fa-solid fa-user-plus"></i>
-        Friend Requests
-      </h2>
-
-      <div id="requests-list">
-
-        <!--Exempel: Kalle Kula request -->
-         <!--<div class="mini-card" data-username="Kalle Kula">
-            <span class="user-name">Kalle Kula</span>
-            <div class="card-btns">
-                <button class="accept-btn" type="button" data-action="accept">Accept</button>
-                <button class="decline-btn" type="button" data-action="decline">Decline</button>
-            </div>
-        </div> -->
-
-      </div>
-
-      <p class="helper-text">
-        Accept adds the user to your contacts. Decline removes the request.
+  <main class="page">
+    <!-- Small title area -->
+    <section class="page-intro">
+      <span class="page-badge">Connections</span>
+      <h1>Manage your contacts</h1>
+      <p>
+        Search for users, send friend requests, and keep your contact list organized in one place.
       </p>
     </section>
 
-
-    <!-- ===== SEARCH ===== -->
-    <section class="search-container">
-
-      <div class="search-bar">
-        <input
-          type="text"
-          id="search-input"
-          placeholder="Search by email or username..."
-          autocomplete="off"
-        />
-
-        <button id="search-btn" type="button">
-          Search <i class="fa-solid fa-magnifying-glass"></i>
-        </button>
-      </div>
-
-      <div id="result-box" class="result-card" style="display: none;">
-        <div class="result-left">
-          <i class="fa-solid fa-circle-check"></i>
-          <span id="username-display"></span>
+    <!-- Main 3-column layout -->
+    <section class="contacts-layout">
+      <!-- Friend requests -->
+      <aside class="panel side-panel">
+        <div class="panel-header">
+          <h2>
+            <i class="fa-solid fa-user-plus"></i>
+            Friend Requests
+          </h2>
+          <p>Accept or decline incoming requests.</p>
         </div>
 
-        <button class="add-btn" type="button" id="send-request-btn">
-            <i class="fa-solid fa-paper-plane"></i> Send Request
-        </button>
-      </div>
+        <div id="requests-list" class="panel-list"></div>
 
-      <p class="helper-text">
-        Tip: Press Enter to search quickly.
-      </p>
+        <div class="panel-note">
+          Accept adds the user to your contacts. Decline removes the request.
+        </div>
+      </aside>
+
+      <!-- Search area -->
+      <section class="panel center-panel">
+        <div class="panel-header">
+          <h2>
+            <i class="fa-solid fa-magnifying-glass"></i>
+            Find a user
+          </h2>
+          <p>Search by username or email and send a request.</p>
+        </div>
+
+        <div class="search-box">
+          <input
+            type="text"
+            id="search-input"
+            placeholder="Search by email or username..."
+            autocomplete="off"
+          >
+
+          <button id="search-btn" type="button" class="search-btn">
+            Search
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
+        </div>
+
+        <div id="result-box" class="result-card hidden-result">
+          <div class="result-left">
+            <div class="result-icon">
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+
+            <div class="result-text">
+              <span class="result-label">User found</span>
+              <span id="username-display" class="result-username"></span>
+            </div>
+          </div>
+
+          <button class="send-btn" type="button" id="send-request-btn">
+            <i class="fa-solid fa-paper-plane"></i>
+            Send Request
+          </button>
+        </div>
+
+        <div class="search-tip">
+          Tip: press Enter to search faster.
+        </div>
+      </section>
+
+      <!-- Contact list -->
+      <aside class="panel side-panel">
+        <div class="panel-header">
+          <h2>
+            <i class="fa-solid fa-address-book"></i>
+            My Contacts
+          </h2>
+          <p>Your saved contacts appear here.</p>
+        </div>
+
+        <ul id="my-contacts-list" class="contacts-list"></ul>
+
+        <div id="contacts-empty" class="panel-note">
+          No contacts yet. Accept a request or search and send one.
+        </div>
+      </aside>
     </section>
-
-
-    <!-- ===== MY CONTACTS ===== -->
-    <section class="side-box contacts-section">
-      <h2>
-        <i class="fa-solid fa-address-book"></i>
-        My Contacts
-      </h2>
-
-      <ul id="my-contacts-list"></ul>
-
-      <div id="contacts-empty" class="empty-text">
-        No contacts yet. Accept a request or search and send one.
-      </div>
-    </section>
-
   </main>
 
-  <!-- ===== TOAST ===== -->
+  <!-- Small message popup -->
   <div id="toast" class="toast"></div>
 
-  <!-- JS -->
   <script src="contacts.js"></script>
   <script src="1.js"></script>
-
 </body>
 </html>

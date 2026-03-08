@@ -3,133 +3,183 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RAYALISTLY</title>
+  <title>RayaListly</title>
 
   <link rel="icon" href="bilder/icon.png">
   <link rel="stylesheet" href="2.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
-
 <body>
 
-  <!-- ===== HEADER (top navigation) ===== -->
-  <header>
-    <img src="bilder/logo.png" alt="logo">
+   <header class="topbar">
+    <a href="#" class="logo-wrap" id="logo-link">
+      <img src="bilder/logo.png" alt="RayaListly logo">
+    </a>
 
-    <nav>
-      <!-- My account button -->
-      <button class="account-btn" id="account-link">
-        <i class="fa-regular fa-user"></i> My Account
+    <nav class="top-actions">
+      <!-- My Account button -->
+      <button class="account-btn" id="account-link" type="button">
+        <i class="fa-regular fa-user"></i>
+        <span>My Account</span>
       </button>
 
-      <!-- Account dropdown card -->
+      <!-- Account card -->
       <div id="account-section" class="account-card hidden">
         <h2>My Account</h2>
 
-        <!-- User info fields -->
         <div class="info-row">
-          <label>Name:</label>
+          <label for="acc-name">Name</label>
           <input type="text" id="acc-name" readonly placeholder="Loading...">
         </div>
 
         <div class="info-row">
-          <label>Username:</label>
+          <label for="acc-username">Username</label>
           <input type="text" id="acc-username" readonly placeholder="Loading...">
         </div>
 
         <div class="info-row">
-          <label>Email:</label>
+          <label for="acc-email">Email</label>
           <input type="text" id="acc-email" readonly placeholder="Loading...">
         </div>
 
         <div class="info-row">
-          <label>Password:</label>
+          <label for="acc-password">Password</label>
           <div class="password-container">
             <input type="password" id="acc-password" value="********" readonly>
-            <button class="edit-btn">Change</button>
+            <button class="edit-btn" type="button">Change</button>
           </div>
         </div>
       </div>
 
-      <!-- Logout button -->
-      <button id="logout-btn" class="logout-btn">
-        <i class="fas fa-sign-out-alt"></i> Log out
+      <!-- Log out button -->
+      <button id="logout-btn" class="logout-btn" type="button">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>Log out</span>
       </button>
     </nav>
   </header>
 
-  <!-- ===== MAIN LAYOUT WRAPPER ===== -->
-  <div class="layout">
+   <div class="layout">
 
     <!-- ===== SIDEBAR ===== -->
-    <nav class="sidebar">
-      <ul>
+    <aside class="sidebar">
+      <div class="sidebar-title">
+        <h2>Dashboard</h2>
+        <p>Organize your lists in a simple way</p>
+      </div>
 
-        <!-- Create list -->
+      <ul class="sidebar-menu">
+
+        <!-- Create new list -->
         <li>
-          <a href="javascript:void(0)" class="menu-link" id="createListBtn">
+          <button class="menu-link active-link" id="toggleCreateMenuBtn" type="button">
             <i class="fa-solid fa-circle-plus"></i>
-            Create a list
-          </a>
-
+            <span>Create New List</span>
+          </button>
 
           <div id="mySubmenu" class="submenu">
-    <ul>
-        <li>
-          <a href="privatelist.html" onclick="window.location.href='privatelist.html';">
-            Private <i class="fa-solid fa-plus"></i>
-          </a>
+            <ul>
+              <li>
+                <a href="privatelist.html">
+                  <span>Private</span>
+                  <i class="fa-solid fa-plus"></i>
+                </a>
+              </li>
+
+              <li>
+                <a href="#">
+                  <span>Family</span>
+                  <i class="fa-solid fa-plus"></i>
+                </a>
+              </li>
+
+              <li>
+                <a href="other.html">
+                  <span>Other</span>
+                  <i class="fa-solid fa-plus"></i>
+                </a>
+              </li>
+            </ul>
+          </div>
         </li>
-        
-        <li><a href="#">Family <i class="fa-solid fa-plus"></i></a></li>
-        <li><a href="other.html">Other... <i class="fa-solid fa-plus"></i></a></li>
-    </ul>
-</div>
 
-    
-
-        <!-- Show my list -->
-   
+        <!-- My lists -->
         <li>
-          <a href="javascript:void(0)" class="menu-link" id="showMyListBtn" onclick="toggleSavedLists()">
+          <button class="menu-link" id="showMyListBtn" type="button" onclick="toggleSavedLists()">
             <i class="fa-solid fa-list"></i>
-            Show my list
-          </a>
+            <span>My Lists</span>
+          </button>
 
           <div id="savedListsMenu" class="submenu">
             <ul id="myCreatedLists"></ul>
           </div>
         </li>
 
+        <!-- History -->
         <li>
           <a href="#" class="menu-link">
             <i class="fa-solid fa-clock-rotate-left"></i>
-            History
+            <span>History</span>
           </a>
         </li>
 
+        <!-- Contacts -->
         <li>
           <a href="contacts.html" class="menu-link">
             <i class="fa-solid fa-address-book"></i>
-            Contacts
+            <span>Contacts</span>
           </a>
         </li>
-
       </ul>
-    </nav>
+    </aside>
 
-    <!-- ===== MAIN CONTENT AREA ===== -->
     <main class="content">
-      <div class="empty-state">
-        <h1>Welcome 👋</h1>
-        <p>Select a list from the left or create a new one.</p>
-      </div>
-    </main>
+      <section class="hero-card">
+        <div class="hero-text">
+          <span class="welcome-badge">Welcome back</span>
+          <h1>Manage your lists beautifully and easily</h1>
+          <p>
+            Create a new list, open your saved lists, and keep everything organized
+            in one place with RayaListly.
+          </p>
 
+          <div class="hero-actions">
+            <a href="javascript:void(0)" class="primary-btn" onclick="document.getElementById('toggleCreateMenuBtn').click()">
+              <i class="fa-solid fa-circle-plus"></i>
+              Create New List
+            </a>
+
+            <a href="javascript:void(0)" class="secondary-btn" onclick="toggleSavedLists()">
+              <i class="fa-solid fa-list"></i>
+              View My Lists
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="quick-cards">
+        <div class="quick-card">
+          <i class="fa-solid fa-lock"></i>
+          <h3>Private Lists</h3>
+          <p>Create personal lists and keep your important items safe and organized.</p>
+        </div>
+
+        <div class="quick-card">
+          <i class="fa-solid fa-users"></i>
+          <h3>Family Lists</h3>
+          <p>Plan together and collect useful information for your family in one place.</p>
+        </div>
+
+        <div class="quick-card">
+          <i class="fa-solid fa-address-book"></i>
+          <h3>Contacts</h3>
+          <p>Save and manage useful contacts so they are always easy to find.</p>
+        </div>
+      </section>
+    </main>
   </div>
 
-  <script src="1.js"></script>
+  <script src="PrivateHome2.js"></script>
   <script src="list.js"></script>
-
 </body>
 </html>

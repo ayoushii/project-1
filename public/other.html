@@ -1,38 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create List - RayaListly</title>
-    <link rel="stylesheet" href="list.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create List - RayaListly</title>
+
+  <link rel="icon" href="bilder/icon.png">
+  <link rel="stylesheet" href="otherlist.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body>
+  <!-- Top bar with logo and back button -->
+  <header class="topbar">
+    <a href="#" class="brand" id="logo-link">
+      <img src="bilder/logo.png" alt="RayaListly logo" class="brand-logo">
+    </a>
 
-    <div class="list-area">
-        <a href="PrivateHome2.html" class="back-link">← Back to Menu</a>
+    <div class="top-actions">
+      <a href="PrivateHome2.html" class="top-btn top-btn--ghost">
+        <i class="fa-solid fa-arrow-left"></i>
+        Back to Menu
+      </a>
+    </div>
+  </header>
 
-        <div id="createListSection">
-            <h3>Create New List</h3>
-            <p>Give your list a name to get started.</p>
-            <div class="input-container">
-                <input type="text" id="listNameInput" placeholder="Enter list name (e.g., Grocery)...">
-                <button id="createListBtn">Create</button>
-            </div>
-        </div>
+  <main class="page">
+    <!-- Intro text -->
+    <section class="page-intro">
+      <span class="page-badge">My Lists</span>
+      <h1>Create and manage a beautiful list</h1>
+      <p>
+        Give your list a name, add items, and keep everything organized in one clean view.
+      </p>
+    </section>
 
-        <div id="activeListSection" style="display: none;">
-            <h2 id="currentListNameDisplay">List Name</h2>
-            <div class="input-container">
-                <input type="text" id="itemInput" placeholder="Add an item...">
-                <button id="addBtn">Add</button>
-            </div>
-            
-            <ul id="shoppingList">
-                </ul>
-        </div>
+    <!-- Create list section -->
+    <section id="createListSection" class="create-card">
+      <h2>Create New List</h2>
+      <p>Start by choosing a name for your new list.</p>
+
+      <div class="input-row">
+        <input
+          type="text"
+          id="listNameInput"
+          placeholder="Enter list name..."
+          autocomplete="off"
+        >
+        <button id="createListBtn" class="primary-btn" type="button">
+          Create
+        </button>
+      </div>
+
+      <p id="createMessage" class="helper-message"></p>
+    </section>
+
+    <!-- Active list section -->
+    <section id="activeListSection" class="list-card" style="display: none;">
+      <div class="list-window-bar">
+        <span class="window-dot"></span>
+        <span class="window-dot"></span>
+        <span class="window-dot"></span>
+        <h2 id="currentListNameDisplay">List Name</h2>
+      </div>
+
+       <div class="input-row">
+    <input
+        type="text"
+        id="itemInput"
+        placeholder="Item name..."
+        autocomplete="off"
+    >
+
+    <input
+        type="number"
+        id="quantityInput"
+        placeholder="Qty"
+        min="1"
+    >
+
+    <div class="select-wrap">
+        <select id="unitSelect">
+        <option value="pcs">pcs</option>
+        <option value="kg">kg</option>
+        <option value="L">L</option>
+        </select>
+        <i class="fa-solid fa-chevron-down"></i>
     </div>
 
-    <script src="list.js"></script>
+        <button id="addBtn" class="primary-btn" type="button">
+        Add item
+        </button>
+    </div>
+
+        <ul id="shoppingList"></ul>
+      </div>
+
+      <div class="list-footer">
+        <span id="itemsCount">
+          <i class="fa-solid fa-list-check"></i>
+          0 items
+        </span>
+
+        <span>
+          <i class="fa-solid fa-clock"></i>
+          saved automatically
+        </span>
+      </div>
+    </section>
+  </main>
+
+  <script src="list.js"></script>
 </body>
 </html>

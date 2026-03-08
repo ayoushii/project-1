@@ -1,322 +1,590 @@
+/* Nollställer standardmarginaler så allt börjar rent */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-body{
-  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
-  background: linear-gradient(180deg, #f6f9ff 0%, #ffffff 60%);
-  color: #111;
+/* Färger som passar loggan */
+:root {
+  --bg: #f4f8f7;
+  --bg-soft: #eef6f3;
+  --white: #ffffff;
+
+  --text: #1f2937;
+  --muted: #6b7280;
+  --line: #dbe7e2;
+
+  --green: #8bb04f;
+  --green-dark: #6f9440;
+  --green-soft: #eef6df;
+
+  --blue: #7ea9d6;
+  --blue-dark: #5d8fc4;
+  --blue-soft: #eaf3fb;
+
+  --danger: #d96b5f;
+
+  --shadow: 0 10px 30px rgba(31, 41, 55, 0.08);
+  --radius-lg: 24px;
+  --radius-md: 16px;
+  --radius-sm: 12px;
 }
 
-/* ===== HEADER ===== */
-header{
+/* Grundstil för hela sidan */
+body {
+  font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  background: linear-gradient(180deg, #f6fbf8 0%, #edf5f8 55%, #fdfefe 100%);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* Övre delen av sidan där logga och knappar ligger */
+.topbar {
   width: 100%;
-  min-height: 110px;
-  background: #fff;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  min-height: 96px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(139, 176, 79, 0.12);
+  box-shadow: 0 6px 20px rgba(31, 41, 55, 0.05);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0px 22px;
+  padding: 18px 28px;
   position: sticky;
   top: 0;
-  z-index: 999;
+  z-index: 1000;
 }
 
-header img{
-  width: 200px;
+/* Storlek på loggan */
+.logo-wrap {
+  width: 120px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: visible;
+}
+
+.logo-wrap img {
+  width: 120px;
   height: auto;
-  transform: none;
+  display: block;
+  object-fit: contain;
+  transform: scale(1.8);
+  transform-origin: left center;
 }
 
-/* Nav uppe till höger */
-header nav{
+/* Knapparna uppe till höger */
+.top-actions {
   display: flex;
   align-items: center;
   gap: 12px;
   position: relative;
   flex-wrap: wrap;
-  justify-content: flex-end;
 }
 
-/* ===== TOP BUTTONS ===== */
+/* Gemensam stil för knappar och klickbara delar */
 .account-btn,
-.logout-btn{
-  border: 1px solid rgba(0,0,0,0.12);
-  background: #fff;
-  color: #111;
-  padding: 10px 14px;
-  border-radius: 14px;
-  font-weight: 800;
+.logout-btn,
+.primary-btn,
+.secondary-btn,
+.edit-btn,
+.menu-link {
+  border: none;
   cursor: pointer;
+  border-radius: 14px;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  font-family: inherit;
+}
+
+/* Knapparna högst upp till höger */
+.account-btn,
+.logout-btn {
+  padding: 12px 18px;
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  box-shadow: 0 10px 18px rgba(0,0,0,0.06);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  background: var(--white);
+  border: 1px solid var(--line);
+  color: var(--text);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
 }
 
+/* Lite hover-effekt så sidan känns mer levande */
 .account-btn:hover,
-.logout-btn:hover{
+.logout-btn:hover {
   transform: translateY(-1px);
-  opacity: 0.98;
-  box-shadow: 0 14px 25px rgba(0,0,0,0.10);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
 }
 
-.logout-btn{
-  border: 1px solid rgba(231, 76, 60, 0.25);
+/* Log out får en svag röd ton */
+.logout-btn {
+  color: var(--danger);
+  border: 1px solid rgba(217, 107, 95, 0.25);
 }
 
-.logout-btn i{
-  color: #e74c3c;
-}
-
-/* ===== ACCOUNT CARD ===== */
-.hidden{
+/* Döljer element när de inte ska synas */
+.hidden {
   display: none !important;
 }
 
-.account-card{
+/* Rutan som öppnas när man klickar på My Account */
+.account-card {
   position: absolute;
-  top: 56px;
+  top: 68px;
   right: 0;
-  background: #fff;
-  border: 1px solid rgba(0,0,0,0.12);
-  padding: 18px;
-  border-radius: 18px;
-  box-shadow: 0 18px 45px rgba(0,0,0,0.12);
   width: 340px;
-  z-index: 1000;
+  max-width: calc(100vw - 32px);
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.14);
+  padding: 20px;
+  z-index: 1100;
 }
 
-.account-card h2{
-  font-size: 18px;
-  margin-bottom: 14px;
+/* Rubriken i rutan */
+.account-card h2 {
+  font-size: 20px;
+  margin-bottom: 16px;
   padding-bottom: 10px;
-  border-bottom: 1px solid rgba(0,0,0,0.08);
+  border-bottom: 1px solid var(--line);
 }
 
-.info-row{
+/* Varje rad i account-rutan */
+.info-row {
   display: flex;
-  gap: 10px;
-  align-items: center;
-  margin-bottom: 12px;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 14px;
 }
 
-.info-row label{
-  font-weight: 800;
-  color: rgba(0,0,0,0.65);
-  width: 90px;
+/* Texten över input-fälten */
+.info-row label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
 }
 
-.info-row input{
-  flex: 1;
-  padding: 9px 10px;
-  border: 1px solid rgba(0,0,0,0.12);
+/* Fälten i account-rutan */
+.info-row input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
   border-radius: 12px;
-  background: rgba(0,0,0,0.03);
+  background: #f9fafb;
   outline: none;
+  color: var(--text);
+  font-size: 15px;
 }
 
-.password-container{
+/* Password-fältet och knappen på samma rad */
+.password-container {
   display: flex;
   gap: 8px;
+  align-items: stretch;
+}
+
+.password-container input {
   flex: 1;
 }
 
-.edit-btn{
-  border: 1px solid rgba(0,0,0,0.12);
-  background: #fff;
-  padding: 8px 10px;
+/* Knappen för att byta lösenord */
+.edit-btn {
+  padding: 0 16px;
+  min-width: 110px;
+  background: #f3f4f6;
+  color: var(--text);
+  border: 1px solid var(--line);
   border-radius: 12px;
-  cursor: pointer;
-  font-weight: 800;
+  font-weight: 700;
 }
 
-.edit-btn:hover{
-  background: rgba(0,0,0,0.04);
+.edit-btn:hover {
+  background: #e5e7eb;
 }
 
-/* ===== APP LAYOUT ===== */
-.layout{
+/* Huvudlayouten: meny till vänster och innehåll till höger */
+.layout {
   display: flex;
-  min-height: calc(100vh - 110px);
+  min-height: calc(100vh - 96px);
 }
 
-/* ===== SIDEBAR ===== */
-.sidebar{
-  width: 260px;
-  background: rgba(255,255,255,0.92);
-  border-right: 1px solid rgba(0,0,0,0.08);
-  box-shadow: 10px 0 25px rgba(0,0,0,0.05);
-  padding: 18px;
+/* Menyn till vänster */
+.sidebar {
+  width: 280px;
+  background: linear-gradient(180deg, #f7fbf8 0%, #eef5f2 100%);
+  border-right: 1px solid rgba(139, 176, 79, 0.14);
+  padding: 24px 18px;
   position: fixed;
-  top: 110px;
+  top: 96px;
   left: 0;
-  height: calc(100vh - 110px);
+  height: calc(100vh - 96px);
   overflow-y: auto;
 }
 
-.sidebar ul{
+/* Rubrik längst upp i sidomenyn */
+.sidebar-title {
+  margin-bottom: 22px;
+  padding: 0 6px;
+}
+
+.sidebar-title h2 {
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+
+.sidebar-title p {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Listan i sidomenyn */
+.sidebar-menu {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
-.menu-link{
+/* Länkar och knappar i vänstermenyn */
+.menu-link {
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  color: #111;
-  font-weight: 900;
-  padding: 12px 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(0,0,0,0.10);
-  background: #fff;
-  box-shadow: 0 10px 18px rgba(0,0,0,0.06);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  user-select: none;
+  gap: 12px;
+  text-align: left;
+  padding: 14px 16px;
+  background: var(--white);
+  border: 1px solid #dde7e2;
+  color: var(--text);
+  box-shadow: 0 6px 18px rgba(31, 41, 55, 0.04);
 }
 
-.menu-link:hover{
+/* Ikonerna i vänstermenyn */
+.menu-link i {
+  color: var(--green-dark);
+}
+
+/* Hover-effekt på sidomenyn */
+.menu-link:hover {
   transform: translateY(-1px);
-  box-shadow: 0 14px 25px rgba(0,0,0,0.10);
+  background: linear-gradient(90deg, #f7fbef 0%, #eef6fb 100%);
+  border-color: rgba(126, 169, 214, 0.28);
+  box-shadow: 0 10px 22px rgba(31, 41, 55, 0.06);
 }
 
-.menu-link:active{
-  transform: translateY(0px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+/* Visar vilken meny som är aktiv */
+.active-link {
+  background: linear-gradient(90deg, #eef6df 0%, #eaf3fb 100%);
+  border-color: rgba(139, 176, 79, 0.28);
+  color: var(--green-dark);
 }
 
-.submenu{
+.active-link i {
+  color: var(--blue-dark);
+}
+
+/* Undermenyn som öppnas under Create New List och My Lists */
+.submenu {
   margin-top: 10px;
-  display: none;
   margin-left: 12px;
-  padding: 10px 10px;
-  border-left: 2px solid rgba(0,0,0,0.10);
-  border-radius: 14px;
-  background: rgba(255,255,255,0.8);
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  display: none;
 }
 
-.submenu ul{
+/* Listan inne i undermenyn */
+.submenu ul {
   list-style: none;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.submenu a{
-  text-decoration: none;
-  color: rgba(0,0,0,0.75);
-  font-weight: 800;
+/* Varje länk inne i undermenyn */
+.submenu a {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  padding: 8px 10px;
+  text-decoration: none;
+  color: var(--text);
+  background: var(--white);
+  border: 1px solid var(--line);
   border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
 }
 
-.submenu a:hover{
-  background: rgba(0,0,0,0.04);
+/* Hover i undermenyn */
+.submenu a:hover {
+  background: linear-gradient(90deg, #f9fcf4 0%, #f3f8fd 100%);
+  border-color: rgba(139, 176, 79, 0.18);
 }
 
-/* ===== MAIN CONTENT ===== */
-.content{
+/* Högra delen där huvudinnehållet visas */
+.content {
   flex: 1;
-  padding: 40px;
-  margin-left: 260px;
-  background: rgba(255,255,255,0.75);
-  border: 1px solid rgba(0,0,0,0.06);
+  margin-left: 280px;
+  padding: 32px;
+  background: transparent;
+}
+
+/* Stora välkomstkortet */
+.hero-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f7fbef 45%, #eef6fb 100%);
+  border: 1px solid #e1ebe5;
+  border-radius: 28px;
+  box-shadow: 0 14px 34px rgba(31, 41, 55, 0.07);
+  padding: 42px;
+  margin-bottom: 28px;
+}
+
+/* Begränsar textbredden så det ser renare ut */
+.hero-text {
+  max-width: 760px;
+}
+
+/* Liten badge ovanför huvudrubriken */
+.welcome-badge {
+  display: inline-block;
+  background: linear-gradient(90deg, #eef6df 0%, #eaf3fb 100%);
+  color: var(--green-dark);
+  border: 1px solid rgba(139, 176, 79, 0.2);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 18px;
+}
+
+/* Huvudrubriken */
+.hero-card h1 {
+  font-size: 40px;
+  line-height: 1.15;
+  margin-bottom: 14px;
+}
+
+/* Beskrivningstexten under rubriken */
+.hero-card p {
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--muted);
+  margin-bottom: 26px;
+}
+
+/* Knapparna i välkomstkortet */
+.hero-actions {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.primary-btn,
+.secondary-btn {
+  padding: 14px 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Huvudknappen */
+.primary-btn {
+  background: linear-gradient(90deg, var(--green) 0%, var(--blue) 100%);
+  color: white;
+  box-shadow: 0 10px 24px rgba(126, 169, 214, 0.22);
+}
+
+.primary-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.02);
+}
+
+/* Sekundär knapp */
+.secondary-btn {
+  background: #ffffff;
+  color: var(--text);
+  border: 1px solid #dbe7e2;
+}
+
+.secondary-btn:hover {
+  background: linear-gradient(90deg, #f9fcf4 0%, #f3f8fd 100%);
+}
+
+/* Korten längre ner på sidan */
+.quick-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+/* Varje informationskort */
+.quick-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
+  border: 1px solid #e2ebe6;
   border-radius: 22px;
-  box-shadow: 0 18px 45px rgba(0,0,0,0.08);
-  margin-top: 18px;
-  margin-right: 18px;
+  padding: 24px;
+  box-shadow: 0 10px 24px rgba(31, 41, 55, 0.06);
 }
 
-/* Empty state */
-.empty-state{
-  max-width: 520px;
-  margin: 110px auto 0 auto;
-  background: rgba(255,255,255,0.9);
-  border: 1px solid rgba(0,0,0,0.06);
-  border-radius: 22px;
-  padding: 26px 22px;
-  box-shadow: 0 14px 30px rgba(0,0,0,0.08);
-  text-align: center;
-  color: rgba(0,0,0,0.65);
+/* Ikoner i korten */
+.quick-card i {
+  font-size: 24px;
+  margin-bottom: 14px;
+  background: linear-gradient(90deg, var(--green) 0%, var(--blue) 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
 }
 
-.empty-state h1{
-  font-size: 30px;
-  color: #111;
-  margin-bottom: 8px;
+/* Rubrik i varje kort */
+.quick-card h3 {
+  font-size: 20px;
+  margin-bottom: 10px;
 }
 
-.empty-state p{
-  line-height: 1.5;
+/* Text i varje kort */
+.quick-card p {
+  color: var(--muted);
+  line-height: 1.6;
 }
 
-/* ===== RESPONSIVE ===== */
-@media (max-width: 900px){
-  header{
+/* På lite mindre skärmar läggs korten under varandra */
+@media (max-width: 1100px) {
+  .quick-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-card h1 {
+    font-size: 34px;
+  }
+}
+
+/* Anpassning för surfplatta och mindre laptop */
+@media (max-width: 900px) {
+  .topbar {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 14px;
+    padding: 16px 18px;
   }
 
-  header img{
-    width: 180px;
-  }
-
-  header nav{
+  .top-actions {
     width: 100%;
-    justify-content: flex-end;
+    justify-content: flex-start;
   }
 
-  .layout{
+  .account-btn,
+  .logout-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .layout {
     flex-direction: column;
   }
 
-  .sidebar{
+  /* Sidomenyn flyttas upp och blir full bredd */
+  .sidebar {
     position: relative;
     top: 0;
     left: 0;
     width: 100%;
     height: auto;
-    box-shadow: none;
     border-right: none;
-    padding: 14px;
+    border-bottom: 1px solid var(--line);
   }
 
-  .content{
+  .content {
     margin-left: 0;
-    margin-right: 0;
-    border-radius: 18px;
     padding: 18px;
   }
 
-  .empty-state{
-    margin-top: 26px;
-    width: 100%;
+  .hero-card {
+    padding: 28px 20px;
+  }
+
+  .hero-card h1 {
+    font-size: 30px;
+  }
+
+  .hero-card p {
+    font-size: 16px;
+  }
+
+  /* Gör account-rutan smidigare på mindre skärm */
+  .account-card {
+    top: 64px;
+    right: 0;
+    left: auto;
+    width: 320px;
+    max-width: calc(100vw - 36px);
+    padding: 18px;
   }
 }
 
-@media (max-width: 520px){
-  .account-btn,
-  .logout-btn{
+/* Extra liten mobil */
+@media (max-width: 520px) {
+  .logo-wrap img {
+    width: 135px;
+  }
+
+  .hero-card h1 {
+    font-size: 25px;
+  }
+
+  .hero-actions {
+    flex-direction: column;
+  }
+
+  .primary-btn,
+  .secondary-btn {
     width: 100%;
     justify-content: center;
   }
 
-  header nav{
-    gap: 10px;
+  .menu-link {
+    padding: 13px 14px;
   }
 
-  .menu-link{
-    padding: 12px 14px;
-    border-radius: 14px;
+  .quick-card {
+    padding: 18px;
+  }
+
+  /* Account-rutan blir mer mobilanpassad */
+  .account-card {
+    width: 100%;
+    max-width: none;
+    left: 0;
+    right: 0;
+    top: 110px;
+    border-radius: 18px;
+    padding: 16px;
+  }
+
+  .account-card h2 {
+    font-size: 18px;
+  }
+
+  .info-row input {
+    padding: 11px 12px;
+    font-size: 14px;
+  }
+
+  .password-container {
+    flex-direction: column;
+  }
+
+  .edit-btn {
+    width: 100%;
+    min-width: 0;
+    padding: 12px;
   }
 }
