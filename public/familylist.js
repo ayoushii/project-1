@@ -209,7 +209,7 @@ function renderMemberOptions() {
   });
 }
 
-function createMemberChip(memberName, index) {
+function createMemberChip(member, index) {
   const li = document.createElement("li");
   li.className = "member-chip";
 
@@ -217,7 +217,7 @@ function createMemberChip(memberName, index) {
   icon.className = "fa-solid fa-user";
 
   const text = document.createElement("span");
-  text.textContent = memberName;
+  text.textContent = member.username;
 
   const removeBtn = document.createElement("button");
   removeBtn.type = "button";
@@ -250,8 +250,8 @@ function renderMembers() {
     return;
   }
 
-  sharedMembers.forEach((memberName, index) => {
-    memberList.appendChild(createMemberChip(memberName, index));
+  sharedMembers.forEach((member, index) => {
+    memberList.appendChild(createMemberChip(member, index));
   });
 }
 
@@ -358,6 +358,34 @@ async function loadItems() {
   } catch (error) {
     console.error("LOAD FAMILY ITEMS ERROR:", error);
     alert("Server error while loading items.");
+  }
+}
+
+async function loadMembers() {
+  const userId = getUserId();
+
+  if (!userId || !currentListId) {
+    sharedMembers = [];
+    renderMembers();
+    return;
+  }
+
+  try {
+    const res = await fetch(`/lists/${currentListId}/members?userId=${encodeURIComponent(userId)}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      sharedMembers = [];
+      renderMembers();
+      return;
+    }
+
+    sharedMembers = data.members || [];
+    renderMembers();
+  } catch (error) {
+    console.error("LOAD FAMILY MEMBERS ERROR:", error);
+    sharedMembers = [];
+    renderMembers();
   }
 }
 
@@ -535,25 +563,46 @@ async function addMemberToFamilyList() {
       return;
     }
 
-    if (!sharedMembers.includes(selectedName)) {
-      sharedMembers.push(selectedName);
-    }
 
     memberSelect.value = "";
-    renderMembers();
+    await loadMembers();
+
   } catch (error) {
     console.error("SHARE FAMILY LIST ERROR:", error);
     alert("Server error while sharing the list.");
   }
 }
 
-function removeMember(index) {
-  if (!sharedMembers[index]) return;
+async function removeMember(index) {
+  const userId = getUserId();
+  const member = sharedMembers[index];
 
-  sharedMembers.splice(index, 1);
-  renderMembers();
+  if (!member || !member.user_id || !currentListId) return;
+
+  const confirmed = confirm(`Remove ${member.username} from this list?`);
+  if (!confirmed) return;
+
+  try {
+    const res = await fetch(
+      `/lists/${currentListId}/share/${member.user_id}?userId=${encodeURIComponent(userId)}`,
+      {
+        method: "DELETE"
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Could not remove member.");
+      return;
+    }
+
+    await loadMembers();
+  } catch (error) {
+    console.error("REMOVE FAMILY MEMBER ERROR:", error);
+    alert("Server error while removing member.");
+  }
 }
-
 async function saveFamilyList() {
   if (!currentListId) {
     alert("Create the list first.");
@@ -576,7 +625,7 @@ function loadListFromURL() {
     currentListId = listId;
     loadListById(listId).then(() => {
       loadItems();
-      renderMembers();
+      loadMembers();
     });
   } else {
     updateListNameDisplays("New Family List");

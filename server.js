@@ -563,6 +563,59 @@ app.post("/lists", (req, res) => {
     });
   });
 });
+app.delete("/lists/:id/share/:sharedUserId", (req, res) => {
+  const listId = Number(req.params.id);
+  const sharedUserId = Number(req.params.sharedUserId);
+  const userId = Number(req.query.userId);
+
+  if (!listId || !sharedUserId || !userId) {
+    return res.status(400).json({
+      message: "listId, sharedUserId and userId are required.",
+    });
+  }
+
+  const ownerSql = `
+    SELECT id
+    FROM lists
+    WHERE id = ? AND owner_id = ?
+    LIMIT 1
+  `;
+
+  db.query(ownerSql, [listId, userId], (err, ownerRows) => {
+    if (err) {
+      console.log("DELETE SHARE OWNER ERROR:", err.message);
+      return res.status(500).json({ message: "Database error." });
+    }
+
+    if (ownerRows.length === 0) {
+      return res.status(403).json({
+        message: "Only the owner can remove members from this list.",
+      });
+    }
+
+    const deleteSql = `
+      DELETE FROM list_shares
+      WHERE list_id = ? AND shared_with_user_id = ?
+    `;
+
+    db.query(deleteSql, [listId, sharedUserId], (err2, result) => {
+      if (err2) {
+        console.log("DELETE SHARE ERROR:", err2.message);
+        return res.status(500).json({ message: "Database error." });
+      }
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({
+          message: "Shared member not found.",
+        });
+      }
+
+      return res.json({
+        message: "Member removed successfully.",
+      });
+    });
+  });
+});
 
 app.get("/lists", (req, res) => {
   const userId = Number(req.query.userId);
@@ -620,6 +673,45 @@ app.get("/lists/:id", (req, res) => {
     }
 
     return res.json({ list: rows[0] });
+  });
+});
+
+app.get("/lists/:id/members", (req, res) => {
+  const listId = Number(req.params.id);
+  const userId = Number(req.query.userId);
+
+  if (!listId || !userId) {
+    return res.status(400).json({
+      message: "listId and userId are required.",
+    });
+  }
+
+  db.query(getAccessibleListSql(), [listId, userId, userId], (err, rows) => {
+    if (err) {
+      console.log("GET LIST MEMBERS ACCESS ERROR:", err.message);
+      return res.status(500).json({ message: "Database error." });
+    }
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "List not found." });
+    }
+
+    const sql = `
+      SELECT ls.id, u.id AS user_id, u.username, u.email, ls.permission
+      FROM list_shares ls
+      JOIN users u ON u.id = ls.shared_with_user_id
+      WHERE ls.list_id = ?
+      ORDER BY u.username ASC
+    `;
+
+    db.query(sql, [listId], (err2, memberRows) => {
+      if (err2) {
+        console.log("GET LIST MEMBERS ERROR:", err2.message);
+        return res.status(500).json({ message: "Database error." });
+      }
+
+      return res.json({ members: memberRows });
+    });
   });
 });
 
