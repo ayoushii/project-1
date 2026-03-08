@@ -206,6 +206,20 @@ body {
   gap: 8px;
 }
 
+.owner-row {
+  margin-top: 2px;
+}
+
+#ownerText {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+#ownerText strong {
+  color: var(--text);
+  font-weight: 800;
+}
+
 .member-placeholder {
   color: #999;
   font-size: 14px;
@@ -487,6 +501,50 @@ body {
   font-size: 14px;
   list-style: none;
 }
+.member-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.member-chip i.fa-user {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--green-soft) 0%, var(--blue-soft) 100%);
+  color: var(--green-dark);
+  font-size: 12px;
+}
+
+.member-remove-btn {
+  border: none;
+  background: transparent;
+  color: var(--danger);
+  padding: 6px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.member-remove-btn:hover {
+  background: rgba(217, 107, 95, 0.08);
+}
+.member-remove-btn {
+  border: none;
+  background: transparent;
+  color: var(--danger);
+  padding: 6px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.member-remove-btn:hover {
+  background: rgba(217, 107, 95, 0.08);
+}
 
 @media (max-width: 900px) {
   .list-layout {
@@ -504,5 +562,8 @@ body {
   .create-list-bar {
     flex-direction: column;
     align-items: stretch;
+  }
+    #ownerText {
+    font-size: 14px;
   }
 }

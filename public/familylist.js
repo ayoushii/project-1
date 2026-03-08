@@ -13,6 +13,8 @@ const memberPickerBox = document.getElementById("memberPickerBox");
 const memberSelect = document.getElementById("memberSelect");
 const addMemberBtn = document.getElementById("addMemberBtn");
 const memberList = document.getElementById("memberList");
+const ownerText = document.getElementById("ownerText");
+
 
 let currentListId = null;
 let currentListName = null;
@@ -307,6 +309,36 @@ async function createFamilyList() {
   }
 }
 
+async function loadOwnerName(ownerId) {
+  if (!ownerText) return;
+
+  if (!ownerId) {
+    ownerText.textContent = "";
+    return;
+  }
+
+  const currentUserId = getUserId();
+
+  if (Number(ownerId) === Number(currentUserId)) {
+    ownerText.innerHTML = `Owned by <strong>you</strong>`;
+    return;
+  }
+
+  try {
+    const res = await fetch(`/user/${ownerId}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      ownerText.textContent = "";
+      return;
+    }
+
+    ownerText.innerHTML = `Owned by <strong>${data.username}</strong>`;
+  } catch (error) {
+    console.error("LOAD OWNER ERROR:", error);
+    ownerText.textContent = "";
+  }
+}
 async function loadListById(listId) {
   const userId = getUserId();
 
@@ -325,6 +357,8 @@ async function loadListById(listId) {
     currentListName = data.list.title;
 
     updateListNameDisplays(currentListName);
+
+    await loadOwnerName(data.list.owner_id);
 
     listNameInput.value = currentListName;
     listNameInput.disabled = true;
@@ -623,12 +657,13 @@ function loadListFromURL() {
 
   if (listId) {
     currentListId = listId;
-    loadListById(listId).then(() => {
-      loadItems();
-      loadMembers();
+    loadListById(listId).then(async() => {
+      await loadItems();
+      await loadMembers();
     });
   } else {
     updateListNameDisplays("New Family List");
+    if (ownerText) ownerText.textContent = "";
     setControlsDisabled(true);
     renderList();
     renderMembers();

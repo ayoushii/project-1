@@ -12,11 +12,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   const memberSelect = document.getElementById("memberSelect");
   const addMemberBtn = document.getElementById("addMemberBtn");
   const listMembers = document.getElementById("listMembers");
+  const ownerText = document.getElementById("ownerText");
 
   let currentListId = null;
   let currentListName = null;
   let contactsCache = [];
   let currentItems = [];
+  let sharedMembers = [];
 
   function getUserId() {
     const id = localStorage.getItem("userId");
@@ -106,15 +108,84 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  function renderMembersPlaceholder() {
+   function createMemberChip(member, index) {
+  const li = document.createElement("li");
+  li.className = "member-chip";
+
+  const icon = document.createElement("i");
+  icon.className = "fa-solid fa-user";
+
+  const text = document.createElement("span");
+  text.textContent = member.username;
+
+  const removeBtn = document.createElement("button");
+  removeBtn.type = "button";
+  removeBtn.className = "member-remove-btn";
+  removeBtn.setAttribute("data-member-remove-index", index);
+
+  const removeIcon = document.createElement("i");
+  removeIcon.className = "fa-solid fa-xmark";
+  removeBtn.appendChild(removeIcon);
+
+  li.appendChild(icon);
+  li.appendChild(text);
+  li.appendChild(removeBtn);
+
+  return li;
+}
+
+  function renderMembers() {
     if (!listMembers) return;
 
     listMembers.innerHTML = "";
 
-    const li = document.createElement("li");
-    li.className = "member-placeholder";
-    li.textContent = "Members will be connected in the share step";
-    listMembers.appendChild(li);
+    if (!currentListId && sharedMembers.length === 0) {
+      const li = document.createElement("li");
+      li.className = "member-placeholder";
+      li.textContent = "Create the list first";
+      listMembers.appendChild(li);
+      return;
+    }
+
+    if (sharedMembers.length === 0) {
+      const li = document.createElement("li");
+      li.className = "member-placeholder";
+      li.textContent = "No members added yet";
+      listMembers.appendChild(li);
+      return;
+    }
+
+    sharedMembers.forEach((member, index) => {
+      listMembers.appendChild(createMemberChip(member, index));
+    });  
+  }
+
+  async function loadMembers() {
+    const userId = getUserId();
+
+    if (!userId || !currentListId) {
+      sharedMembers = [];
+      renderMembers();
+      return;
+    }
+
+    try {
+      const res = await fetch(`/lists/${currentListId}/members?userId=${encodeURIComponent(userId)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        sharedMembers = [];
+        renderMembers();
+        return;
+      }
+
+      sharedMembers = data.members || [];
+      renderMembers();
+    } catch (error) {
+      console.error("LOAD MEMBERS ERROR:", error);
+      sharedMembers = [];
+      renderMembers();
+    }
   }
 
   function createToggleButton(item) {
@@ -208,7 +279,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       li.textContent = "Create the list first";
       shoppingList.appendChild(li);
       updateItemsCount([]);
-      renderMembersPlaceholder();
+      renderMembers();
       return;
     }
 
@@ -218,7 +289,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       li.textContent = "No items yet";
       shoppingList.appendChild(li);
       updateItemsCount(currentItems);
-      renderMembersPlaceholder();
+      renderMembers();
       return;
     }
 
@@ -227,7 +298,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     updateItemsCount(currentItems);
-    renderMembersPlaceholder();
+    renderMembers();
   }
 
   async function loadItems() {
@@ -250,6 +321,38 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
+
+  async function loadOwnerName(ownerId) {
+    if (!ownerText) return;
+
+    if (!ownerId) {
+      ownerText.textContent = "";
+      return;
+    }
+
+    const currentUserId = getUserId();
+
+    if (Number(ownerId) === Number(currentUserId)) {
+      ownerText.innerHTML = `Owned by <strong>you</strong>`;
+      return;
+    }
+
+    try {
+      const res = await fetch(`/user/${ownerId}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        ownerText.textContent = "";
+        return;
+      }
+
+      ownerText.innerHTML = `Owned by <strong>${data.username}</strong>`;
+    } catch (error) {
+      console.error("LOAD OWNER ERROR:", error);
+      ownerText.textContent = "";
+    }
+  }
+
   async function openList(listId) {
     const userId = getUserId();
     if (!listId || !userId) return;
@@ -267,6 +370,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       currentListName = data.list.title;
 
       updateListNameDisplays(currentListName);
+      await loadOwnerName(data.list.owner_id);
 
       if (listNameInput) {
         listNameInput.value = currentListName;
@@ -280,6 +384,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       setControlsDisabled(false);
       await loadItems();
+      await loadMembers();
     } catch (err) {
       console.error("OPEN LIST ERROR:", err);
     }
@@ -408,12 +513,42 @@ document.addEventListener("DOMContentLoaded", async () => {
         alert(data.message || "Could not share the list.");
         return;
       }
-
-      alert(`List shared with ${selectedName}.`);
       memberSelect.value = "";
+      await loadMembers();
     } catch (err) {
       console.error("SHARE LIST ERROR:", err);
       alert("Server error while sharing the list.");
+    }
+  }
+
+  async function removeMember(index) {
+    const userId = getUserId();
+    const member = sharedMembers[index];
+
+    if (!member || !member.user_id || !currentListId) return;
+
+    const confirmed = confirm(`Remove ${member.username} from this list?`);
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(
+        `/lists/${currentListId}/share/${member.user_id}?userId=${encodeURIComponent(userId)}`,
+        {
+          method: "DELETE"
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.message || "Could not remove member.");
+        return;
+      }
+
+      await loadMembers();
+    } catch (error) {
+      console.error("REMOVE MEMBER ERROR:", error);
+      alert("Server error while removing member.");
     }
   }
 
@@ -483,6 +618,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       openList(listIdFromURL);
     } else {
       updateListNameDisplays("New List");
+      if (ownerText) ownerText.innerHTML = `Owned by <strong>you</strong>`;
       setControlsDisabled(true);
       renderItems();
     }
@@ -525,4 +661,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   addMemberBtn?.addEventListener("click", addMemberToCurrentList);
+  
+  listMembers?.addEventListener("click", (event) => {
+    const removeBtn = event.target.closest("[data-member-remove-index]");
+    if (!removeBtn) return;
+
+    removeMember(Number(removeBtn.getAttribute("data-member-remove-index")));
+  });
 });
