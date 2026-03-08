@@ -1,38 +1,58 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RayaListly - Create Private List</title>
-    <link rel="stylesheet" href="privatelist.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+    <link rel="icon" href="bilder/icon.png">
+    <link rel="stylesheet" href="privatelist.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
+    <header class="topbar">
+        <a href="PrivateHome2.html" class="logo-wrap">
+            <img src="bilder/logo.png" alt="RayaListly logo">
+        </a>
 
-    <div class="create-container">
-        <header class="list-header">
+        <div class="top-actions">
             <a href="PrivateHome2.html" class="back-btn">
                 <i class="fa-solid fa-arrow-left"></i>
+                <span>Back to Menu</span>
             </a>
-            <h2>New Private List</h2>
-            <button class="share-btn"><i class="fa-solid fa-share-nodes"></i></button>
-        </header>
+        </div>
+    </header>
 
-        <main>
-            <div class="input-section">
-                <input type="text" id="listNameInput" placeholder="Namn på listan (t.ex. Hemmet)">
+    <main class="page">
+        <section class="page-intro">
+            <span class="page-badge">Private List</span>
+            <h1>Create your private shopping list</h1>
+            <p>Add items and save the list directly to My Lists.</p>
+        </section>
+
+        <section class="list-card">
+            <div class="card-header">
+                <h2>New Private List</h2>
+                <p>This list is only for your own planning.</p>
+            </div>
+
+            <div class="list-name-row">
+                <label for="listNameInput">List name</label>
+                <input type="text" id="listNameInput" placeholder="Example: Home">
             </div>
 
             <div class="add-item-row">
-                <input type="text" id="itemNameInput" placeholder="Lägg till vara...">
-                <button id="addItemBtn"><i class="fa-solid fa-plus"></i></button>
+                <input type="text" id="itemNameInput" placeholder="Add an item...">
+                <button id="addItemBtn" type="button" class="add-btn">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Add</span>
+                </button>
             </div>
 
             <ul id="visualItemList"></ul>
 
-            <button id="saveListBtn" class="main-save-btn">Save to "My Lists"</button>
-        </main>
-    </div>
+            <button id="saveListBtn" class="save-btn" type="button">Save to My Lists</button>
+        </section>
+    </main>
 
     <script src="privatelist.js"></script>
 </body>

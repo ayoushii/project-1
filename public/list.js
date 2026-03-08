@@ -1,37 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const myCreatedLists = document.getElementById("myCreatedLists");
-  const savedListsMenu = document.getElementById("savedListsMenu");
-  const createMenu = document.getElementById("mySubmenu");
   const toggleCreateMenuBtn = document.getElementById("toggleCreateMenuBtn");
-
-  const createListSection = document.getElementById("createListSection");
-  const activeListSection = document.getElementById("activeListSection");
-
-  const listNameInput = document.getElementById("listNameInput");
-  const createListBtn = document.getElementById("createListBtn");
-  const createMessage = document.getElementById("createMessage");
-
-  const currentListNameDisplay = document.getElementById("currentListNameDisplay");
-  const itemInput = document.getElementById("itemInput");
-  const addBtn = document.getElementById("addBtn");
-  const shoppingList = document.getElementById("shoppingList");
-  const itemsCount = document.getElementById("itemsCount");
-
-  const logoLink = document.getElementById("logo-link");
-
-  let currentListName = null;
-
-  if (logoLink) {
-    logoLink.addEventListener("click", (event) => {
-      event.preventDefault();
-
-      if (localStorage.getItem("isLoggedIn") === "true") {
-        window.location.href = "PrivateHome2.html";
-      } else {
-        window.location.href = "PublicHome1.html";
-      }
-    });
-  }
+  const createMenu = document.getElementById("mySubmenu");
 
   function getAllLists() {
     return JSON.parse(localStorage.getItem("rayaLists")) || [];
@@ -41,44 +11,149 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem("rayaLists", JSON.stringify(lists));
   }
 
-  function getItemsForList(listName) {
-    return JSON.parse(localStorage.getItem(`rayaListItems_${listName}`)) || [];
+  function getHistoryLists() {
+    return JSON.parse(localStorage.getItem("rayaHistoryLists")) || [];
   }
 
-  function setItemsForList(listName, items) {
-    localStorage.setItem(`rayaListItems_${listName}`, JSON.stringify(items));
+  function setHistoryLists(lists) {
+    localStorage.setItem("rayaHistoryLists", JSON.stringify(lists));
   }
 
-  function updateItemsCount(items) {
-    if (!itemsCount) return;
-
-    const count = items.length;
-    itemsCount.textContent = `${count} ${count === 1 ? "item" : "items"}`;
-  }
-
-  function showCreateMessage(text, isError = false) {
-    if (!createMessage) return;
-
-    createMessage.textContent = text;
-    createMessage.classList.remove("message-error", "message-normal");
-    createMessage.classList.add(isError ? "message-error" : "message-normal");
-  }
-
-  function createEmptyListMessage() {
+  function createEmptyListMessage(text) {
     const li = document.createElement("li");
     li.className = "empty-list-item";
-    li.textContent = "No lists yet";
+    li.textContent = text;
     return li;
+  }
+
+  function toggleCreateMenu() {
+    if (!createMenu) return;
+
+    createMenu.style.display =
+      createMenu.style.display === "block" ? "none" : "block";
+  }
+
+  function moveListToHistory(listName) {
+    const allLists = getAllLists();
+    const historyLists = getHistoryLists();
+
+    const updatedLists = allLists.filter((name) => name !== listName);
+
+    if (!historyLists.includes(listName)) {
+      historyLists.push(listName);
+    }
+
+    setAllLists(updatedLists);
+    setHistoryLists(historyLists);
+
+    loadLists();
+    loadHistoryLists();
+  }
+
+  function restoreListFromHistory(listName) {
+    const allLists = getAllLists();
+    const historyLists = getHistoryLists();
+
+    if (!allLists.includes(listName)) {
+      allLists.push(listName);
+    }
+
+    const updatedHistory = historyLists.filter((name) => name !== listName);
+
+    setAllLists(allLists);
+    setHistoryLists(updatedHistory);
+
+    loadLists();
+    loadHistoryLists();
+  }
+
+  function deleteListForever(listName) {
+    const historyLists = getHistoryLists();
+    const updatedHistory = historyLists.filter((name) => name !== listName);
+
+    setHistoryLists(updatedHistory);
+    localStorage.removeItem(`rayaListItems_${listName}`);
+    localStorage.removeItem(`rayaListMembers_${listName}`);
+
+    loadHistoryLists();
   }
 
   function createSavedListItem(listName) {
     const li = document.createElement("li");
-    const link = document.createElement("a");
+    li.className = "saved-list-item";
 
+    const link = document.createElement("a");
     link.href = `other.html?name=${encodeURIComponent(listName)}`;
     link.textContent = listName;
+    link.className = "saved-list-link";
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "delete-list-btn";
+    deleteBtn.setAttribute("aria-label", `Move ${listName} to history`);
+
+    const icon = document.createElement("i");
+    icon.className = "fa-solid fa-trash";
+    deleteBtn.appendChild(icon);
+
+    deleteBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      moveListToHistory(listName);
+    });
 
     li.appendChild(link);
+    li.appendChild(deleteBtn);
+
+    return li;
+  }
+
+  function createHistoryListItem(listName) {
+    const li = document.createElement("li");
+    li.className = "history-list-item";
+
+    const link = document.createElement("a");
+    link.href = `other.html?name=${encodeURIComponent(listName)}`;
+    link.textContent = listName;
+    link.className = "history-list-link";
+
+    const actions = document.createElement("div");
+    actions.className = "history-actions";
+
+    const restoreBtn = document.createElement("button");
+    restoreBtn.type = "button";
+    restoreBtn.className = "restore-list-btn";
+
+    const restoreIcon = document.createElement("i");
+    restoreIcon.className = "fa-solid fa-rotate-left";
+    restoreBtn.appendChild(restoreIcon);
+
+    restoreBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      restoreListFromHistory(listName);
+    });
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "delete-history-btn";
+
+    const deleteIcon = document.createElement("i");
+    deleteIcon.className = "fa-solid fa-trash";
+    deleteBtn.appendChild(deleteIcon);
+
+    deleteBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      deleteListForever(listName);
+    });
+
+    actions.appendChild(restoreBtn);
+    actions.appendChild(deleteBtn);
+
+    li.appendChild(link);
+    li.appendChild(actions);
+
     return li;
   }
 
@@ -89,7 +164,7 @@ document.addEventListener("DOMContentLoaded", () => {
     myCreatedLists.innerHTML = "";
 
     if (allLists.length === 0) {
-      myCreatedLists.appendChild(createEmptyListMessage());
+      myCreatedLists.appendChild(createEmptyListMessage("No lists yet"));
       return;
     }
 
@@ -98,239 +173,38 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function createToggleButton(index, completed) {
-    const button = document.createElement("button");
-    const icon = document.createElement("i");
+  function loadHistoryLists() {
+    const historyContainer = document.getElementById("historyLists");
+    if (!historyContainer) return;
 
-    button.type = "button";
-    button.className = "item-toggle";
-    if (completed) {
-      button.classList.add("is-completed");
-    }
-    button.setAttribute("data-index", index);
+    const historyLists = getHistoryLists();
+    historyContainer.innerHTML = "";
 
-    icon.className = "fa-solid fa-check";
-    button.appendChild(icon);
-
-    return button;
-  }
-
-  function createItemName(name, completed) {
-    const span = document.createElement("span");
-    span.className = "item-name";
-    if (completed) {
-      span.classList.add("is-completed");
-    }
-    span.textContent = name;
-    return span;
-  }
-
-  function createItemBadge(item) {
-    const badge = document.createElement("span");
-    badge.className = "item-badge";
-
-    if (item.completed) {
-        badge.classList.add("is-done");
-        badge.textContent = "Bought";
-    } else {
-        badge.textContent = `${item.quantity} ${item.unit}`;
-    }
-
-        return badge;
-   }
-
-  function createDeleteButton(index) {
-    const button = document.createElement("button");
-    const icon = document.createElement("i");
-
-    button.type = "button";
-    button.className = "delete-btn";
-    button.setAttribute("data-delete-index", index);
-    button.setAttribute("aria-label", "Delete item");
-
-    icon.className = "fa-solid fa-trash";
-    button.appendChild(icon);
-
-    return button;
-  }
-
-  function createShoppingItem(item, index) {
-    const li = document.createElement("li");
-    li.className = "shopping-item";
-
-    const toggleButton = createToggleButton(index, item.completed);
-    const itemName = createItemName(item.name, item.completed);
-
-    const actions = document.createElement("div");
-    actions.className = "item-actions";
-
-    const badge = createItemBadge(item);
-    const deleteButton = createDeleteButton(index);
-
-    actions.appendChild(badge);
-    actions.appendChild(deleteButton);
-
-    li.appendChild(toggleButton);
-    li.appendChild(itemName);
-    li.appendChild(actions);
-
-    return li;
-  }
-
-  function renderItems() {
-    if (!currentListName || !shoppingList) return;
-
-    const items = getItemsForList(currentListName);
-    shoppingList.innerHTML = "";
-
-    items.forEach((item, index) => {
-      shoppingList.appendChild(createShoppingItem(item, index));
-    });
-
-    updateItemsCount(items);
-  }
-
-  function openList(listName) {
-    currentListName = listName;
-
-    if (currentListNameDisplay) {
-      currentListNameDisplay.textContent = listName;
-    }
-
-    if (createListSection) {
-      createListSection.style.display = "none";
-    }
-
-    if (activeListSection) {
-      activeListSection.style.display = "block";
-    }
-
-    renderItems();
-  }
-
-  function createNewList() {
-    const listName = listNameInput?.value.trim();
-
-    if (!listName) {
-      showCreateMessage("Please enter a list name first.", true);
+    if (historyLists.length === 0) {
+      historyContainer.appendChild(createEmptyListMessage("No history yet"));
       return;
     }
 
-    const allLists = getAllLists();
-
-    if (!allLists.includes(listName)) {
-      allLists.push(listName);
-      setAllLists(allLists);
-      setItemsForList(listName, []);
-    }
-
-    showCreateMessage("", false);
-    loadLists();
-    openList(listName);
-  }
-
-
-  function addItemToCurrentList() {
-    const itemName = itemInput?.value.trim();
-    const quantityInput = document.getElementById("quantityInput");
-    const unitSelect = document.getElementById("unitSelect");
-
-    const quantity = quantityInput?.value.trim();
-    const unit = unitSelect?.value;
-
-    if (!currentListName || !itemName) return;
-
-    const items = getItemsForList(currentListName);
-
-    items.push({
-        name: itemName,
-        quantity: quantity || "1",
-        unit: unit || "pcs",
-        completed: false
+    historyLists.forEach((listName) => {
+      historyContainer.appendChild(createHistoryListItem(listName));
     });
-
-    setItemsForList(currentListName, items);
-
-    itemInput.value = "";
-    if (quantityInput) quantityInput.value = "";
-    if (unitSelect) unitSelect.value = "pcs";
-
-    renderItems();
   }
-
-
-
-
-  function handleListClick(event) {
-    const toggleBtn = event.target.closest("[data-index]");
-    const deleteBtn = event.target.closest("[data-delete-index]");
-
-    if (!currentListName) return;
-
-    const items = getItemsForList(currentListName);
-
-    if (toggleBtn) {
-      const index = Number(toggleBtn.getAttribute("data-index"));
-
-      if (!Number.isNaN(index) && items[index]) {
-        items[index].completed = !items[index].completed;
-        setItemsForList(currentListName, items);
-        renderItems();
-      }
-    }
-
-    if (deleteBtn) {
-      const index = Number(deleteBtn.getAttribute("data-delete-index"));
-
-      if (!Number.isNaN(index)) {
-        items.splice(index, 1);
-        setItemsForList(currentListName, items);
-        renderItems();
-      }
-    }
-  }
-
-  function loadListFromURL() {
-    const params = new URLSearchParams(window.location.search);
-    const listNameFromURL = params.get("name");
-
-    if (listNameFromURL) {
-      openList(listNameFromURL);
-    }
-  }
-
-  function toggleCreateMenu() {
-    if (!createMenu) return;
-
-    createMenu.style.display =
-      createMenu.style.display === "block" ? "none" : "block";
-  }
-
-  loadLists();
-  loadListFromURL();
 
   toggleCreateMenuBtn?.addEventListener("click", toggleCreateMenu);
-  createListBtn?.addEventListener("click", createNewList);
 
-  listNameInput?.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      createNewList();
-    }
-  });
-
-  addBtn?.addEventListener("click", addItemToCurrentList);
-
-  itemInput?.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      addItemToCurrentList();
-    }
-  });
-
-  shoppingList?.addEventListener("click", handleListClick);
+  loadLists();
+  loadHistoryLists();
 });
 
 function toggleSavedLists() {
   const menu = document.getElementById("savedListsMenu");
+  if (!menu) return;
+
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+}
+
+function toggleHistoryLists() {
+  const menu = document.getElementById("historyMenu");
   if (!menu) return;
 
   menu.style.display = menu.style.display === "block" ? "none" : "block";

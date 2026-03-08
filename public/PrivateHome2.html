@@ -87,7 +87,7 @@
               </li>
 
               <li>
-                <a href="#">
+                <a href="familylist.html">
                   <span>Family</span>
                   <i class="fa-solid fa-plus"></i>
                 </a>
@@ -116,11 +116,15 @@
         </li>
 
         <!-- History -->
-        <li>
-          <a href="#" class="menu-link">
+         <li>
+          <button class="menu-link" type="button" onclick="toggleHistoryLists()">
             <i class="fa-solid fa-clock-rotate-left"></i>
             <span>History</span>
-          </a>
+          </button>
+
+          <div id="historyMenu" class="submenu">
+            <ul id="historyLists"></ul>
+          </div>
         </li>
 
         <!-- Contacts -->

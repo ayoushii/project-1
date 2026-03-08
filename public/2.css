@@ -455,6 +455,118 @@ body {
   color: var(--muted);
   line-height: 1.6;
 }
+.saved-list-item,
+.history-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.saved-list-link {
+  flex: 1;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.saved-list-link:hover {
+  color: var(--green-dark);
+}
+
+.delete-list-btn {
+  border: none;
+  background: transparent;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 15px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.delete-list-btn:hover {
+  background: rgba(217, 107, 95, 0.08);
+  transform: scale(1.05);
+}
+.saved-list-item,
+.history-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.saved-list-link,
+.history-list-link {
+  flex: 1;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.saved-list-link:hover,
+.history-list-link:hover {
+  color: var(--green-dark);
+}
+
+.delete-list-btn,
+.restore-list-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.delete-list-btn {
+  color: var(--danger);
+}
+
+.delete-list-btn:hover {
+  background: rgba(217, 107, 95, 0.08);
+  transform: scale(1.05);
+}
+
+.restore-list-btn {
+  color: var(--blue-dark);
+}
+
+.restore-list-btn:hover {
+  background: rgba(126, 169, 214, 0.12);
+  transform: scale(1.05);
+}
+.history-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.delete-history-btn {
+  border: none;
+  background: transparent;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 15px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.delete-history-btn:hover {
+  background: rgba(217, 107, 95, 0.08);
+  transform: scale(1.05);
+}
 
 /* På lite mindre skärmar läggs korten under varandra */
 @media (max-width: 1100px) {
