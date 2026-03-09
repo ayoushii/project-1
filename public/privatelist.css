@@ -135,8 +135,7 @@ body {
     color: var(--muted);
 }
 
-.list-name-row input,
-.add-item-row input {
+.list-name-row input {
     width: 100%;
     padding: 14px 16px;
     border: 1px solid rgba(0, 0, 0, 0.12);
@@ -147,12 +146,57 @@ body {
     outline: none;
 }
 
-.add-item-row {
+.add-item-grid {
     display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 12px;
+    grid-template-columns: 1fr 80px auto auto;
+    gap: 10px;
     align-items: center;
     margin-bottom: 22px;
+}
+
+.add-item-grid input[type="text"],
+.add-item-grid input[type="number"] {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 16px;
+    background: #fff;
+    font-size: 16px;
+    color: var(--text);
+    outline: none;
+}
+
+.add-item-grid input[type="number"] {
+    text-align: center;
+    padding: 14px 10px;
+}
+
+.select-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.select-wrap select {
+    appearance: none;
+    width: 100%;
+    padding: 14px 32px 14px 14px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 16px;
+    background: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    outline: none;
+}
+
+.select-wrap i {
+    position: absolute;
+    right: 12px;
+    pointer-events: none;
+    font-size: 13px;
+    color: var(--muted);
 }
 
 .add-btn,
@@ -165,6 +209,7 @@ body {
     font-size: 15px;
     font-weight: 800;
     cursor: pointer;
+    white-space: nowrap;
 }
 
 #visualItemList {
@@ -290,11 +335,20 @@ body {
         font-size: 30px;
     }
 
-    .add-item-row {
-        grid-template-columns: 1fr;
+    .add-item-grid {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto;
     }
 
-    .add-btn,
+    .add-item-grid input[type="text"] {
+        grid-column: 1 / -1;
+    }
+
+    .add-btn {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
     .save-btn {
         width: 100%;
     }

@@ -20,7 +20,6 @@ const pendingRequestsSection = document.getElementById("pendingRequestsSection")
 const pendingRequestsList = document.getElementById("pendingRequestsList");
 
 let currentListId = null;
-let currentListName = null;
 let shoppingItems = [];
 let contactsCache = [];
 let sharedMembers = [];
@@ -53,6 +52,13 @@ function setControlsDisabled(disabled) {
   if (saveListBtn) saveListBtn.disabled = disabled;
 }
 
+function createEmptyState(text) {
+  const li = document.createElement("li");
+  li.className = "empty-state";
+  li.textContent = text;
+  return li;
+}
+
 async function loadContactsFromDB() {
   const userId = getUserId();
 
@@ -75,17 +81,27 @@ async function loadContactsFromDB() {
     contactsCache = data.contacts || [];
     renderMemberOptions();
   } catch (error) {
-    console.error("Could not load contacts:", error);
     contactsCache = [];
     renderMemberOptions();
   }
 }
 
-function createEmptyState(text) {
-  const li = document.createElement("li");
-  li.className = "empty-state";
-  li.textContent = text;
-  return li;
+function renderMemberOptions() {
+  if (!memberSelect) return;
+
+  memberSelect.innerHTML = "";
+
+  const defaultOption = document.createElement("option");
+  defaultOption.value = "";
+  defaultOption.textContent = "Select a contact";
+  memberSelect.appendChild(defaultOption);
+
+  contactsCache.forEach((contact) => {
+    const option = document.createElement("option");
+    option.value = contact.username;
+    option.textContent = contact.username;
+    memberSelect.appendChild(option);
+  });
 }
 
 function createCheckButton(item) {
@@ -150,7 +166,6 @@ function createItemRow(item) {
   const checkBtn = createCheckButton(item);
   const text = createItemText(item);
   const badge = createBadge(item);
-
   const editBtn = createActionButton("edit-btn", "fa-solid fa-pen", "data-edit-item-id", item.id);
   const deleteBtn = createActionButton("delete-btn", "fa-solid fa-trash", "data-delete-item-id", item.id);
 
@@ -172,7 +187,7 @@ function renderList() {
 
   visualItemList.innerHTML = "";
 
-  if (!currentListId && shoppingItems.length === 0) {
+  if (!currentListId) {
     visualItemList.appendChild(createEmptyState("Create the list first."));
     return;
   }
@@ -184,24 +199,6 @@ function renderList() {
 
   shoppingItems.forEach((item) => {
     visualItemList.appendChild(createItemRow(item));
-  });
-}
-
-function renderMemberOptions() {
-  if (!memberSelect) return;
-
-  memberSelect.innerHTML = "";
-
-  const defaultOption = document.createElement("option");
-  defaultOption.value = "";
-  defaultOption.textContent = "Select a contact";
-  memberSelect.appendChild(defaultOption);
-
-  contactsCache.forEach((contact) => {
-    const option = document.createElement("option");
-    option.value = contact.username;
-    option.textContent = contact.username;
-    memberSelect.appendChild(option);
   });
 }
 
@@ -239,7 +236,7 @@ function renderMembers() {
 
   memberList.innerHTML = "";
 
-  if (!currentListId && sharedMembers.length === 0) {
+  if (!currentListId) {
     memberList.appendChild(createEmptyState("Create the list first."));
     return;
   }
@@ -318,157 +315,6 @@ function renderPendingRequests() {
   });
 }
 
-async function loadPendingShareRequests() {
-  const userId = getUserId();
-
-  if (!userId || !currentListId || currentUserRole !== "owner") {
-    pendingShareRequests = [];
-    renderPendingRequests();
-    return;
-  }
-
-  try {
-    const res = await fetch(`/list-share-requests?userId=${encodeURIComponent(userId)}`);
-    const data = await res.json();
-
-    if (!res.ok) {
-      pendingShareRequests = [];
-      renderPendingRequests();
-      return;
-    }
-
-    pendingShareRequests = (data.requests || []).filter(
-      (request) => Number(request.list_id) === Number(currentListId)
-    );
-
-    renderPendingRequests();
-  } catch (error) {
-    console.error("LOAD PENDING SHARE REQUESTS ERROR:", error);
-    pendingShareRequests = [];
-    renderPendingRequests();
-  }
-}
-
-async function acceptShareRequest(requestId) {
-  const userId = getUserId();
-
-  try {
-    const res = await fetch(`/list-share-requests/${requestId}/accept`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ userId })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.message || "Could not accept request.");
-      return;
-    }
-
-    await loadPendingShareRequests();
-    await loadMembers();
-  } catch (error) {
-    console.error("ACCEPT SHARE REQUEST ERROR:", error);
-    alert("Server error while accepting request.");
-  }
-}
-
-async function declineShareRequest(requestId) {
-  const userId = getUserId();
-
-  try {
-    const res = await fetch(`/list-share-requests/${requestId}/decline`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ userId })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.message || "Could not decline request.");
-      return;
-    }
-
-    await loadPendingShareRequests();
-  } catch (error) {
-    console.error("DECLINE SHARE REQUEST ERROR:", error);
-    alert("Server error while declining request.");
-  }
-}
-
-async function createFamilyList() {
-  const userId = getUserId();
-  const listName = listNameInput.value.trim();
-
-  if (!userId) {
-    alert("You must be logged in.");
-    return false;
-  }
-
-  if (!listName) {
-    alert("Please enter a list name.");
-    return false;
-  }
-
-  try {
-    const res = await fetch("/lists", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        userId,
-        title: listName,
-        listType: "family"
-      })
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.message || "Could not create family list.");
-      return false;
-    }
-
-    currentListId = data.listId;
-    currentListName = listName;
-    currentUserRole = "owner";
-    pendingShareRequests = [];
-
-    if (toggleMemberPickerBtn) {
-      toggleMemberPickerBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Add member`;
-    }
-
-    if (ownerText) {
-      ownerText.innerHTML = `Owned by <strong>you</strong>`;
-    }
-
-    if (memberActionInfo) {
-      memberActionInfo.textContent = "You can add members directly to this list.";
-    }
-
-    updateListNameDisplays(listName);
-
-    listNameInput.disabled = true;
-    createListBtn.disabled = true;
-    createListBtn.textContent = "Created";
-
-    setControlsDisabled(false);
-    renderPendingRequests();
-    return true;
-  } catch (error) {
-    console.error("CREATE FAMILY LIST ERROR:", error);
-    alert("Server error while creating the family list.");
-    return false;
-  }
-}
-
 async function loadOwnerName(ownerId) {
   if (!ownerText) return;
 
@@ -495,7 +341,6 @@ async function loadOwnerName(ownerId) {
 
     ownerText.innerHTML = `Owned by <strong>${data.username}</strong>`;
   } catch (error) {
-    console.error("LOAD OWNER ERROR:", error);
     ownerText.textContent = "";
   }
 }
@@ -514,67 +359,20 @@ async function loadUserRole() {
 
     if (!res.ok) {
       currentUserRole = null;
-      if (memberActionInfo) memberActionInfo.textContent = "";
       return;
     }
 
     currentUserRole = data.role;
 
-    if (toggleMemberPickerBtn) {
-      if (currentUserRole === "owner") {
-        toggleMemberPickerBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Add member`;
-
-        if (memberActionInfo) {
-          memberActionInfo.textContent = "You can add members directly to this list.";
-        }
-      } else {
-        toggleMemberPickerBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Request member`;
-
-        if (memberActionInfo) {
-          memberActionInfo.textContent = "You can request new members from the owner.";
-        }
-      }
+    if (currentUserRole === "owner") {
+      toggleMemberPickerBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i><span>Add member</span>`;
+      memberActionInfo.textContent = "You can add members directly to this list.";
+    } else {
+      toggleMemberPickerBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i><span>Request member</span>`;
+      memberActionInfo.textContent = "You can request new members from the owner.";
     }
   } catch (error) {
-    console.error("LOAD ROLE ERROR:", error);
-    if (memberActionInfo) memberActionInfo.textContent = "";
-  }
-}
-
-async function loadListById(listId) {
-  const userId = getUserId();
-
-  if (!userId || !listId) return;
-
-  try {
-    const res = await fetch(`/lists/${listId}?userId=${encodeURIComponent(userId)}`);
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.message || "Could not load the family list.");
-      return;
-    }
-
-    currentListId = data.list.id;
-    currentListName = data.list.title;
-
-    await loadUserRole();
-
-    updateListNameDisplays(currentListName);
-    await loadOwnerName(data.list.owner_id);
-
-    listNameInput.value = currentListName;
-    listNameInput.disabled = true;
-
-    createListBtn.disabled = true;
-    createListBtn.textContent = "Created";
-
-    setControlsDisabled(false);
-
-    await loadPendingShareRequests();
-  } catch (error) {
-    console.error("LOAD FAMILY LIST ERROR:", error);
-    alert("Server error while loading the family list.");
+    currentUserRole = null;
   }
 }
 
@@ -595,7 +393,6 @@ async function loadItems() {
     shoppingItems = data.items || [];
     renderList();
   } catch (error) {
-    console.error("LOAD FAMILY ITEMS ERROR:", error);
     alert("Server error while loading items.");
   }
 }
@@ -622,9 +419,112 @@ async function loadMembers() {
     sharedMembers = data.members || [];
     renderMembers();
   } catch (error) {
-    console.error("LOAD FAMILY MEMBERS ERROR:", error);
     sharedMembers = [];
     renderMembers();
+  }
+}
+
+async function loadPendingShareRequests() {
+  const userId = getUserId();
+
+  if (!userId || !currentListId || currentUserRole !== "owner") {
+    pendingShareRequests = [];
+    renderPendingRequests();
+    return;
+  }
+
+  try {
+    const res = await fetch(`/list-share-requests?userId=${encodeURIComponent(userId)}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      pendingShareRequests = [];
+      renderPendingRequests();
+      return;
+    }
+
+    pendingShareRequests = (data.requests || []).filter(
+      (request) => Number(request.list_id) === Number(currentListId)
+    );
+
+    renderPendingRequests();
+  } catch (error) {
+    pendingShareRequests = [];
+    renderPendingRequests();
+  }
+}
+
+async function createFamilyList() {
+  const userId = getUserId();
+  const listName = listNameInput.value.trim();
+
+  if (!userId) {
+    alert("You must be logged in.");
+    return;
+  }
+
+  if (!listName) {
+    alert("Please enter a list name.");
+    return;
+  }
+
+  try {
+    const res = await fetch("/lists", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        userId,
+        title: listName,
+        listType: "family"
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Could not create family list.");
+      return;
+    }
+
+    window.location.href = `familylist.html?id=${encodeURIComponent(data.listId)}`;
+  } catch (error) {
+    alert("Server error while creating the family list.");
+  }
+}
+
+async function loadListById(listId) {
+  const userId = getUserId();
+
+  if (!userId || !listId) return;
+
+  try {
+    const res = await fetch(`/lists/${listId}?userId=${encodeURIComponent(userId)}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Could not load the family list.");
+      return;
+    }
+
+    currentListId = data.list.id;
+
+    updateListNameDisplays(data.list.title);
+    listNameInput.value = data.list.title;
+    listNameInput.disabled = true;
+    createListBtn.disabled = true;
+    createListBtn.textContent = "Created";
+
+    setControlsDisabled(false);
+
+    await loadUserRole();
+    await loadOwnerName(data.list.owner_id);
+    await loadItems();
+    await loadMembers();
+    await loadPendingShareRequests();
+  } catch (error) {
+    alert("Server error while loading the family list.");
   }
 }
 
@@ -672,7 +572,6 @@ async function addItem() {
 
     await loadItems();
   } catch (error) {
-    console.error("ADD FAMILY ITEM ERROR:", error);
     alert("Server error while adding item.");
   }
 }
@@ -704,7 +603,6 @@ async function toggleComplete(itemId) {
 
     await loadItems();
   } catch (error) {
-    console.error("TOGGLE FAMILY ITEM ERROR:", error);
     alert("Server error while updating item.");
   }
 }
@@ -726,7 +624,6 @@ async function removeItem(itemId) {
 
     await loadItems();
   } catch (error) {
-    console.error("DELETE FAMILY ITEM ERROR:", error);
     alert("Server error while deleting item.");
   }
 }
@@ -762,7 +659,6 @@ async function editItem(itemId) {
 
     await loadItems();
   } catch (error) {
-    console.error("EDIT FAMILY ITEM ERROR:", error);
     alert("Server error while editing item.");
   }
 }
@@ -782,9 +678,7 @@ async function addMemberToFamilyList() {
     return;
   }
 
-  const isOwner = currentUserRole === "owner";
-
-  const endpoint = isOwner
+  const endpoint = currentUserRole === "owner"
     ? `/lists/${currentListId}/share`
     : `/lists/${currentListId}/share-request`;
 
@@ -801,12 +695,7 @@ async function addMemberToFamilyList() {
       })
     });
 
-    let data = {};
-    try {
-      data = await res.json();
-    } catch (e) {
-      data = {};
-    }
+    const data = await res.json();
 
     if (!res.ok) {
       alert(data.message || "Could not process request.");
@@ -815,13 +704,12 @@ async function addMemberToFamilyList() {
 
     memberSelect.value = "";
 
-    if (isOwner) {
+    if (currentUserRole === "owner") {
       await loadMembers();
     } else {
-      alert("Request sent to the owner.");
+      alert(data.message || "Request sent to owner.");
     }
   } catch (error) {
-    console.error("ADD MEMBER ERROR:", error);
     alert("Server error.");
   }
 }
@@ -852,19 +740,63 @@ async function removeMember(index) {
 
     await loadMembers();
   } catch (error) {
-    console.error("REMOVE FAMILY MEMBER ERROR:", error);
     alert("Server error while removing member.");
   }
 }
 
-async function saveFamilyList() {
+async function acceptShareRequest(requestId) {
+  const userId = getUserId();
+
+  try {
+    const res = await fetch(`/list-share-requests/${requestId}/accept`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ userId })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Could not accept request.");
+      return;
+    }
+
+    await loadPendingShareRequests();
+  } catch (error) {
+    alert("Server error while accepting request.");
+  }
+}
+
+async function declineShareRequest(requestId) {
+  const userId = getUserId();
+
+  try {
+    const res = await fetch(`/list-share-requests/${requestId}/decline`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ userId })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Could not decline request.");
+      return;
+    }
+
+    await loadPendingShareRequests();
+  } catch (error) {
+    alert("Server error while declining request.");
+  }
+}
+
+function saveFamilyList() {
   if (!currentListId) {
     alert("Create the list first.");
-    return;
-  }
-
-  if (shoppingItems.length === 0) {
-    alert("Please add at least one item.");
     return;
   }
 
@@ -876,17 +808,11 @@ function loadListFromURL() {
   const listId = Number(params.get("id"));
 
   if (listId) {
-    currentListId = listId;
-    loadListById(listId).then(async () => {
-      await loadItems();
-      await loadMembers();
-      await loadPendingShareRequests();
-    });
+    loadListById(listId);
   } else {
     updateListNameDisplays("New Family List");
-    if (ownerText) ownerText.textContent = "";
+    if (ownerText) ownerText.innerHTML = `Owned by <strong>you</strong>`;
     if (memberActionInfo) memberActionInfo.textContent = "";
-    pendingShareRequests = [];
     setControlsDisabled(true);
     renderList();
     renderMembers();

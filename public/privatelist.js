@@ -1,4 +1,6 @@
 const itemNameInput = document.getElementById("itemNameInput");
+const quantityInput = document.getElementById("quantityInput");
+const unitSelect = document.getElementById("unitSelect");
 const addItemBtn = document.getElementById("addItemBtn");
 const visualItemList = document.getElementById("visualItemList");
 const listNameInput = document.getElementById("listNameInput");
@@ -31,8 +33,8 @@ function createCheckButton(item) {
 
   const icon = document.createElement("i");
   icon.className = "fa-solid fa-check";
-
   button.appendChild(icon);
+
   return button;
 }
 
@@ -51,13 +53,7 @@ function createItemText(item) {
 function createBadge(item) {
   const badge = document.createElement("span");
   badge.className = "item-badge";
-
-  if (item.is_completed) {
-    badge.textContent = "Bought";
-  } else {
-    badge.textContent = `${item.quantity} ${item.unit}`;
-  }
-
+  badge.textContent = item.is_completed ? "Bought" : `${item.quantity} ${item.unit}`;
   return badge;
 }
 
@@ -69,8 +65,8 @@ function createActionButton(className, iconClass, dataAttribute, value) {
 
   const icon = document.createElement("i");
   icon.className = iconClass;
-
   button.appendChild(icon);
+
   return button;
 }
 
@@ -87,20 +83,8 @@ function createItemRow(item) {
   const checkBtn = createCheckButton(item);
   const text = createItemText(item);
   const badge = createBadge(item);
-
-  const editBtn = createActionButton(
-    "edit-btn",
-    "fa-solid fa-pen",
-    "data-edit-item-id",
-    item.id
-  );
-
-  const deleteBtn = createActionButton(
-    "delete-btn",
-    "fa-solid fa-trash",
-    "data-delete-item-id",
-    item.id
-  );
+  const editBtn = createActionButton("edit-btn", "fa-solid fa-pen", "data-edit-item-id", item.id);
+  const deleteBtn = createActionButton("delete-btn", "fa-solid fa-trash", "data-delete-item-id", item.id);
 
   left.appendChild(checkBtn);
   left.appendChild(text);
@@ -191,14 +175,8 @@ async function createPrivateList() {
   try {
     const res = await fetch("/lists", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        userId,
-        title: listName,
-        listType: "private"
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, title: listName, listType: "private" }),
     });
 
     const data = await res.json();
@@ -220,9 +198,11 @@ async function createPrivateList() {
 
 async function addItem() {
   const userId = getUserId();
-  const value = itemNameInput.value.trim();
+  const itemName = itemNameInput.value.trim();
+  const quantity = quantityInput.value.trim() || "1";
+  const unit = unitSelect.value || "pcs";
 
-  if (!value) return;
+  if (!itemName) return;
 
   if (!currentListId) {
     const created = await createPrivateList();
@@ -232,15 +212,8 @@ async function addItem() {
   try {
     const res = await fetch(`/lists/${currentListId}/items`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        userId,
-        text: value,
-        quantity: "1",
-        unit: "pcs"
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, text: itemName, quantity, unit }),
     });
 
     const data = await res.json();
@@ -251,6 +224,9 @@ async function addItem() {
     }
 
     itemNameInput.value = "";
+    quantityInput.value = "";
+    unitSelect.value = "pcs";
+
     await loadItems();
   } catch (error) {
     console.error("ADD PRIVATE ITEM ERROR:", error);
@@ -267,13 +243,8 @@ async function toggleComplete(itemId) {
   try {
     const res = await fetch(`/items/${itemId}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        userId,
-        is_completed: !item.is_completed
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, is_completed: !item.is_completed }),
     });
 
     const data = await res.json();
@@ -295,7 +266,7 @@ async function removeItem(itemId) {
 
   try {
     const res = await fetch(`/items/${itemId}?userId=${encodeURIComponent(userId)}`, {
-      method: "DELETE"
+      method: "DELETE",
     });
 
     const data = await res.json();
@@ -325,13 +296,8 @@ async function editItem(itemId) {
   try {
     const res = await fetch(`/items/${itemId}`, {
       method: "PUT",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        userId,
-        text: newText.trim()
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, text: newText.trim() }),
     });
 
     const data = await res.json();
@@ -384,9 +350,11 @@ function loadListFromURL() {
 addItemBtn?.addEventListener("click", addItem);
 
 itemNameInput?.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") {
-    addItem();
-  }
+  if (event.key === "Enter") addItem();
+});
+
+quantityInput?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") addItem();
 });
 
 saveListBtn?.addEventListener("click", savePrivateList);
@@ -396,17 +364,9 @@ visualItemList?.addEventListener("click", (event) => {
   const editBtn = event.target.closest("[data-edit-item-id]");
   const deleteBtn = event.target.closest("[data-delete-item-id]");
 
-  if (checkBtn) {
-    toggleComplete(Number(checkBtn.getAttribute("data-item-id")));
-  }
-
-  if (editBtn) {
-    editItem(Number(editBtn.getAttribute("data-edit-item-id")));
-  }
-
-  if (deleteBtn) {
-    removeItem(Number(deleteBtn.getAttribute("data-delete-item-id")));
-  }
+  if (checkBtn) toggleComplete(Number(checkBtn.getAttribute("data-item-id")));
+  if (editBtn) editItem(Number(editBtn.getAttribute("data-edit-item-id")));
+  if (deleteBtn) removeItem(Number(deleteBtn.getAttribute("data-delete-item-id")));
 });
 
 loadListFromURL();

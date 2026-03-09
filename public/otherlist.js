@@ -15,14 +15,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   const ownerText = document.getElementById("ownerText");
 
   let currentListId = null;
-  let currentListName = null;
   let contactsCache = [];
   let currentItems = [];
   let sharedMembers = [];
+  let currentUserRole = null;
 
   function getUserId() {
     const id = localStorage.getItem("userId");
     return id ? Number(id) : 0;
+  }
+
+  function isLoggedIn() {
+    return localStorage.getItem("isLoggedIn") === "true";
   }
 
   function updateListNameDisplays(listName) {
@@ -50,15 +54,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (addMemberBtn) addMemberBtn.disabled = disabled;
   }
 
-  if (logoLink) {
-    logoLink.addEventListener("click", (event) => {
-      event.preventDefault();
+  function renderMemberOptions() {
+    if (!memberSelect) return;
 
-      if (localStorage.getItem("isLoggedIn") === "true") {
-        window.location.href = "PrivateHome2.html";
-      } else {
-        window.location.href = "PublicHome1.html";
-      }
+    memberSelect.innerHTML = "";
+
+    const defaultOption = document.createElement("option");
+    defaultOption.value = "";
+    defaultOption.textContent = "Select a contact";
+    memberSelect.appendChild(defaultOption);
+
+    contactsCache.forEach((contact) => {
+      const option = document.createElement("option");
+      option.value = contact.username;
+      option.textContent = contact.username;
+      memberSelect.appendChild(option);
     });
   }
 
@@ -84,62 +94,46 @@ document.addEventListener("DOMContentLoaded", async () => {
       contactsCache = data.contacts || [];
       renderMemberOptions();
     } catch (error) {
-      console.error("Could not load contacts:", error);
       contactsCache = [];
       renderMemberOptions();
     }
   }
 
-  function renderMemberOptions() {
-    if (!memberSelect) return;
+  function createMemberChip(member, index) {
+    const li = document.createElement("li");
+    li.className = "member-chip";
 
-    memberSelect.innerHTML = "";
+    const icon = document.createElement("i");
+    icon.className = "fa-solid fa-user";
 
-    const defaultOption = document.createElement("option");
-    defaultOption.value = "";
-    defaultOption.textContent = "Select a contact";
-    memberSelect.appendChild(defaultOption);
+    const text = document.createElement("span");
+    text.textContent = member.username;
 
-    contactsCache.forEach((contact) => {
-      const option = document.createElement("option");
-      option.value = contact.username;
-      option.textContent = contact.username;
-      memberSelect.appendChild(option);
-    });
+    li.appendChild(icon);
+    li.appendChild(text);
+
+    if (currentUserRole === "owner") {
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "member-remove-btn";
+      removeBtn.setAttribute("data-member-remove-index", index);
+
+      const removeIcon = document.createElement("i");
+      removeIcon.className = "fa-solid fa-xmark";
+      removeBtn.appendChild(removeIcon);
+
+      li.appendChild(removeBtn);
+    }
+
+    return li;
   }
-
-   function createMemberChip(member, index) {
-  const li = document.createElement("li");
-  li.className = "member-chip";
-
-  const icon = document.createElement("i");
-  icon.className = "fa-solid fa-user";
-
-  const text = document.createElement("span");
-  text.textContent = member.username;
-
-  const removeBtn = document.createElement("button");
-  removeBtn.type = "button";
-  removeBtn.className = "member-remove-btn";
-  removeBtn.setAttribute("data-member-remove-index", index);
-
-  const removeIcon = document.createElement("i");
-  removeIcon.className = "fa-solid fa-xmark";
-  removeBtn.appendChild(removeIcon);
-
-  li.appendChild(icon);
-  li.appendChild(text);
-  li.appendChild(removeBtn);
-
-  return li;
-}
 
   function renderMembers() {
     if (!listMembers) return;
 
     listMembers.innerHTML = "";
 
-    if (!currentListId && sharedMembers.length === 0) {
+    if (!currentListId) {
       const li = document.createElement("li");
       li.className = "member-placeholder";
       li.textContent = "Create the list first";
@@ -157,7 +151,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     sharedMembers.forEach((member, index) => {
       listMembers.appendChild(createMemberChip(member, index));
-    });  
+    });
   }
 
   async function loadMembers() {
@@ -182,7 +176,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       sharedMembers = data.members || [];
       renderMembers();
     } catch (error) {
-      console.error("LOAD MEMBERS ERROR:", error);
       sharedMembers = [];
       renderMembers();
     }
@@ -303,6 +296,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function loadItems() {
     const userId = getUserId();
+
     if (!currentListId || !userId) return;
 
     try {
@@ -316,11 +310,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       currentItems = data.items || [];
       renderItems();
-    } catch (err) {
-      console.error("LOAD ITEMS ERROR:", err);
+    } catch (error) {
+      alert("Server error while loading items.");
     }
   }
-
 
   async function loadOwnerName(ownerId) {
     if (!ownerText) return;
@@ -348,8 +341,40 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       ownerText.innerHTML = `Owned by <strong>${data.username}</strong>`;
     } catch (error) {
-      console.error("LOAD OWNER ERROR:", error);
       ownerText.textContent = "";
+    }
+  }
+
+  async function loadUserRole() {
+    const userId = getUserId();
+
+    if (!userId || !currentListId) {
+      currentUserRole = null;
+      return;
+    }
+
+    try {
+      const res = await fetch(`/lists/${currentListId}/role?userId=${encodeURIComponent(userId)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        currentUserRole = null;
+        return;
+      }
+
+      currentUserRole = data.role;
+
+      if (toggleMemberPickerBtn) {
+        if (currentUserRole === "owner") {
+          toggleMemberPickerBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Add member`;
+          toggleMemberPickerBtn.style.display = "";
+        } else {
+          toggleMemberPickerBtn.style.display = "none";
+          memberPickerBox?.classList.add("hidden-box");
+        }
+      }
+    } catch (error) {
+      currentUserRole = null;
     }
   }
 
@@ -367,13 +392,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       currentListId = data.list.id;
-      currentListName = data.list.title;
 
-      updateListNameDisplays(currentListName);
+      updateListNameDisplays(data.list.title);
+      await loadUserRole();
       await loadOwnerName(data.list.owner_id);
 
       if (listNameInput) {
-        listNameInput.value = currentListName;
+        listNameInput.value = data.list.title;
         listNameInput.disabled = true;
       }
 
@@ -383,10 +408,17 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       setControlsDisabled(false);
+
+      if (currentUserRole !== "owner") {
+        if (toggleMemberPickerBtn) toggleMemberPickerBtn.disabled = true;
+        if (memberSelect) memberSelect.disabled = true;
+        if (addMemberBtn) addMemberBtn.disabled = true;
+      }
+
       await loadItems();
       await loadMembers();
-    } catch (err) {
-      console.error("OPEN LIST ERROR:", err);
+    } catch (error) {
+      alert("Server error while opening the list.");
     }
   }
 
@@ -425,8 +457,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
 
       window.location.href = `other.html?id=${encodeURIComponent(data.listId)}`;
-    } catch (err) {
-      console.error("CREATE LIST ERROR:", err);
+    } catch (error) {
       alert("Server error while creating the list.");
     }
   }
@@ -473,8 +504,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (unitSelect) unitSelect.value = "pcs";
 
       await loadItems();
-    } catch (err) {
-      console.error("ADD ITEM ERROR:", err);
+    } catch (error) {
       alert("Server error while adding the item.");
     }
   }
@@ -484,6 +514,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (!currentListId) {
       alert("Create the list first.");
+      return;
+    }
+
+    if (currentUserRole !== "owner") {
+      alert("Only the owner can add members to this list.");
       return;
     }
 
@@ -513,10 +548,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         alert(data.message || "Could not share the list.");
         return;
       }
+
       memberSelect.value = "";
-      await loadMembers();
-    } catch (err) {
-      console.error("SHARE LIST ERROR:", err);
+      alert(data.message || "Invitation sent.");
+    } catch (error) {
       alert("Server error while sharing the list.");
     }
   }
@@ -524,6 +559,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function removeMember(index) {
     const userId = getUserId();
     const member = sharedMembers[index];
+
+    if (currentUserRole !== "owner") {
+      alert("Only the owner can remove members.");
+      return;
+    }
 
     if (!member || !member.user_id || !currentListId) return;
 
@@ -547,7 +587,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       await loadMembers();
     } catch (error) {
-      console.error("REMOVE MEMBER ERROR:", error);
       alert("Server error while removing member.");
     }
   }
@@ -583,8 +622,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         await loadItems();
-      } catch (err) {
-        console.error("TOGGLE ITEM ERROR:", err);
+      } catch (error) {
+        alert("Server error while updating the item.");
       }
     }
 
@@ -604,8 +643,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         await loadItems();
-      } catch (err) {
-        console.error("DELETE ITEM ERROR:", err);
+      } catch (error) {
+        alert("Server error while deleting the item.");
       }
     }
   }
@@ -622,6 +661,23 @@ document.addEventListener("DOMContentLoaded", async () => {
       setControlsDisabled(true);
       renderItems();
     }
+  }
+
+  if (!isLoggedIn()) {
+    window.location.href = "PublicHome1.html";
+    return;
+  }
+
+  if (logoLink) {
+    logoLink.addEventListener("click", (event) => {
+      event.preventDefault();
+
+      if (localStorage.getItem("isLoggedIn") === "true") {
+        window.location.href = "PrivateHome2.html";
+      } else {
+        window.location.href = "PublicHome1.html";
+      }
+    });
   }
 
   loadListFromURL();
@@ -657,11 +713,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
+    if (currentUserRole !== "owner") {
+      return;
+    }
+
     memberPickerBox?.classList.toggle("hidden-box");
   });
 
   addMemberBtn?.addEventListener("click", addMemberToCurrentList);
-  
+
   listMembers?.addEventListener("click", (event) => {
     const removeBtn = event.target.closest("[data-member-remove-index]");
     if (!removeBtn) return;
