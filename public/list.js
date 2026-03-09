@@ -9,14 +9,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     return id ? Number(id) : 0;
   }
 
-  function getHistoryLists() {
-    return JSON.parse(localStorage.getItem("rayaHistoryLists")) || [];
-  }
-
-  function setHistoryLists(lists) {
-    localStorage.setItem("rayaHistoryLists", JSON.stringify(lists));
-  }
-
   function createEmptyListMessage(text) {
     const li = document.createElement("li");
     li.className = "empty-list-item";
@@ -55,7 +47,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  async function deleteListFromDB(listId) {
+  async function fetchHistoryLists() {
+    const userId = getUserId();
+    if (!userId) return [];
+
+    try {
+      const res = await fetch(`/lists/history?userId=${encodeURIComponent(userId)}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error("GET HISTORY LISTS ERROR:", data.message);
+        return [];
+      }
+
+      return data.lists || [];
+    } catch (err) {
+      console.error("Could not fetch history lists:", err);
+      return [];
+    }
+  }
+
+  async function moveListToHistory(listId) {
     const userId = getUserId();
 
     if (!userId || !listId) {
@@ -75,7 +87,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!res.ok) {
         return {
           ok: false,
-          message: data.message || "Could not delete the list."
+          message: data.message || "Could not move list to history."
         };
       }
 
@@ -89,27 +101,76 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  function moveListToHistory(list) {
-    const historyLists = getHistoryLists();
+  async function restoreListFromHistory(listId) {
+    const userId = getUserId();
 
-    if (!historyLists.find((x) => x.id === list.id)) {
-      historyLists.push(list);
-      setHistoryLists(historyLists);
+    if (!userId || !listId) {
+      return {
+        ok: false,
+        message: "Missing userId or listId."
+      };
+    }
+
+    try {
+      const res = await fetch(`/lists/${listId}/restore`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ userId })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        return {
+          ok: false,
+          message: data.message || "Could not restore the list."
+        };
+      }
+
+      return { ok: true, data };
+    } catch (err) {
+      console.error("RESTORE LIST ERROR:", err);
+      return {
+        ok: false,
+        message: "Server error while restoring the list."
+      };
     }
   }
 
-  function restoreListFromHistory(listId) {
-    const historyLists = getHistoryLists();
-    const updatedHistory = historyLists.filter((x) => x.id !== listId);
-    setHistoryLists(updatedHistory);
-    loadHistoryLists();
-  }
+  async function deleteListForever(listId) {
+    const userId = getUserId();
 
-  function deleteListForever(listId) {
-    const historyLists = getHistoryLists();
-    const updatedHistory = historyLists.filter((x) => x.id !== listId);
-    setHistoryLists(updatedHistory);
-    loadHistoryLists();
+    if (!userId || !listId) {
+      return {
+        ok: false,
+        message: "Missing userId or listId."
+      };
+    }
+
+    try {
+      const res = await fetch(`/lists/${listId}/history?userId=${encodeURIComponent(userId)}`, {
+        method: "DELETE"
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        return {
+          ok: false,
+          message: data.message || "Could not delete the list permanently."
+        };
+      }
+
+      return { ok: true, data };
+    } catch (err) {
+      console.error("DELETE HISTORY LIST ERROR:", err);
+      return {
+        ok: false,
+        message: "Server error while deleting from history."
+      };
+    }
   }
 
   function createSavedListItem(list) {
@@ -137,19 +198,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         event.preventDefault();
         event.stopPropagation();
 
-        const confirmed = confirm(`Delete the list "${list.title}"?`);
+        const confirmed = confirm(`Move the list "${list.title}" to history?`);
         if (!confirmed) return;
 
-        const result = await deleteListFromDB(list.id);
+        const result = await moveListToHistory(list.id);
 
         if (!result.ok) {
           alert(result.message);
           return;
         }
 
-        moveListToHistory(list);
         await loadLists();
-        loadHistoryLists();
+        await loadHistoryLists();
       });
 
       li.appendChild(deleteBtn);
@@ -173,31 +233,51 @@ document.addEventListener("DOMContentLoaded", async () => {
     const restoreBtn = document.createElement("button");
     restoreBtn.type = "button";
     restoreBtn.className = "restore-list-btn";
-    restoreBtn.title = "Remove from history";
+    restoreBtn.title = "Restore list";
 
     const restoreIcon = document.createElement("i");
     restoreIcon.className = "fa-solid fa-rotate-left";
     restoreBtn.appendChild(restoreIcon);
 
-    restoreBtn.addEventListener("click", (event) => {
+    restoreBtn.addEventListener("click", async (event) => {
       event.preventDefault();
       event.stopPropagation();
-      restoreListFromHistory(list.id);
+
+      const result = await restoreListFromHistory(list.id);
+
+      if (!result.ok) {
+        alert(result.message);
+        return;
+      }
+
+      await loadLists();
+      await loadHistoryLists();
     });
 
     const deleteBtn = document.createElement("button");
     deleteBtn.type = "button";
     deleteBtn.className = "delete-history-btn";
-    deleteBtn.title = "Delete from history";
+    deleteBtn.title = "Delete permanently";
 
     const deleteIcon = document.createElement("i");
     deleteIcon.className = "fa-solid fa-trash";
     deleteBtn.appendChild(deleteIcon);
 
-    deleteBtn.addEventListener("click", (event) => {
+    deleteBtn.addEventListener("click", async (event) => {
       event.preventDefault();
       event.stopPropagation();
-      deleteListForever(list.id);
+
+      const confirmed = confirm(`Delete "${list.title}" permanently?`);
+      if (!confirmed) return;
+
+      const result = await deleteListForever(list.id);
+
+      if (!result.ok) {
+        alert(result.message);
+        return;
+      }
+
+      await loadHistoryLists();
     });
 
     actions.appendChild(restoreBtn);
@@ -225,10 +305,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  function loadHistoryLists() {
+  async function loadHistoryLists() {
     if (!historyListsEl) return;
 
-    const historyLists = getHistoryLists();
+    const historyLists = await fetchHistoryLists();
     historyListsEl.innerHTML = "";
 
     if (historyLists.length === 0) {
@@ -244,7 +324,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   toggleCreateMenuBtn?.addEventListener("click", toggleCreateMenu);
 
   await loadLists();
-  loadHistoryLists();
+  await loadHistoryLists();
 });
 
 function toggleSavedLists() {

@@ -15,8 +15,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const ownerText = document.getElementById("ownerText");
 
   let currentListId = null;
-  let contactsCache = [];
   let currentItems = [];
+  let contactsCache = [];
   let sharedMembers = [];
   let currentUserRole = null;
 
@@ -30,16 +30,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function updateListNameDisplays(listName) {
-    const nameEls = document.querySelectorAll(".current-list-name");
-    nameEls.forEach((el) => {
+    const els = document.querySelectorAll(".current-list-name");
+    els.forEach((el) => {
       el.textContent = listName;
     });
   }
 
   function updateItemsCount(items) {
     const count = items.length;
-    const countEls = document.querySelectorAll(".items-count");
-    countEls.forEach((el) => {
+    const els = document.querySelectorAll(".items-count");
+    els.forEach((el) => {
       el.textContent = `${count} ${count === 1 ? "item" : "items"}`;
     });
   }
@@ -49,9 +49,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (quantityInput) quantityInput.disabled = disabled;
     if (unitSelect) unitSelect.disabled = disabled;
     if (addBtn) addBtn.disabled = disabled;
-    if (toggleMemberPickerBtn) toggleMemberPickerBtn.disabled = disabled;
-    if (memberSelect) memberSelect.disabled = disabled;
-    if (addMemberBtn) addMemberBtn.disabled = disabled;
   }
 
   function renderMemberOptions() {
@@ -367,10 +364,16 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (toggleMemberPickerBtn) {
         if (currentUserRole === "owner") {
           toggleMemberPickerBtn.innerHTML = `<i class="fa-solid fa-user-plus"></i> Add member`;
-          toggleMemberPickerBtn.style.display = "";
         } else {
-          toggleMemberPickerBtn.style.display = "none";
-          memberPickerBox?.classList.add("hidden-box");
+          toggleMemberPickerBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Request member`;
+        }
+      }
+
+      if (addMemberBtn) {
+        if (currentUserRole === "owner") {
+          addMemberBtn.textContent = "Add";
+        } else {
+          addMemberBtn.textContent = "Send request";
         }
       }
     } catch (error) {
@@ -380,6 +383,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   async function openList(listId) {
     const userId = getUserId();
+
     if (!listId || !userId) return;
 
     try {
@@ -409,10 +413,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       setControlsDisabled(false);
 
-      if (currentUserRole !== "owner") {
-        if (toggleMemberPickerBtn) toggleMemberPickerBtn.disabled = true;
-        if (memberSelect) memberSelect.disabled = true;
-        if (addMemberBtn) addMemberBtn.disabled = true;
+      if (toggleMemberPickerBtn) {
+        toggleMemberPickerBtn.disabled = false;
+        toggleMemberPickerBtn.style.display = "inline-flex";
+      }
+
+      if (memberSelect) {
+        memberSelect.disabled = false;
+      }
+
+      if (addMemberBtn) {
+        addMemberBtn.disabled = false;
+        addMemberBtn.style.display = "inline-flex";
       }
 
       await loadItems();
@@ -517,11 +529,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    if (currentUserRole !== "owner") {
-      alert("Only the owner can add members to this list.");
-      return;
-    }
-
     const selectedName = memberSelect?.value.trim();
 
     if (!selectedName) {
@@ -529,8 +536,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
+    const endpoint =
+      currentUserRole === "owner"
+        ? `/lists/${currentListId}/share`
+        : `/lists/${currentListId}/share-request`;
+
     try {
-      const res = await fetch(`/lists/${currentListId}/share`, {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -545,14 +557,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       const data = await res.json();
 
       if (!res.ok) {
-        alert(data.message || "Could not share the list.");
+        alert(data.message || "Could not process request.");
         return;
       }
 
       memberSelect.value = "";
-      alert(data.message || "Invitation sent.");
+
+      if (currentUserRole === "owner") {
+        alert(data.message || "Invitation sent.");
+      } else {
+        alert(data.message || "Request sent to owner.");
+      }
     } catch (error) {
-      alert("Server error while sharing the list.");
+      alert("Server error while processing request.");
     }
   }
 
@@ -660,6 +677,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (ownerText) ownerText.innerHTML = `Owned by <strong>you</strong>`;
       setControlsDisabled(true);
       renderItems();
+      renderMembers();
     }
   }
 
@@ -710,10 +728,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   toggleMemberPickerBtn?.addEventListener("click", () => {
     if (!currentListId) {
       alert("Create the list first.");
-      return;
-    }
-
-    if (currentUserRole !== "owner") {
       return;
     }
 

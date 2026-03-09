@@ -56,14 +56,14 @@ async function findUserByQuery(q) {
   return rows[0] || null;
 }
 
-async function isMember(listId, targetUserId) {
+async function isMember(listId, userId) {
   const sql = `
     SELECT id
     FROM list_shares
     WHERE list_id = ? AND shared_with_user_id = ?
     LIMIT 1
   `;
-  const rows = await query(sql, [listId, targetUserId]);
+  const rows = await query(sql, [listId, userId]);
   return rows.length > 0;
 }
 
@@ -98,11 +98,13 @@ router.post("/lists", async (req, res) => {
       return badRequest(res, "userId and title are required.");
     }
 
-    const sql = `
+    const result = await query(
+      `
       INSERT INTO lists (owner_id, title, list_type)
       VALUES (?, ?, ?)
-    `;
-    const result = await query(sql, [userId, title, listType]);
+      `,
+      [userId, title, listType]
+    );
 
     return res.status(201).json({
       message: "List created successfully.",
@@ -129,13 +131,16 @@ router.get("/lists", async (req, res) => {
         l.owner_id,
         l.created_at,
         l.updated_at,
+        l.is_deleted,
+        l.deleted_at,
         CASE
           WHEN l.owner_id = ? THEN 'owner'
           ELSE 'shared'
         END AS relation_type
       FROM lists l
       LEFT JOIN list_shares s ON l.id = s.list_id
-      WHERE l.owner_id = ? OR s.shared_with_user_id = ?
+      WHERE (l.owner_id = ? OR s.shared_with_user_id = ?)
+        AND l.is_deleted = 0
       ORDER BY l.updated_at DESC, l.id DESC
     `;
 
@@ -145,7 +150,41 @@ router.get("/lists", async (req, res) => {
     return serverError(res, "GET LISTS ERROR:", err);
   }
 });
+router.get("/lists/history", async (req, res) => {
+  try {
+    const userId = Number(req.query.userId);
 
+
+    if (!userId) {
+      return badRequest(res, "userId is required.");
+    }
+
+
+    const rows = await query(
+      `
+      SELECT
+        id,
+        title,
+        list_type,
+        owner_id,
+        created_at,
+        updated_at,
+        is_deleted,
+        deleted_at
+      FROM lists
+      WHERE owner_id = ?
+        AND is_deleted = 1
+      ORDER BY deleted_at DESC, id DESC
+      `,
+      [userId]
+    );
+
+
+    return res.json({ lists: rows });
+  } catch (err) {
+    return serverError(res, "GET HISTORY LISTS ERROR:", err);
+  }
+});
 router.get("/lists/:id", async (req, res) => {
   try {
     const listId = Number(req.params.id);
@@ -182,77 +221,20 @@ router.get("/lists/:id/members", async (req, res) => {
       return res.status(404).json({ message: "List not found." });
     }
 
-    const sql = `
+    const members = await query(
+      `
       SELECT ls.id, u.id AS user_id, u.username, u.email, ls.permission
       FROM list_shares ls
       JOIN users u ON u.id = ls.shared_with_user_id
       WHERE ls.list_id = ?
       ORDER BY u.username ASC
-    `;
+      `,
+      [listId]
+    );
 
-    const members = await query(sql, [listId]);
     return res.json({ members });
   } catch (err) {
     return serverError(res, "GET LIST MEMBERS ERROR:", err);
-  }
-});
-
-router.delete("/lists/:id/share/:sharedUserId", async (req, res) => {
-  try {
-    const listId = Number(req.params.id);
-    const sharedUserId = Number(req.params.sharedUserId);
-    const userId = Number(req.query.userId);
-
-    if (!listId || !sharedUserId || !userId) {
-      return badRequest(res, "listId, sharedUserId and userId are required.");
-    }
-
-    const list = await getOwnerList(listId, userId);
-
-    if (!list) {
-      return res.status(403).json({
-        message: "Only the owner can remove members from this list."
-      });
-    }
-
-    const sql = `
-      DELETE FROM list_shares
-      WHERE list_id = ? AND shared_with_user_id = ?
-    `;
-
-    const result = await query(sql, [listId, sharedUserId]);
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "Shared member not found." });
-    }
-
-    return res.json({ message: "Member removed successfully." });
-  } catch (err) {
-    return serverError(res, "DELETE SHARE ERROR:", err);
-  }
-});
-
-router.delete("/lists/:id", async (req, res) => {
-  try {
-    const listId = Number(req.params.id);
-    const userId = Number(req.query.userId);
-
-    if (!listId || !userId) {
-      return badRequest(res, "listId and userId are required.");
-    }
-
-    const list = await getOwnerList(listId, userId);
-
-    if (!list) {
-      return res.status(404).json({
-        message: "List not found or access denied."
-      });
-    }
-
-    await query("DELETE FROM lists WHERE id = ?", [listId]);
-    return res.json({ message: "List deleted successfully." });
-  } catch (err) {
-    return serverError(res, "DELETE LIST ERROR:", err);
   }
 });
 
@@ -271,14 +253,16 @@ router.get("/lists/:id/items", async (req, res) => {
       return res.status(404).json({ message: "List not found." });
     }
 
-    const sql = `
+    const items = await query(
+      `
       SELECT id, text, quantity, unit, is_completed, position_index, created_at
       FROM list_items
       WHERE list_id = ?
       ORDER BY position_index ASC, id ASC
-    `;
+      `,
+      [listId]
+    );
 
-    const items = await query(sql, [listId]);
     return res.json({ items });
   } catch (err) {
     return serverError(res, "GET LIST ITEMS ERROR:", err);
@@ -477,10 +461,42 @@ router.delete("/items/:itemId", async (req, res) => {
       }
     }
 
-    await query("DELETE FROM list_items WHERE id = ?", [itemId]);
+    await query(`DELETE FROM list_items WHERE id = ?`, [itemId]);
     return res.json({ message: "Item deleted successfully." });
   } catch (err) {
     return serverError(res, "DELETE ITEM ERROR:", err);
+  }
+});
+
+router.delete("/lists/:id", async (req, res) => {
+  try {
+    const listId = Number(req.params.id);
+    const userId = Number(req.query.userId);
+
+    if (!listId || !userId) {
+      return badRequest(res, "listId and userId are required.");
+    }
+
+    const list = await getOwnerList(listId, userId);
+
+    if (!list) {
+      return res.status(404).json({
+        message: "List not found or access denied."
+      });
+    }
+
+    await query(
+      `
+      UPDATE lists
+      SET is_deleted = 1, deleted_at = NOW()
+      WHERE id = ? AND owner_id = ?
+      `,
+      [listId, userId]
+    );
+
+    return res.json({ message: "List moved to history successfully." });
+  } catch (err) {
+    return serverError(res, "DELETE LIST ERROR:", err);
   }
 });
 
@@ -517,23 +533,41 @@ router.post("/lists/:id/share", async (req, res) => {
       return badRequest(res, "This user is already a member of this list.");
     }
 
+    const existingAccepted = await query(
+      `
+      SELECT id
+      FROM list_share_requests
+      WHERE list_id = ?
+        AND requested_by_user_id = ?
+        AND target_user_id = ?
+        AND status = 'accepted'
+      LIMIT 1
+      `,
+      [listId, userId, targetUser.id]
+    );
+
+    if (existingAccepted.length > 0) {
+      return badRequest(res, "This user has already been invited before.");
+    }
+
     const pendingRows = await query(
       `
       SELECT id
       FROM list_share_requests
       WHERE list_id = ?
+        AND requested_by_user_id = ?
         AND target_user_id = ?
-        AND status IN ('pending_target', 'pending')
+        AND status IN ('pending', 'pending_target')
       LIMIT 1
       `,
-      [listId, targetUser.id]
+      [listId, userId, targetUser.id]
     );
 
     if (pendingRows.length > 0) {
       return badRequest(res, "A pending request already exists for this user.");
     }
 
-    if (list.list_type === "other") {
+    if (list.list_type === "family" || list.list_type === "other") {
       const result = await query(
         `
         INSERT INTO list_share_requests (list_id, requested_by_user_id, target_user_id, status)
@@ -563,11 +597,6 @@ router.post("/lists/:id/share", async (req, res) => {
       shareId: result.insertId
     });
   } catch (err) {
-    if (err.code === "ER_DUP_ENTRY") {
-      return res.status(400).json({
-        message: "This list is already shared with that user."
-      });
-    }
     return serverError(res, "SHARE LIST ERROR:", err);
   }
 });
@@ -608,6 +637,23 @@ router.post("/lists/:id/share-request", async (req, res) => {
 
     if (await isMember(listId, targetUser.id)) {
       return badRequest(res, "That user is already a member of this list.");
+    }
+
+    const existingAccepted = await query(
+      `
+      SELECT id
+      FROM list_share_requests
+      WHERE list_id = ?
+        AND requested_by_user_id = ?
+        AND target_user_id = ?
+        AND status = 'accepted'
+      LIMIT 1
+      `,
+      [listId, userId, targetUser.id]
+    );
+
+    if (existingAccepted.length > 0) {
+      return badRequest(res, "This user has already been requested before.");
     }
 
     const pendingRows = await query(
@@ -677,7 +723,8 @@ router.get("/list-share-requests", async (req, res) => {
       return badRequest(res, "userId is required.");
     }
 
-    const sql = `
+    const requests = await query(
+      `
       SELECT
         lsr.id,
         lsr.list_id,
@@ -694,9 +741,10 @@ router.get("/list-share-requests", async (req, res) => {
       WHERE l.owner_id = ?
         AND lsr.status = 'pending'
       ORDER BY lsr.id DESC
-    `;
+      `,
+      [userId]
+    );
 
-    const requests = await query(sql, [userId]);
     return res.json({ requests });
   } catch (err) {
     return serverError(res, "GET LIST SHARE REQUESTS ERROR:", err);
@@ -720,8 +768,7 @@ router.post("/list-share-requests/:id/accept", async (req, res) => {
         lsr.requested_by_user_id,
         lsr.target_user_id,
         lsr.status,
-        l.owner_id,
-        l.list_type
+        l.owner_id
       FROM list_share_requests lsr
       JOIN lists l ON l.id = lsr.list_id
       WHERE lsr.id = ?
@@ -742,8 +789,38 @@ router.post("/list-share-requests/:id/accept", async (req, res) => {
       });
     }
 
+    if (requestRow.status === "accepted") {
+      return res.json({ message: "Request already accepted." });
+    }
+
     if (requestRow.status !== "pending") {
       return badRequest(res, "This request is not pending.");
+    }
+
+    const existingPendingTarget = await query(
+      `
+      SELECT id
+      FROM list_share_requests
+      WHERE list_id = ?
+        AND requested_by_user_id = ?
+        AND target_user_id = ?
+        AND status = 'pending_target'
+        AND id <> ?
+      LIMIT 1
+      `,
+      [
+        requestRow.list_id,
+        requestRow.requested_by_user_id,
+        requestRow.target_user_id,
+        requestId
+      ]
+    );
+
+    if (existingPendingTarget.length > 0) {
+      await query(`UPDATE list_share_requests SET status = 'declined' WHERE id = ?`, [requestId]);
+      return res.json({
+        message: "Invitation already exists for that user."
+      });
     }
 
     await query(
@@ -794,14 +871,11 @@ router.post("/list-share-requests/:id/decline", async (req, res) => {
       });
     }
 
-    if (requestRow.status !== "pending") {
-      return badRequest(res, "This request is not pending.");
+    if (requestRow.status === "declined") {
+      return res.json({ message: "Request already declined." });
     }
 
-    await query(
-      `UPDATE list_share_requests SET status = 'declined' WHERE id = ?`,
-      [requestId]
-    );
+    await query(`UPDATE list_share_requests SET status = 'declined' WHERE id = ?`, [requestId]);
 
     return res.json({ message: "Request declined successfully." });
   } catch (err) {
@@ -817,7 +891,8 @@ router.get("/target-list-invitations", async (req, res) => {
       return badRequest(res, "userId is required.");
     }
 
-    const sql = `
+    const invitations = await query(
+      `
       SELECT
         lsr.id,
         lsr.list_id,
@@ -830,9 +905,10 @@ router.get("/target-list-invitations", async (req, res) => {
       WHERE lsr.target_user_id = ?
         AND lsr.status = 'pending_target'
       ORDER BY lsr.id DESC
-    `;
+      `,
+      [userId]
+    );
 
-    const invitations = await query(sql, [userId]);
     return res.json({ invitations });
   } catch (err) {
     return serverError(res, "GET TARGET INVITATIONS ERROR:", err);
@@ -874,6 +950,10 @@ router.post("/target-list-invitations/:id/accept", async (req, res) => {
       });
     }
 
+    if (invitation.status === "accepted") {
+      return res.json({ message: "Invitation already accepted." });
+    }
+
     if (invitation.status !== "pending_target") {
       return badRequest(res, "This invitation is not pending.");
     }
@@ -895,14 +975,6 @@ router.post("/target-list-invitations/:id/accept", async (req, res) => {
 
     return res.json({ message: "Invitation accepted successfully." });
   } catch (err) {
-    if (err.code === "ER_DUP_ENTRY") {
-      await query(
-        `UPDATE list_share_requests SET status = 'accepted' WHERE id = ?`,
-        [Number(req.params.id)]
-      );
-      return res.json({ message: "Invitation accepted successfully." });
-    }
-
     return serverError(res, "ACCEPT TARGET INVITATION ERROR:", err);
   }
 });
@@ -941,8 +1013,8 @@ router.post("/target-list-invitations/:id/decline", async (req, res) => {
       });
     }
 
-    if (invitation.status !== "pending_target") {
-      return badRequest(res, "This invitation is not pending.");
+    if (invitation.status === "declined") {
+      return res.json({ message: "Invitation already declined." });
     }
 
     await query(
@@ -955,5 +1027,74 @@ router.post("/target-list-invitations/:id/decline", async (req, res) => {
     return serverError(res, "DECLINE TARGET INVITATION ERROR:", err);
   }
 });
+router.post("/lists/:id/restore", async (req, res) => {
+  try {
+    const listId = Number(req.params.id);
+    const userId = Number(req.body.userId);
 
+    if (!listId || !userId) {
+      return badRequest(res, "listId and userId are required.");
+    }
+
+    const rows = await query(
+      `
+      SELECT id
+      FROM lists
+      WHERE id = ? AND owner_id = ? AND is_deleted = 1
+      LIMIT 1
+      `,
+      [listId, userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "List not found in history." });
+    }
+
+    await query(
+      `
+      UPDATE lists
+      SET is_deleted = 0, deleted_at = NULL
+      WHERE id = ? AND owner_id = ?
+      `,
+      [listId, userId]
+    );
+
+    return res.json({ message: "List restored successfully." });
+  } catch (err) {
+    return serverError(res, "RESTORE LIST ERROR:", err);
+  }
+});
+router.delete("/lists/:id/history", async (req, res) => {
+  try {
+    const listId = Number(req.params.id);
+    const userId = Number(req.query.userId);
+
+    if (!listId || !userId) {
+      return badRequest(res, "listId and userId are required.");
+    }
+
+    const rows = await query(
+      `
+      SELECT id
+      FROM lists
+      WHERE id = ? AND owner_id = ? AND is_deleted = 1
+      LIMIT 1
+      `,
+      [listId, userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "List not found in history." });
+    }
+
+    await query(`DELETE FROM list_items WHERE list_id = ?`, [listId]);
+    await query(`DELETE FROM list_shares WHERE list_id = ?`, [listId]);
+    await query(`DELETE FROM list_share_requests WHERE list_id = ?`, [listId]);
+    await query(`DELETE FROM lists WHERE id = ? AND owner_id = ?`, [listId, userId]);
+
+    return res.json({ message: "List deleted permanently." });
+  } catch (err) {
+    return serverError(res, "DELETE HISTORY LIST ERROR:", err);
+  }
+});
 module.exports = router;

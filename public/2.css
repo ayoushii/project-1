@@ -4,33 +4,26 @@
   box-sizing: border-box;
 }
 
-/* Färger som passar loggan */
 :root {
   --bg: #f4f8f7;
   --bg-soft: #eef6f3;
   --white: #ffffff;
-
   --text: #1f2937;
   --muted: #6b7280;
   --line: #dbe7e2;
-
   --green: #8bb04f;
   --green-dark: #6f9440;
   --green-soft: #eef6df;
-
   --blue: #7ea9d6;
   --blue-dark: #5d8fc4;
   --blue-soft: #eaf3fb;
-
   --danger: #d96b5f;
-
   --shadow: 0 10px 30px rgba(31, 41, 55, 0.08);
   --radius-lg: 24px;
   --radius-md: 16px;
   --radius-sm: 12px;
 }
 
-/* Grundstil för hela sidan */
 body {
   font-family: "Segoe UI", Tahoma, Arial, sans-serif;
   background: linear-gradient(180deg, #f6fbf8 0%, #edf5f8 55%, #fdfefe 100%);
@@ -38,7 +31,6 @@ body {
   min-height: 100vh;
 }
 
-/* Övre delen av sidan där logga och knappar ligger */
 .topbar {
   width: 100%;
   min-height: 96px;
@@ -55,7 +47,6 @@ body {
   z-index: 1000;
 }
 
-/* Storlek på loggan */
 .logo-wrap {
   width: 120px;
   height: 80px;
@@ -74,7 +65,6 @@ body {
   transform-origin: left center;
 }
 
-/* Knapparna uppe till höger */
 .top-actions {
   display: flex;
   align-items: center;
@@ -83,7 +73,6 @@ body {
   flex-wrap: wrap;
 }
 
-/* Gemensam stil för knappar och klickbara delar */
 .account-btn,
 .logout-btn,
 .primary-btn,
@@ -99,7 +88,6 @@ body {
   font-family: inherit;
 }
 
-/* Knapparna högst upp till höger */
 .account-btn,
 .logout-btn {
   padding: 12px 18px;
@@ -112,25 +100,25 @@ body {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
 }
 
-/* Lite hover-effekt så sidan känns mer levande */
 .account-btn:hover,
 .logout-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
 }
 
-/* Log out får en svag röd ton */
 .logout-btn {
   color: var(--danger);
   border: 1px solid rgba(217, 107, 95, 0.25);
 }
 
-/* Döljer element när de inte ska synas */
 .hidden {
   display: none !important;
 }
 
-/* Rutan som öppnas när man klickar på My Account */
+.hidden-box {
+  display: none !important;
+}
+
 .account-card {
   position: absolute;
   top: 68px;
@@ -145,7 +133,6 @@ body {
   z-index: 1100;
 }
 
-/* Rubriken i rutan */
 .account-card h2 {
   font-size: 20px;
   margin-bottom: 16px;
@@ -153,7 +140,6 @@ body {
   border-bottom: 1px solid var(--line);
 }
 
-/* Varje rad i account-rutan */
 .info-row {
   display: flex;
   flex-direction: column;
@@ -161,14 +147,12 @@ body {
   margin-bottom: 14px;
 }
 
-/* Texten över input-fälten */
 .info-row label {
   font-size: 14px;
   font-weight: 700;
   color: var(--muted);
 }
 
-/* Fälten i account-rutan */
 .info-row input {
   width: 100%;
   padding: 12px 14px;
@@ -180,7 +164,6 @@ body {
   font-size: 15px;
 }
 
-/* Password-fältet och knappen på samma rad */
 .password-container {
   display: flex;
   gap: 8px;
@@ -191,7 +174,6 @@ body {
   flex: 1;
 }
 
-/* Knappen för att byta lösenord */
 .edit-btn {
   padding: 0 16px;
   min-width: 110px;
@@ -206,13 +188,11 @@ body {
   background: #e5e7eb;
 }
 
-/* Huvudlayouten: meny till vänster och innehåll till höger */
 .layout {
   display: flex;
   min-height: calc(100vh - 96px);
 }
 
-/* Menyn till vänster */
 .sidebar {
   width: 280px;
   background: linear-gradient(180deg, #f7fbf8 0%, #eef5f2 100%);
@@ -225,7 +205,6 @@ body {
   overflow-y: auto;
 }
 
-/* Rubrik längst upp i sidomenyn */
 .sidebar-title {
   margin-bottom: 22px;
   padding: 0 6px;
@@ -241,7 +220,6 @@ body {
   font-size: 14px;
 }
 
-/* Listan i sidomenyn */
 .sidebar-menu {
   list-style: none;
   display: flex;
@@ -249,7 +227,6 @@ body {
   gap: 12px;
 }
 
-/* Länkar och knappar i vänstermenyn */
 .menu-link {
   width: 100%;
   display: flex;
@@ -263,12 +240,10 @@ body {
   box-shadow: 0 6px 18px rgba(31, 41, 55, 0.04);
 }
 
-/* Ikonerna i vänstermenyn */
 .menu-link i {
   color: var(--green-dark);
 }
 
-/* Hover-effekt på sidomenyn */
 .menu-link:hover {
   transform: translateY(-1px);
   background: linear-gradient(90deg, #f7fbef 0%, #eef6fb 100%);
@@ -276,7 +251,6 @@ body {
   box-shadow: 0 10px 22px rgba(31, 41, 55, 0.06);
 }
 
-/* Visar vilken meny som är aktiv */
 .active-link {
   background: linear-gradient(90deg, #eef6df 0%, #eaf3fb 100%);
   border-color: rgba(139, 176, 79, 0.28);
@@ -287,7 +261,6 @@ body {
   color: var(--blue-dark);
 }
 
-/* Undermenyn som öppnas under Create New List och My Lists */
 .submenu {
   margin-top: 10px;
   margin-left: 12px;
@@ -298,7 +271,6 @@ body {
   display: none;
 }
 
-/* Listan inne i undermenyn */
 .submenu ul {
   list-style: none;
   display: flex;
@@ -306,7 +278,6 @@ body {
   gap: 8px;
 }
 
-/* Varje länk inne i undermenyn */
 .submenu a {
   display: flex;
   align-items: center;
@@ -321,13 +292,11 @@ body {
   transition: all 0.2s ease;
 }
 
-/* Hover i undermenyn */
 .submenu a:hover {
   background: linear-gradient(90deg, #f9fcf4 0%, #f3f8fd 100%);
   border-color: rgba(139, 176, 79, 0.18);
 }
 
-/* Högra delen där huvudinnehållet visas */
 .content {
   flex: 1;
   margin-left: 280px;
@@ -335,7 +304,6 @@ body {
   background: transparent;
 }
 
-/* Stora välkomstkortet */
 .hero-card {
   background: linear-gradient(135deg, #ffffff 0%, #f7fbef 45%, #eef6fb 100%);
   border: 1px solid #e1ebe5;
@@ -345,12 +313,10 @@ body {
   margin-bottom: 28px;
 }
 
-/* Begränsar textbredden så det ser renare ut */
 .hero-text {
   max-width: 760px;
 }
 
-/* Liten badge ovanför huvudrubriken */
 .welcome-badge {
   display: inline-block;
   background: linear-gradient(90deg, #eef6df 0%, #eaf3fb 100%);
@@ -363,14 +329,12 @@ body {
   margin-bottom: 18px;
 }
 
-/* Huvudrubriken */
 .hero-card h1 {
   font-size: 40px;
   line-height: 1.15;
   margin-bottom: 14px;
 }
 
-/* Beskrivningstexten under rubriken */
 .hero-card p {
   font-size: 17px;
   line-height: 1.7;
@@ -378,7 +342,6 @@ body {
   margin-bottom: 26px;
 }
 
-/* Knapparna i välkomstkortet */
 .hero-actions {
   display: flex;
   gap: 14px;
@@ -393,7 +356,6 @@ body {
   gap: 10px;
 }
 
-/* Huvudknappen */
 .primary-btn {
   background: linear-gradient(90deg, var(--green) 0%, var(--blue) 100%);
   color: white;
@@ -405,7 +367,6 @@ body {
   filter: brightness(1.02);
 }
 
-/* Sekundär knapp */
 .secondary-btn {
   background: #ffffff;
   color: var(--text);
@@ -416,14 +377,12 @@ body {
   background: linear-gradient(90deg, #f9fcf4 0%, #f3f8fd 100%);
 }
 
-/* Korten längre ner på sidan */
 .quick-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 18px;
 }
 
-/* Varje informationskort */
 .quick-card {
   background: linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
   border: 1px solid #e2ebe6;
@@ -432,7 +391,6 @@ body {
   box-shadow: 0 10px 24px rgba(31, 41, 55, 0.06);
 }
 
-/* Ikoner i korten */
 .quick-card i {
   font-size: 24px;
   margin-bottom: 14px;
@@ -443,55 +401,16 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
-/* Rubrik i varje kort */
 .quick-card h3 {
   font-size: 20px;
   margin-bottom: 10px;
 }
 
-/* Text i varje kort */
 .quick-card p {
   color: var(--muted);
   line-height: 1.6;
 }
-.saved-list-item,
-.history-list-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  background: var(--white);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 10px 12px;
-}
 
-.saved-list-link {
-  flex: 1;
-  text-decoration: none;
-  color: var(--text);
-  font-weight: 600;
-}
-
-.saved-list-link:hover {
-  color: var(--green-dark);
-}
-
-.delete-list-btn {
-  border: none;
-  background: transparent;
-  color: var(--danger);
-  cursor: pointer;
-  font-size: 15px;
-  padding: 6px 8px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.delete-list-btn:hover {
-  background: rgba(217, 107, 95, 0.08);
-  transform: scale(1.05);
-}
 .saved-list-item,
 .history-list-item {
   display: flex;
@@ -518,7 +437,8 @@ body {
 }
 
 .delete-list-btn,
-.restore-list-btn {
+.restore-list-btn,
+.delete-history-btn {
   border: none;
   background: transparent;
   cursor: pointer;
@@ -528,11 +448,13 @@ body {
   transition: all 0.2s ease;
 }
 
-.delete-list-btn {
+.delete-list-btn,
+.delete-history-btn {
   color: var(--danger);
 }
 
-.delete-list-btn:hover {
+.delete-list-btn:hover,
+.delete-history-btn:hover {
   background: rgba(217, 107, 95, 0.08);
   transform: scale(1.05);
 }
@@ -545,26 +467,11 @@ body {
   background: rgba(126, 169, 214, 0.12);
   transform: scale(1.05);
 }
+
 .history-actions {
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.delete-history-btn {
-  border: none;
-  background: transparent;
-  color: var(--danger);
-  cursor: pointer;
-  font-size: 15px;
-  padding: 6px 8px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.delete-history-btn:hover {
-  background: rgba(217, 107, 95, 0.08);
-  transform: scale(1.05);
 }
 
 .request-card {
@@ -625,7 +532,9 @@ body {
 }
 
 .accept-request-btn,
-.decline-request-btn {
+.accept-invitation-btn,
+.decline-request-btn,
+.decline-invitation-btn {
   border: none;
   border-radius: 12px;
   padding: 10px 14px;
@@ -635,24 +544,28 @@ body {
   font-family: inherit;
 }
 
-.accept-request-btn {
+.accept-request-btn,
+.accept-invitation-btn {
   background: linear-gradient(90deg, var(--green) 0%, var(--blue) 100%);
   color: #fff;
   box-shadow: 0 8px 18px rgba(126, 169, 214, 0.18);
 }
 
-.accept-request-btn:hover {
+.accept-request-btn:hover,
+.accept-invitation-btn:hover {
   transform: translateY(-1px);
   filter: brightness(1.02);
 }
 
-.decline-request-btn {
+.decline-request-btn,
+.decline-invitation-btn {
   background: #fff;
   color: var(--danger);
   border: 1px solid rgba(217, 107, 95, 0.25);
 }
 
-.decline-request-btn:hover {
+.decline-request-btn:hover,
+.decline-invitation-btn:hover {
   background: rgba(217, 107, 95, 0.08);
 }
 
@@ -665,22 +578,6 @@ body {
   background: #fbfdfc;
 }
 
-@media (max-width: 700px) {
-  .request-item {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .request-actions {
-    width: 100%;
-  }
-
-  .accept-request-btn,
-  .decline-request-btn {
-    width: 100%;
-  }
-}
-/* På lite mindre skärmar läggs korten under varandra */
 @media (max-width: 1100px) {
   .quick-cards {
     grid-template-columns: 1fr;
@@ -691,7 +588,6 @@ body {
   }
 }
 
-/* Anpassning för surfplatta och mindre laptop */
 @media (max-width: 900px) {
   .topbar {
     flex-direction: column;
@@ -715,7 +611,6 @@ body {
     flex-direction: column;
   }
 
-  /* Sidomenyn flyttas upp och blir full bredd */
   .sidebar {
     position: relative;
     top: 0;
@@ -743,7 +638,6 @@ body {
     font-size: 16px;
   }
 
-  /* Gör account-rutan smidigare på mindre skärm */
   .account-card {
     top: 64px;
     right: 0;
@@ -754,7 +648,24 @@ body {
   }
 }
 
-/* Extra liten mobil */
+@media (max-width: 700px) {
+  .request-item {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .request-actions {
+    width: 100%;
+  }
+
+  .accept-request-btn,
+  .accept-invitation-btn,
+  .decline-request-btn,
+  .decline-invitation-btn {
+    width: 100%;
+  }
+}
+
 @media (max-width: 520px) {
   .logo-wrap img {
     width: 135px;
@@ -782,7 +693,6 @@ body {
     padding: 18px;
   }
 
-  /* Account-rutan blir mer mobilanpassad */
   .account-card {
     width: 100%;
     max-width: none;
