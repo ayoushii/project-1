@@ -12,7 +12,6 @@ if (token) {
     console.log("Verifierar token: " + token);
     
     // 3. Här skickar man koden till din server (Backend)
-    // Ersätt '/api/verify' med din faktiska länk när du har din backend klar
     fetch('/api/verify?token=' + token)
         .then(response => {
             if (response.ok) {

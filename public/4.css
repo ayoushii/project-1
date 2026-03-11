@@ -25,31 +25,28 @@ header img{
     float: left; 
     margin-left:  8px  ;
 }
-/* Denna del styr var rutan hamnar på sidan */
 
 
-/* Denna behållare styr placeringen av kortet under headern */
+
 .main-content {
     display: flex;
-    justify-content: center; /* Håller kortet centrerat vågrätt */
-    align-items: flex-start; /* Flyttar kortet till toppen av behållaren istället för mitten */
+    justify-content: center; 
+    align-items: flex-start; 
     min-height: calc(100vh - 150px); 
     width: 100%;
-    padding-top: 50px; /* Här kan du ändra siffran för att bestämma exakt hur högt upp det ska sitta */
+    padding-top: 50px; 
 }
 
-/* Själva vita rutan från din ritning */
 .verify-card {
     background-color: #fff;
     border: 1px solid #e0e0e0;
     padding: 60px 40px;
     text-align: center;
     width: 100%;
-    max-width: 500px; /* Gör att rutan inte blir för bred */
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* En svag skugga för att rutan ska poppa */
+    max-width: 500px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
 }
 
-/* Den gröna cirkeln */
 .icon-circle {
     width: 90px;
     height: 90px;
@@ -66,7 +63,7 @@ header img{
     color: #8cc63f;
 }
 
-/* Texten "Grattis..." */
+
 h1 {
     font-family: Arial, sans-serif;
     font-size: 20px;
@@ -75,7 +72,7 @@ h1 {
     margin-bottom: 40px;
 }
 
-/* Knappen längst ner */
+
 .login-button {
     display: inline-block;
     padding: 12px 35px;
@@ -96,8 +93,8 @@ h1 {
     color: #0000FF;
     text-decoration: underline;
     font-family: Arial, sans-serif;
-    font-size: 16px; /* Detta gör länken mindre och mer proportionerlig */
-    font-weight: normal; /* Tar bort fetstil för en smidigare känsla */
+    font-size: 16px; 
+    font-weight: normal; 
     display: inline-block;
     margin-top: 15px;
     cursor: pointer;
@@ -109,7 +106,6 @@ h1 {
     color: #0000CC;
 }
 
-/* Justering för själva kortet så det ser bra ut med länken */
 .verify-card {
     background-color: #fff;
     border: 1px solid #e0e0e0;
@@ -117,7 +113,6 @@ h1 {
     text-align: center;
     width: 100%;
     max-width: 500px;
-    /* Om du vill ha de runda hörnen som syns i sista bilden: */
     border-radius: 20px; 
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
